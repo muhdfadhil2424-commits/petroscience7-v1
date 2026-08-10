@@ -1,0 +1,6 @@
+{
+  "name": "Dapur Pecahan Chef Alya",
+  "description": "Simulasi pembelajaran pecahan Matematik Darjah 3 (DSKP 3.1) bertema dapur dan memasak bersama Chef Alya.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

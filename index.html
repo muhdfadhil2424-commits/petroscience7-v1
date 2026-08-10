@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSENSE - Portal Pembelajaran</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0f1423;
+            --bg-card-dark: #171d30;
+            --b1-bg: #222a20;
+            --b1-border: #384535;
+            --b1-accent: #e5a93c;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden; /* Mengelakkan scrollbar mendatar */
+        }
+
+        body {
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 40%);
+            padding: 15px 25px 40px 25px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        header h1 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 2.5rem;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #a5b4fc, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        header p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .module-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            background: rgba(23, 29, 48, 0.85);
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #4f46e5, #3b82f6);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .tab-btn[data-tab="1"].active {
+            background: linear-gradient(135deg, #3a5a20, #4f772d);
+            box-shadow: 0 4px 20px rgba(79, 119, 45, 0.4);
+        }
+
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+
+        .badge-locked {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-unlocked {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .content-area {
+            width: 100%;
+            position: relative;
+        }
+
+        .module-content {
+            display: none;
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .module-content.active {
+            display: block;
+        }
+
+        #bahan1 {
+            background-color: var(--b1-bg);
+            border: 2px solid var(--b1-border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            min-height: 80vh;
+        }
+
+        #bahan1 h2 {
+            font-family: 'Fredoka', sans-serif;
+            color: var(--b1-accent);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        #bahan1 .desc {
+            color: #cbd5e1;
+            margin-bottom: 25px;
+        }
+
+        .btn-camera {
+            background: linear-gradient(135deg, #52b788, #2d6a4f);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-camera:hover {
+            transform: translateY(-2px);
+        }
+
+        .camera-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .view-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--b1-border);
+            border-radius: 14px;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 15px;
+        }
+
+        .view-box .box-title {
+            position: absolute;
+            top: 10px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #a7f3d0;
+        }
+
+        .placeholder-text {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* REKABENTUK IFRAME TANPA SCROLLBAR KEDUA */
+        .iframe-container {
+            width: 100%;
+            height: 100vh; /* Ketinggian asas, akan dilaraskan oleh JavaScript */
+            border: none;
+            border-radius: 16px;
+            background: transparent;
+            display: block;
+            overflow: hidden; /* Menghapuskan scrollbar dalaman */
+        }
+
+        .emotion-bar-container {
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .emotion-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .emotion-label {
+            width: 80px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .label-happy { color: #f97316; }
+        .label-neutral { color: #f43f5e; }
+        .label-sad { color: #8b5cf6; }
+        .label-sleepy { color: #3b82f6; }
+
+        .progress-bg {
+            flex: 1;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .fill-happy { background: #ea580c; }
+        .fill-neutral { background: #e11d48; }
+        .fill-sad { background: #7c3aed; }
+        .fill-sleepy { background: #2563eb; }
+
+        .floating-robot-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 25px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 280px;
+            pointer-events: none;
+        }
+
+        .floating-robot-widget * {
+            pointer-events: auto;
+        }
+
+        .speech-bubble {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(129, 140, 248, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 12px 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .bubble-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 4px;
+        }
+
+        .bot-name {
+            font-weight: 700;
+            color: #a5b4fc;
+            font-size: 0.85rem;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: #4f46e5;
+        }
+
+        .speech-text {
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            line-height: 1.35;
+        }
+
+        .robot-avatar {
+            width: 90px;
+            height: 90px;
+            cursor: pointer;
+            filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+            transition: transform 0.2s ease;
+        }
+
+        .robot-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        .robot-svg {
+            width: 100%;
+            height: 100%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .speech-bubble.minimized {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .module-tabs { grid-template-columns: 1fr; }
+            .camera-grid { grid-template-columns: 1fr; }
+            .floating-robot-widget { max-width: 220px; right: 10px; bottom: 10px; }
+            .robot-avatar { width: 70px; height: 70px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>EDUSENSE</h1>
+            <p>Akses pantas ke aplikasi AI, modul interaktif, dan pengesan emosi terkini.</p>
+        </header>
+
+        <!-- MODUL TABS -->
+        <div class="module-tabs">
+            <button class="tab-btn active" data-tab="1" onclick="switchTab(1)">
+                <span><i class="fa-solid fa-camera-retro" style="margin-right: 8px;"></i> 1. Pengesan Emosi Wajah</span>
+            </button>
+
+            <button class="tab-btn" data-tab="2" onclick="switchTab(2)">
+                <span><i class="fa-solid fa-utensils" style="margin-right: 8px;"></i> 2. DAPUR PECAHAN CHEF ALYA</span>
+                <span id="badge-tab-2" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
+            </button>
+
+            <button class="tab-btn" data-tab="3" onclick="switchTab(3)">
+                <span><i class="fa-solid fa-gamepad" style="margin-right: 8px;"></i> 3. PETUALANGAN DUNIA PECAHAN</span>
+                <span id="badge-tab-3" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
+            </button>
+        </div>
+
+        <div class="content-area">
+            
+            <!-- BAHAN 1 -->
+            <div id="bahan1" class="module-content active">
+                <h2><i class="fa-solid fa-camera"></i> PENGESAN EMOSI WAJAH</h2>
+                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sehingga 80% untuk membuka kunci Modul 2 & 3!</p>
+
+                <button class="btn-camera" id="btnCamera" onclick="toggleCamera()">
+                    <i class="fa-solid fa-play"></i> <span id="btnCamText">Mula Pengimbas Kamera</span>
+                </button>
+
+                <div class="camera-grid">
+                    <div class="view-box">
+                        <span class="box-title">PAPARAN KAMERA:</span>
+                        <div id="webcam-container"></div>
+                        <div id="camPlaceholder" class="placeholder-text">
+                            <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i><br>
+                            Kamera belum dihidupkan
+                        </div>
+                    </div>
+
+                    <div class="view-box">
+                        <span class="box-title">Output</span>
+                        <div id="resultBox" class="placeholder-text">
+                            <i class="fa-solid fa-brain" style="font-size: 2.5rem; margin-bottom: 10px; opacity: 0.5;"></i><br>
+                            Sila mulakan kamera untuk mengesan emosi.
+                        </div>
+                        
+                        <div id="label-container" class="emotion-bar-container" style="display: none;">
+                            <div class="emotion-row">
+                                <span class="emotion-label label-happy">HAPPY</span>
+                                <div class="progress-bg"><div class="progress-fill fill-happy" id="bar-happy">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-neutral">NEUTRAL</span>
+                                <div class="progress-bg"><div class="progress-fill fill-neutral" id="bar-neutral">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-sad">SAD</span>
+                                <div class="progress-bg"><div class="progress-fill fill-sad" id="bar-sad">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-sleepy">SLEEPY</span>
+                                <div class="progress-bg"><div class="progress-fill fill-sleepy" id="bar-sleepy">0%</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BAHAN 2 (Dapur Pecahan Chef Alya) -->
+            <div id="bahan2" class="module-content">
+                <div id="m2-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #94a3b8;">
+                    <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px; color: #f43f5e;"></i>
+                    <h3>Modul Terkunci</h3>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 80% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                </div>
+                <iframe id="m2-iframe" src="./dapur-pecahan/dist/index.html" class="iframe-container" scrolling="no" style="display: none;"></iframe>
+            </div>
+
+            <!-- BAHAN 3 (Petualangan Dunia Pecahan) -->
+            <div id="bahan3" class="module-content">
+                <div id="m3-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #f59e0b;">
+                    <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <h3>Modul Terkunci</h3>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 80% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                </div>
+                <iframe id="m3-iframe" src="./petualangan-dunia-pecahan/dist/index.html" class="iframe-container" scrolling="no" style="display: none;"></iframe>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- FLOATING ROBOT WIDGET -->
+    <div class="floating-robot-widget">
+        <div class="speech-bubble" id="speechBubble">
+            <div class="bubble-header">
+                <span class="bot-name">🤖 EduBot</span>
+                <div class="btn-action-group">
+                    <button class="btn-icon" onclick="repeatSpeech()" title="Ulang Suara"><i class="fa-solid fa-volume-high"></i></button>
+                    <button class="btn-icon" onclick="toggleBubble()" title="Kecilkan"><i class="fa-solid fa-minus" id="toggleIcon"></i></button>
+                </div>
+            </div>
+            <div class="speech-text" id="botSpeechText">
+                Hai semua! Saya EduBot! Tekan butang Mula Kamera & tunjukkan emosi gembira/neutral melebihi 80% untuk buka modul!
+            </div>
+        </div>
+
+        <div class="robot-avatar" onclick="toggleBubble()" title="Klik EduBot">
+            <svg class="robot-svg" viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="94" y="10" width="12" height="25" rx="6" fill="#cbd5e1"/>
+                <circle cx="100" cy="10" r="10" fill="#38bdf8"/>
+                <rect x="25" y="60" width="15" height="30" rx="6" fill="#94a3b8"/>
+                <rect x="160" y="60" width="15" height="30" rx="6" fill="#94a3b8"/>
+                <rect x="35" y="30" width="130" height="90" rx="40" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+                <rect x="50" y="45" width="100" height="60" rx="25" fill="#0f172a"/>
+                <circle cx="75" cy="72" r="10" fill="#38bdf8"/>
+                <circle cx="125" cy="72" r="10" fill="#38bdf8"/>
+                <ellipse cx="100" cy="88" rx="6" ry="4" fill="#38bdf8"/>
+                <path d="M50 135 C50 120, 150 120, 150 135 L160 190 C160 205, 40 205, 40 190 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="4"/>
+                <rect x="75" y="145" width="50" height="30" rx="10" fill="#e2e8f0"/>
+                <text x="100" y="165" font-family="'Fredoka', sans-serif" font-size="12" font-weight="bold" fill="#0284c7" text-anchor="middle">EDU</text>
+            </svg>
+        </div>
+    </div>
+
+    <!-- TENSORFLOW & TEACHABLE MACHINE LIBRARIES -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script>
+        const URL = "https://teachablemachine.withgoogle.com/models/Zcg9co-dz/";
+
+        let model, webcam, maxPredictions;
+        let isCameraOn = false;
+        let isUnlocked = false;
+        let currentDialog = "Hai semua! Saya EduBot! Tekan butang Mula Pengimbas Kamera dan tunjukkan emosi gembira/neutral melebihi 80% untuk membuka semua modul!";
+
+        function switchTab(tabIndex) {
+            if (!isUnlocked && tabIndex !== 1) {
+                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila tunjukkan emosi Happy atau Neutral melebihi 80% di Modul 1 terlebih dahulu.");
+                return;
+            }
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.module-content').forEach(content => content.classList.remove('active'));
+
+            const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabIndex}"]`);
+            const content = document.getElementById(`bahan${tabIndex}`);
+            if (tabBtn) tabBtn.classList.add('active');
+            if (content) content.classList.add('active');
+
+            if (tabIndex === 2) {
+                updateBotSpeech("Selamat datang ke Dapur Pecahan Chef Alya!");
+                resizeIframe(document.getElementById('m2-iframe'));
+            } else if (tabIndex === 3) {
+                updateBotSpeech("Selamat datang ke Petualangan Dunia Pecahan!");
+                resizeIframe(document.getElementById('m3-iframe'));
+            } else if (tabIndex === 1) {
+                updateBotSpeech("Ini modul Pengesan Emosi Wajah! Tunjukkan senyuman kamu di hadapan kamera.");
+            }
+        }
+
+        function unlockAllModules() {
+            if (isUnlocked) return;
+            isUnlocked = true;
+
+            document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
+            document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+
+            document.getElementById('badge-tab-3').className = "badge-status badge-unlocked";
+            document.getElementById('badge-tab-3').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+
+            document.getElementById('m2-locked').style.display = 'none';
+            document.getElementById('m2-iframe').style.display = 'block';
+
+            document.getElementById('m3-locked').style.display = 'none';
+            document.getElementById('m3-iframe').style.display = 'block';
+
+            updateBotSpeech("Tahniah! Emosi anda dikesan gembira/neutral melebihi 80%. Modul 2 dan Modul 3 telah DIBUKA!");
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ms-MY';
+                utterance.pitch = 1.4;
+                utterance.rate = 1.05;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function updateBotSpeech(text) {
+            currentDialog = text;
+            const el = document.getElementById('botSpeechText');
+            if (el) el.innerText = text;
+            speakText(text);
+            
+            const bubble = document.getElementById('speechBubble');
+            if (bubble.classList.contains('minimized')) {
+                toggleBubble();
+            }
+        }
+
+        function repeatSpeech() {
+            speakText(currentDialog);
+        }
+
+        function toggleBubble() {
+            const bubble = document.getElementById('speechBubble');
+            const icon = document.getElementById('toggleIcon');
+            bubble.classList.toggle('minimized');
+            
+            if(bubble.classList.contains('minimized')) {
+                icon.className = "fa-solid fa-chevron-up";
+            } else {
+                icon.className = "fa-solid fa-minus";
+            }
+        }
+
+        async function toggleCamera() {
+            const btnText = document.getElementById('btnCamText');
+            const placeholder = document.getElementById('camPlaceholder');
+            const resultBox = document.getElementById('resultBox');
+            const labelContainer = document.getElementById('label-container');
+            const webcamContainer = document.getElementById("webcam-container");
+
+            if (!isCameraOn) {
+                btnText.innerText = "Memula Kamera...";
+
+                try {
+                    const modelURL = URL + "model.json";
+                    const metadataURL = URL + "metadata.json";
+
+                    model = await tmImage.load(modelURL, metadataURL);
+                    maxPredictions = model.getTotalClasses();
+
+                    webcam = new tmImage.Webcam(260, 260, true);
+                    await webcam.setup();
+                    await webcam.play();
+                    window.requestAnimationFrame(loop);
+
+                    webcamContainer.innerHTML = "";
+                    webcamContainer.appendChild(webcam.canvas);
+                    placeholder.style.display = "none";
+                    resultBox.style.display = "none";
+                    labelContainer.style.display = "flex";
+
+                    btnText.innerText = "Hentikan Kamera";
+                    isCameraOn = true;
+
+                } catch (err) {
+                    alert("Gagal memuatkan kamera/model. Sila pastikan kebenaran kamera diberikan.");
+                    btnText.innerText = "Mula Pengimbas Kamera";
+                }
+            } else {
+                if (webcam && webcam.stop) await webcam.stop();
+
+                webcamContainer.innerHTML = "";
+                placeholder.style.display = "block";
+                resultBox.style.display = "block";
+                labelContainer.style.display = "none";
+                btnText.innerText = "Mula Pengimbas Kamera";
+                isCameraOn = false;
+
+                updateBotSpeech("Kamera telah ditutup!");
+            }
+        }
+
+        async function loop() {
+            if (isCameraOn && webcam) {
+                webcam.update();
+                await predict();
+                window.requestAnimationFrame(loop);
+            }
+        }
+
+        async function predict() {
+            if (!model) return;
+            const prediction = await model.predict(webcam.canvas);
+
+            let happyVal = 0;
+            let neutralVal = 0;
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const className = prediction[i].className.toLowerCase();
+                const prob = Math.round(prediction[i].probability * 100);
+
+                let barId = "";
+                if (className.includes("happy")) {
+                    barId = "bar-happy";
+                    happyVal = prob;
+                } else if (className.includes("neut")) {
+                    barId = "bar-neutral";
+                    neutralVal = prob;
+                } else if (className.includes("sad")) {
+                    barId = "bar-sad";
+                } else if (className.includes("sleep")) {
+                    barId = "bar-sleepy";
+                }
+
+                if (barId) {
+                    const barEl = document.getElementById(barId);
+                    if (barEl) {
+                        barEl.style.width = prob + "%";
+                        barEl.innerText = prob + "%";
+                    }
+                }
+            }
+
+            if ((happyVal >= 80 || neutralVal >= 80) && !isUnlocked) {
+                unlockAllModules();
+            }
+        }
+
+        // FUNGSI AUTOMATIK PELARASAN KETINGGIAN IFRAME
+        function resizeIframe(obj) {
+            try {
+                if (obj && obj.contentWindow && obj.contentWindow.document.body) {
+                    const doc = obj.contentWindow.document;
+                    const height = Math.max(
+                        doc.body.scrollHeight, 
+                        doc.documentElement.scrollHeight,
+                        doc.body.offsetHeight,
+                        doc.documentElement.offsetHeight
+                    );
+                    if (height > 0) {
+                        obj.style.height = (height + 30) + 'px';
+                    }
+                }
+            } catch(e) {
+                console.log("Iframe resize status: Cross-origin restriction or loading.");
+            }
+        }
+
+        document.getElementById('m2-iframe').addEventListener('load', function() {
+            resizeIframe(this);
+        });
+        document.getElementById('m3-iframe').addEventListener('load', function() {
+            resizeIframe(this);
+        });
+
+        // Selang masa untuk memastikan saiz dilaraskan jika terdapat animasi kandungan dalam iframe
+        setInterval(() => {
+            if (isUnlocked) {
+                const activeM2 = document.getElementById('m2-iframe');
+                const activeM3 = document.getElementById('m3-iframe');
+                if (activeM2 && activeM2.style.display !== 'none') resizeIframe(activeM2);
+                if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
+            }
+        }, 1000);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => { speakText(currentDialog); }, 800);
+        });
+    </script>
+</body>
+</html>
