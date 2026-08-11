@@ -431,7 +431,7 @@
             <!-- BAHAN 1 -->
             <div id="bahan1" class="module-content active">
                 <h2><i class="fa-solid fa-camera"></i> PENGESAN EMOSI WAJAH</h2>
-                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sehingga 80% untuk membuka kunci Modul 2 & 3!</p>
+                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sehingga 60% untuk membuka kunci Modul 2 & 3!</p>
 
                 <button class="btn-camera" id="btnCamera" onclick="toggleCamera()">
                     <i class="fa-solid fa-play"></i> <span id="btnCamText">Mula Pengimbas Kamera</span>
@@ -481,7 +481,7 @@
                 <div id="m2-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #94a3b8;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px; color: #f43f5e;"></i>
                     <h3>Modul Terkunci</h3>
-                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 80% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 60% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
                 </div>
                 <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
             </div>
@@ -491,7 +491,7 @@
                 <div id="m3-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #f59e0b;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px;"></i>
                     <h3>Modul Terkunci</h3>
-                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 80% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 60% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
                 </div>
 <iframe id="m3-iframe" src="https://petualangan-dunia-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>            </div>
 
@@ -509,7 +509,7 @@
                 </div>
             </div>
             <div class="speech-text" id="botSpeechText">
-                Hai semua! Saya EduBot! Tekan butang Mula Kamera & tunjukkan emosi gembira/neutral melebihi 80% untuk buka modul!
+                Hai semua! Saya EduBot! Tekan butang Mula Kamera & tunjukkan emosi gembira/neutral melebihi 60% untuk buka modul!
             </div>
         </div>
 
@@ -541,11 +541,11 @@
         let model, webcam, maxPredictions;
         let isCameraOn = false;
         let isUnlocked = false;
-        let currentDialog = "Hai semua! Saya EduBot! Tekan butang Mula Pengimbas Kamera dan tunjukkan emosi gembira/neutral melebihi 80% untuk membuka semua modul!";
+        let currentDialog = "Hai semua! Saya EduBot! Tekan butang Mula Pengimbas Kamera dan tunjukkan emosi gembira/neutral melebihi 60% untuk membuka semua modul!";
 
         function switchTab(tabIndex) {
             if (!isUnlocked && tabIndex !== 1) {
-                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila tunjukkan emosi Happy atau Neutral melebihi 80% di Modul 1 terlebih dahulu.");
+                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila tunjukkan emosi Happy atau Neutral melebihi 60% di Modul 1 terlebih dahulu.");
                 return;
             }
 
@@ -584,7 +584,7 @@
             document.getElementById('m3-locked').style.display = 'none';
             document.getElementById('m3-iframe').style.display = 'block';
 
-            updateBotSpeech("Tahniah! Emosi anda dikesan gembira/neutral melebihi 80%. Modul 2 dan Modul 3 telah DIBUKA!");
+            updateBotSpeech("Tahniah! Emosi anda dikesan gembira/neutral melebihi 60%. Modul 2 dan Modul 3 telah DIBUKA!");
         }
 
         function speakText(text) {
@@ -716,7 +716,7 @@
                 }
             }
 
-            if ((happyVal >= 80 || neutralVal >= 80) && !isUnlocked) {
+            if ((happyVal >= 60 || neutralVal >= 60) && !isUnlocked) {
                 unlockAllModules();
             }
         }
