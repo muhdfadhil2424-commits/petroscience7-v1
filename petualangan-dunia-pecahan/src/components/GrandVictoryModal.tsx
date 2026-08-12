@@ -10,6 +10,7 @@ interface GrandVictoryModalProps {
   earnedStars: number;
   badges?: string[];
   onClose: () => void;
+  onOpenCertificate?: () => void;
 }
 
 export const GrandVictoryModal: React.FC<GrandVictoryModalProps> = ({
@@ -18,6 +19,7 @@ export const GrandVictoryModal: React.FC<GrandVictoryModalProps> = ({
   earnedStars,
   badges = [],
   onClose,
+  onOpenCertificate,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -59,7 +61,7 @@ export const GrandVictoryModal: React.FC<GrandVictoryModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 30 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -139,14 +141,38 @@ export const GrandVictoryModal: React.FC<GrandVictoryModalProps> = ({
             </div>
           </div>
 
+          {/* Certificate Unlocked Announcement Banner */}
+          <div className="bg-gradient-to-r from-amber-100 via-amber-200 to-yellow-100 p-3.5 rounded-2xl border-2 border-[#F4C95D] shadow-md space-y-2">
+            <span className="font-extrabold text-xs text-amber-900 uppercase tracking-wider block">
+              🏆 SIJIL ANDA TELAH DIBUKA!
+            </span>
+            <p className="text-xs text-gray-700 font-medium">
+              Sijil Pencapaian Rasmi Master Pecahan anda kini boleh dibuka, dicetak, atau disimpan!
+            </p>
+            {onOpenCertificate && (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  onClose();
+                  onOpenCertificate();
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer border border-emerald-300"
+              >
+                <Award className="w-4 h-4 text-amber-300" />
+                <span>📜 LIHAT SIJIL</span>
+              </motion.button>
+            )}
+          </div>
+
           {/* Close / Hub Action Button */}
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onClose}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-[#D98262] hover:from-amber-600 hover:to-[#c87253] text-white font-rounded font-extrabold text-base shadow-xl flex items-center justify-center gap-2 cursor-pointer border-b-4 border-amber-800"
+            className="w-full py-3.5 rounded-2xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-rounded font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer border border-[#525a46]"
           >
-            <Award className="w-5 h-5" />
+            <Award className="w-5 h-5 text-[#F4C95D]" />
             <span>KEMBALI KE HUB UTAMA</span>
           </motion.button>
         </motion.div>

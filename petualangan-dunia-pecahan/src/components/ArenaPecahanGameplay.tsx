@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
+import { FormattedMathText } from './MathFraction';
 
 // Assets
 import bannerArena from '../assets/images/banner_arena_pecahan_1785426776474.jpg';
@@ -312,7 +313,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
   const [scorePoints, setScorePoints] = useState<number>(0);
   const [mistakesCount, setMistakesCount] = useState<number>(0);
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number | null>(null);
-  const [runnerPosition, setRunnerPosition] = useState<'left' | 'center' | 'right'>('center');
+  const [currentLane, setCurrentLane] = useState<1 | 2 | 3>(1);
   const [isJumping, setIsJumping] = useState<boolean>(false);
   const [isSpeedBoost, setIsSpeedBoost] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -340,83 +341,25 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
     };
   }, [bgmEnabled, soundEnabled]);
 
-  // Keyboard navigation for desktop runner controls
-  useEffect(() => {
-    if (currentScreen !== 'gameplay' || showFinishModal) return;
+  // Core Movement & Answer Evaluation Function
+  const movePlayerToLane = (lane: 1 | 2 | 3) => {
+    if (selectedOptionIndex !== null) return; // Prevent double trigger during evaluation
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') {
-        handleOptionChoose(0);
-      } else if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') {
-        handleOptionChoose(1);
-      } else if (e.key === 'ArrowRight' || e.key === 'd') {
-        handleOptionChoose(2);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentScreen, showFinishModal, currentQuestionIndex]);
-
-  // Helper to save progress
-  const saveArenaProgress = (updated: ArenaStorageData) => {
-    setArenaProgress(updated);
-    localStorage.setItem(ARENA_STORAGE_KEY, JSON.stringify(updated));
-
-    // Calculate total stars across all 3 levels
-    const totalStars = updated.level1Stars + updated.level2Stars + updated.level3Stars;
-    if (onUpdateWorldProgress) {
-      onUpdateWorldProgress('arena', totalStars);
-    }
-  };
-
-  // Start Level
-  const handleStartLevel = (levelId: 1 | 2 | 3) => {
-    playSfx('click', soundEnabled);
-    setActiveLevelId(levelId);
-    setCurrentQuestionIndex(0);
-    setScorePoints(0);
-    setMistakesCount(0);
-    setSelectedOptionIndex(null);
-    setRunnerPosition('center');
-    setIsJumping(false);
-    setIsSpeedBoost(false);
-    setShowFinishModal(false);
-    setCurrentScreen('gameplay');
-
-    const titleText =
-      levelId === 1
-        ? 'Peringkat 1: Lari di trek stadium dan pilih jawapan pecahan yang betul!'
-        : levelId === 2
-        ? 'Peringkat 2: Lompat ke platform pecahan yang betul!'
-        : 'Peringkat 3: Pecutan Akhir! Selesaikan cabaran setara & penambahan!';
-
-    setFeedback({ text: titleText, type: 'info' });
-  };
-
-  // Answer Choice Handler
-  const handleOptionChoose = (optionIdx: number) => {
-    if (selectedOptionIndex !== null) return; // Prevent double taps during animation
-
+    const optionIdx = lane - 1; // Lane 1 -> Option 0, Lane 2 -> Option 1, Lane 3 -> Option 2
+    setCurrentLane(lane);
     setSelectedOptionIndex(optionIdx);
 
-    // Update runner visual position & action
-    if (optionIdx === 0) setRunnerPosition('left');
-    else if (optionIdx === 1) setRunnerPosition('center');
-    else setRunnerPosition('right');
-
-    const isCorrect = optionIdx === currentQ.correctIndex;
-
+    // Trigger Runner Action Animations
     if (activeLevelId === 2) {
-      // Jump animation for Level 2
       setIsJumping(true);
       playSfx('pop', soundEnabled);
       setTimeout(() => setIsJumping(false), 500);
     } else {
-      // Speed boost animation for Level 1 & 3
       setIsSpeedBoost(true);
       setTimeout(() => setIsSpeedBoost(false), 600);
     }
+
+    const isCorrect = optionIdx === currentQ.correctIndex;
 
     if (isCorrect) {
       playSfx('chime', soundEnabled);
@@ -443,6 +386,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
     // Advance to next question or Finish Line after short delay
     setTimeout(() => {
       setSelectedOptionIndex(null);
+      setCurrentLane(1); // Reset to Lane 1 for the new question
       if (currentQuestionIndex + 1 < activeQuestions.length) {
         setCurrentQuestionIndex((prev) => prev + 1);
         setFeedback({ text: 'Soalan seterusnya! Teruskan berlari!', type: 'info' });
@@ -451,6 +395,60 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
         handleLevelComplete();
       }
     }, 1500);
+  };
+
+  // Keyboard navigation for desktop runner controls
+  useEffect(() => {
+    if (currentScreen !== 'gameplay' || showFinishModal) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a') {
+        movePlayerToLane(1);
+      } else if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') {
+        movePlayerToLane(2);
+      } else if (e.key === 'ArrowRight' || e.key === 'd') {
+        movePlayerToLane(3);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentScreen, showFinishModal, currentQuestionIndex, selectedOptionIndex, currentLane]);
+
+  // Helper to save progress
+  const saveArenaProgress = (updated: ArenaStorageData) => {
+    setArenaProgress(updated);
+    localStorage.setItem(ARENA_STORAGE_KEY, JSON.stringify(updated));
+
+    // Calculate total stars across all 3 levels
+    const totalStars = updated.level1Stars + updated.level2Stars + updated.level3Stars;
+    if (onUpdateWorldProgress) {
+      onUpdateWorldProgress('arena', totalStars);
+    }
+  };
+
+  // Start Level
+  const handleStartLevel = (levelId: 1 | 2 | 3) => {
+    playSfx('click', soundEnabled);
+    setActiveLevelId(levelId);
+    setCurrentQuestionIndex(0);
+    setScorePoints(0);
+    setMistakesCount(0);
+    setSelectedOptionIndex(null);
+    setCurrentLane(1);
+    setIsJumping(false);
+    setIsSpeedBoost(false);
+    setShowFinishModal(false);
+    setCurrentScreen('gameplay');
+
+    const titleText =
+      levelId === 1
+        ? 'Peringkat 1: Lari di trek stadium dan pilih jawapan pecahan yang betul!'
+        : levelId === 2
+        ? 'Peringkat 2: Lompat ke platform pecahan yang betul!'
+        : 'Peringkat 3: Pecutan Akhir! Selesaikan cabaran setara & penambahan!';
+
+    setFeedback({ text: titleText, type: 'info' });
   };
 
   // Handle Level Completion
@@ -953,7 +951,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
             </div>
 
             <h2 className="font-serif-title font-bold text-xl sm:text-2xl text-[#4A3728] mb-3 text-center">
-              {currentQ.questionText}
+              <FormattedMathText text={currentQ.questionText} size="xl" />
             </h2>
 
             {/* Visual Graphic Representation depending on visualType */}
@@ -1075,7 +1073,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
                     : 'bg-[#FFF8E8] border-[#F4C95D] text-[#4A3728]'
                 }`}
               >
-                {feedback.text}
+                <FormattedMathText text={feedback.text} size="sm" />
               </div>
             )}
           </div>
@@ -1097,7 +1095,9 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
               
               {/* 3 Interactive Track Gates / Platforms */}
               {currentQ.options.map((opt, idx) => {
+                const laneNumber = (idx + 1) as 1 | 2 | 3;
                 const isSelected = selectedOptionIndex === idx;
+                const isCurrentActiveLane = currentLane === laneNumber;
                 const isCorrectChoice = idx === currentQ.correctIndex;
 
                 return (
@@ -1105,79 +1105,116 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
                     key={idx}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => handleOptionChoose(idx)}
-                    className={`relative w-24 sm:w-32 py-4 rounded-2xl border-3 font-serif-title font-extrabold text-xl sm:text-2xl flex flex-col items-center justify-center cursor-pointer transition-all shadow-lg ${
+                    onClick={() => movePlayerToLane(laneNumber)}
+                    className={`relative w-24 sm:w-36 py-3.5 sm:py-4 rounded-2xl border-3 font-serif-title font-extrabold text-xl sm:text-2xl flex flex-col items-center justify-center cursor-pointer transition-all shadow-lg ${
                       isSelected
                         ? isCorrectChoice
                           ? 'bg-emerald-500 text-white border-emerald-700 ring-4 ring-emerald-300 scale-110'
                           : 'bg-rose-500 text-white border-rose-700 scale-95'
-                        : 'bg-white text-[#4A3728] border-amber-400 hover:bg-amber-50'
+                        : isCurrentActiveLane
+                        ? 'bg-amber-100 text-[#4A3728] border-amber-500 ring-2 ring-amber-400 scale-105 shadow-md'
+                        : 'bg-white text-[#4A3728] border-amber-300 hover:bg-amber-50'
                     }`}
                   >
                     {activeLevelId === 2 && (
-                      <span className="text-xs font-bold text-amber-700 mb-1">
+                      <span className="text-xs font-bold text-amber-700 mb-0.5">
                         PLATFORM {idx + 1}
                       </span>
                     )}
 
-                    <span>{opt.label}</span>
+                    <FormattedMathText text={opt.label} size="xl" />
 
-                    {/* Button indicator key helper */}
-                    <span className="text-[10px] text-gray-400 font-sans mt-1">
-                      {idx === 0 ? 'Lokal [←]' : idx === 1 ? 'Lokal [↑]' : 'Lokal [→]'}
+                    {/* Helper label */}
+                    <span className="text-[10px] text-gray-400 font-sans mt-0.5">
+                      {idx === 0 ? 'Laluan 1 [←]' : idx === 1 ? 'Laluan 2 [↑]' : 'Laluan 3 [→]'}
                     </span>
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* RUNNER AVATAR ANIMATION */}
-            <div className="relative w-full h-16 bg-emerald-700 rounded-2xl border-2 border-emerald-800 shadow-inner flex items-center px-8 overflow-hidden">
+            {/* RUNNER AVATAR ANIMATION TRACK */}
+            <div className="relative w-full h-20 bg-emerald-700 rounded-2xl border-2 border-emerald-800 shadow-inner overflow-hidden">
               
-              {/* Track Lane markings */}
-              <div className="absolute inset-0 flex justify-around items-center opacity-30 pointer-events-none">
-                <div className="border-r-2 border-dashed border-white h-full" />
-                <div className="border-r-2 border-dashed border-white h-full" />
+              {/* 3 Track Lane Columns with Active Highlights */}
+              <div className="absolute inset-0 grid grid-cols-3 pointer-events-none z-0">
+                {[1, 2, 3].map((laneNum) => {
+                  const isActive = currentLane === laneNum;
+                  return (
+                    <div
+                      key={laneNum}
+                      className={`h-full border-r-2 border-dashed border-white/30 transition-all duration-300 flex items-end justify-center pb-1.5 ${
+                        isActive ? 'bg-amber-300/25 border-amber-300' : ''
+                      }`}
+                    >
+                      <span
+                        className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full transition-all ${
+                          isActive
+                            ? 'bg-amber-400 text-amber-950 font-black shadow-xs ring-1 ring-amber-200'
+                            : 'text-white/50 bg-black/20'
+                        }`}
+                      >
+                        Laluan {laneNum}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Animated Runner Character */}
               <motion.div
                 animate={{
-                  x: runnerPosition === 'left' ? '15%' : runnerPosition === 'right' ? '75%' : '45%',
-                  y: isJumping ? [-10, -40, 0] : [0, -4, 0],
+                  left: currentLane === 1 ? '16.66%' : currentLane === 3 ? '83.33%' : '50%',
+                  y: isJumping ? [-5, -35, 0] : [0, -3, 0],
                   scale: isSpeedBoost ? [1, 1.25, 1] : 1,
                 }}
-                transition={{ duration: 0.4 }}
-                className="relative z-10 flex flex-col items-center select-none"
+                transition={{
+                  left: { duration: 0.35, ease: 'easeOut' },
+                  y: { duration: 0.4 },
+                  scale: { duration: 0.4 },
+                }}
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 flex flex-col items-center select-none"
               >
-                <div className="text-4xl filter drop-shadow-md">
+                <div className="text-4xl sm:text-5xl filter drop-shadow-md">
                   {isJumping ? '🦘' : isSpeedBoost ? '⚡🏃' : '🏃'}
                 </div>
-                <span className="text-[10px] font-extrabold text-amber-200 bg-black/60 px-2 py-0.5 rounded-full mt-0.5">
-                  Pelari
+                <span className="text-[10px] sm:text-xs font-extrabold text-amber-200 bg-black/70 px-2 py-0.5 rounded-full mt-0.5 border border-amber-400/50 shadow-xs whitespace-nowrap">
+                  Pelari (Laluan {currentLane})
                 </span>
               </motion.div>
             </div>
 
             {/* Mobile / Touch Action Controls */}
-            <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-3">
               <button
-                onClick={() => handleOptionChoose(0)}
-                className="py-3 rounded-2xl bg-[#D98262] hover:bg-[#c87253] text-white font-rounded font-bold text-xs flex items-center justify-center gap-1.5 shadow-md border-b-4 border-[#9a4b2e] cursor-pointer"
+                onClick={() => movePlayerToLane(1)}
+                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
+                  currentLane === 1
+                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
+                    : 'bg-[#D98262] hover:bg-[#c87253] text-white border-[#9a4b2e]'
+                }`}
               >
                 <span>⬅️ LALUAN 1</span>
               </button>
 
               <button
-                onClick={() => handleOptionChoose(1)}
-                className="py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-rounded font-bold text-xs flex items-center justify-center gap-1.5 shadow-md border-b-4 border-amber-700 cursor-pointer"
+                onClick={() => movePlayerToLane(2)}
+                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
+                  currentLane === 2
+                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-700'
+                }`}
               >
                 <span>{activeLevelId === 2 ? '🦘 LOMPAT TENGAH' : '⬆️ LALUAN 2'}</span>
               </button>
 
               <button
-                onClick={() => handleOptionChoose(2)}
-                className="py-3 rounded-2xl bg-[#D98262] hover:bg-[#c87253] text-white font-rounded font-bold text-xs flex items-center justify-center gap-1.5 shadow-md border-b-4 border-[#9a4b2e] cursor-pointer"
+                onClick={() => movePlayerToLane(3)}
+                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
+                  currentLane === 3
+                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
+                    : 'bg-[#D98262] hover:bg-[#c87253] text-white border-[#9a4b2e]'
+                }`}
               >
                 <span>➡️ LALUAN 3</span>
               </button>

@@ -23,7 +23,7 @@ export const CaraBermainModal: React.FC<CaraBermainModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[1050] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -93,7 +93,7 @@ export const CaraBermainModal: React.FC<CaraBermainModalProps> = ({
                     Alya — Pembantu Pecahan
                   </h4>
                   <p className="text-xs font-semibold text-amber-800">
-                    Satu-satunya tutor Matematik pilihan anda! Tekan butang 💡 Petunjuk di bawah kanan skrin jika perlukan bantuan Alya.
+                    Satu-satunya tutor Matematik pilihan anda! Tekan butang 💡 Petunjuk di bawah kiri skrin jika perlukan bantuan Alya.
                   </p>
                 </div>
               </div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
+import { MathFraction, FormattedMathText } from './MathFraction';
 
 // Import assets
 import customerGirlImg from '../assets/images/customer_girl_1785465257470.jpg';
@@ -597,13 +598,13 @@ export const PizzaPecahanGameplay: React.FC<PizzaPecahanGameplayProps> = ({
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">💬</span>
-                  <p className="font-serif-title font-bold text-lg sm:text-xl text-[#4A3728]">
-                    “Saya mahu{' '}
-                    <span className="text-[#D98262] font-black underline decoration-wavy text-2xl px-1">
-                      {order.numerator}/{order.denominator}
-                    </span>{' '}
-                    pizza {order.topping.name} {order.topping.emoji}!”
-                  </p>
+                  <div className="font-serif-title font-bold text-lg sm:text-xl text-[#4A3728] flex items-center flex-wrap gap-1">
+                    <span>“Saya mahu</span>
+                    <span className="text-[#D98262] font-black px-1.5 py-0.5 bg-amber-100 rounded-xl border border-amber-300 inline-flex items-center">
+                      <MathFraction num={order.numerator} den={order.denominator} size="lg" />
+                    </span>
+                    <span>pizza {order.topping.name} {order.topping.emoji}!”</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -687,7 +688,7 @@ export const PizzaPecahanGameplay: React.FC<PizzaPecahanGameplayProps> = ({
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                 <div className="p-3 bg-[#FFF8E8] rounded-2xl border border-[#F4C95D] text-xs font-medium text-[#4A3728]">
                   <p className="font-bold text-[#D98262] text-sm mb-1">🟨 LANGKAH 2: PILIH BAHAGIAN</p>
-                  Klik pada kepingan pizza untuk memilih. Sasaran: <strong>{order.numerator}/{order.denominator}</strong>.
+                  Klik pada kepingan pizza untuk memilih. Sasaran: <strong className="inline-flex items-center align-middle mx-1"><MathFraction num={order.numerator} den={order.denominator} size="sm" /></strong>.
                 </div>
 
                 <div className="p-3 bg-white rounded-xl border-2 border-[#F6C7A8] text-center">

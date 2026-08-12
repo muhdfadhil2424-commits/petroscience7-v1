@@ -58,7 +58,7 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto">
       {/* CSS Print Styles */}
       <style>{`
         @media print {

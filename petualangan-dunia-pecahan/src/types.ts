@@ -56,6 +56,8 @@ export interface UserProgress {
   totalPlayTimeMinutes?: number;
   gameDetails?: Record<string, GameWorldDetail>; // 'arena_pecahan', 'dapur_pecahan', 'dunia_pixel'
   attemptHistory?: AttemptRecord[];
+  certificateEarned?: boolean;
+  certificateDate?: string;
 }
 
 export interface StudentProfile {

@@ -15,6 +15,7 @@ import {
 import { AlyaCharacter } from './AlyaCharacter';
 import { AlyaContext, getAlyaHint, answerAlyaQuestion } from '../utils/alyaEngine';
 import { playSfx } from '../utils/audio';
+import { FormattedMathText } from './MathFraction';
 
 interface AlyaWidgetProps {
   soundEnabled: boolean;
@@ -179,7 +180,7 @@ export const AlyaWidget: React.FC<AlyaWidgetProps> = ({ soundEnabled, gameContex
   ];
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end pointer-events-auto select-none">
+    <div className="fixed bottom-[12px] sm:bottom-[16px] md:bottom-[20px] left-[12px] sm:left-[16px] md:left-[20px] right-auto z-[1000] flex flex-col items-start pointer-events-auto select-none">
       {/* Expanded Alya Card / Panel */}
       <AnimatePresence>
         {isOpen && (
@@ -340,7 +341,9 @@ export const AlyaWidget: React.FC<AlyaWidgetProps> = ({ soundEnabled, gameContex
                               PETUNJUK {m.hintLevel}
                             </span>
                           )}
-                          <p className="whitespace-pre-line">{m.text}</p>
+                          <div className="whitespace-pre-line">
+                            <FormattedMathText text={m.text} size="xs" />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -370,7 +373,9 @@ export const AlyaWidget: React.FC<AlyaWidgetProps> = ({ soundEnabled, gameContex
                               : 'bg-[#FFF8E8] text-[#4A3728] border border-amber-200 rounded-bl-none shadow-sm'
                           }`}
                         >
-                          <p className="whitespace-pre-line">{m.text}</p>
+                          <div className="whitespace-pre-line">
+                            <FormattedMathText text={m.text} size="xs" />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -439,12 +444,12 @@ export const AlyaWidget: React.FC<AlyaWidgetProps> = ({ soundEnabled, gameContex
         {/* Floating Speech Badge */}
         {!isOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="absolute -top-3 right-12 bg-white text-[#4A3728] text-[11px] font-rounded font-extrabold px-2.5 py-1 rounded-full shadow-md border border-amber-300 whitespace-nowrap flex items-center gap-1"
+            initial={{ opacity: 0, y: 6, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="absolute -top-11 left-6 sm:left-8 bg-white/95 backdrop-blur-sm text-[#4A3728] text-[11px] font-rounded font-extrabold px-3 py-1.5 rounded-2xl rounded-bl-none shadow-lg border-2 border-amber-300 flex items-center gap-1.5 max-w-[220px] whitespace-normal leading-tight z-10"
           >
-            <Sparkles className="w-3 h-3 text-amber-500" />
-            <span>Hai! Saya Alya! 👧</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" />
+            <span>👋 Hai! Saya Alya! 🥰</span>
           </motion.div>
         )}
 

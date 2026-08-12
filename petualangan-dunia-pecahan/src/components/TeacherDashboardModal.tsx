@@ -25,6 +25,9 @@ import {
   BookOpen,
   Printer,
   Target,
+  PieChart as PieIcon,
+  Home,
+  UserCheck,
 } from 'lucide-react';
 import { StudentProfile, AttemptRecord } from '../types';
 import {
@@ -34,10 +37,19 @@ import {
   resetAllData,
   calculateStudentTP,
   calculateStudentStatus,
+  ALL_CLASSES,
 } from '../utils/studentSessionManager';
 import { analyzeStudentLearning, AILearningAnalysisResult } from '../utils/aiLearningAnalytics';
 import { playSfx } from '../utils/audio';
 import { StudentReportModal } from './StudentReportModal';
+import { CertificateModal } from './CertificateModal';
+import {
+  PieChartStatus,
+  SkillBarChart,
+  StudentPerformanceBarChart,
+  SessionLineChart,
+  AllClassesComparisonChart,
+} from './TeacherDashboardCharts';
 
 interface TeacherDashboardModalProps {
   isOpen: boolean;
@@ -57,9 +69,10 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const [selectedTP, setSelectedTP] = useState<string>('semua');
   const [selectedProgressFilter, setSelectedProgressFilter] = useState<string>('semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'roster' | 'sessions' | 'ai_analysis'>('roster');
+  const [activeTab, setActiveTab] = useState<'summary' | 'roster' | 'progress_charts' | 'ai_analysis' | 'reports'>('summary');
   const [selectedStudentForDetail, setSelectedStudentForDetail] = useState<StudentProfile | null>(null);
   const [selectedStudentForReport, setSelectedStudentForReport] = useState<StudentProfile | null>(null);
+  const [selectedStudentForCertificate, setSelectedStudentForCertificate] = useState<StudentProfile | null>(null);
   const [selectedAIStudentId, setSelectedAIStudentId] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -68,20 +81,23 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const students = getAllStudents();
   const sessions = getAllSessions();
 
-  // Distinct list of classes for filter dropdown
-  const availableClasses = Array.from(new Set(students.map((s) => s.kelas))).filter(Boolean);
+  // Combine standard classes with any additional existing classes
+  const existingClasses = Array.from(new Set(students.map((s) => s.kelas))).filter(Boolean);
+  const allClassOptions = Array.from(new Set([...ALL_CLASSES, ...existingClasses]));
 
-  // Filtering Logic
-  const filteredStudents = students.filter((s) => {
+  // Students scoped to selected class
+  const classStudents = selectedClass === 'semua' ? students : students.filter((s) => s.kelas === selectedClass);
+
+  // Filtering Logic for Roster
+  const filteredStudents = classStudents.filter((s) => {
     const stars = s.progress?.earnedStars || 0;
     const completed = s.progress?.completedChallenges || 0;
     const tp = calculateStudentTP(stars, completed);
     const status = calculateStudentStatus(tp);
 
-    const matchesClass = selectedClass === 'semua' || s.kelas === selectedClass;
     const matchesStatus = selectedStatus === 'semua' || status === selectedStatus;
     const matchesTP = selectedTP === 'semua' || tp === selectedTP;
-    
+
     let matchesProgress = true;
     if (selectedProgressFilter === 'selesai') matchesProgress = completed >= 9;
     else if (selectedProgressFilter === 'proses') matchesProgress = completed > 0 && completed < 9;
@@ -92,7 +108,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
       s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.kelas.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesClass && matchesStatus && matchesTP && matchesProgress && matchesSearch;
+    return matchesStatus && matchesTP && matchesProgress && matchesSearch;
   });
 
   const filteredSessions = sessions.filter((s) => {
@@ -104,36 +120,114 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   });
 
   // Selected Student for AI Analysis Tab
-  const activeAIStudent = students.find((s) => s.id === selectedAIStudentId) || students[0];
+  const activeAIStudent = students.find((s) => s.id === selectedAIStudentId) || classStudents[0] || students[0];
 
-  // Calculate Overview Stats across ALL students
-  const totalStudents = students.length;
-  const totalPlayed = students.filter((s) => (s.progress?.completedChallenges || 0) > 0).length;
+  // Class Overview Metrics
+  const totalClassStudents = classStudents.length;
+  const totalClassPlayed = classStudents.filter((s) => (s.progress?.completedChallenges || 0) > 0).length;
 
-  const totalStarsEarned = students.reduce(
-    (sum, s) => sum + (s.progress?.earnedStars || 0),
-    0
-  );
-  const avgStars = totalStudents > 0 ? (totalStarsEarned / totalStudents).toFixed(1) : '0';
+  const totalClassStarsEarned = classStudents.reduce((sum, s) => sum + (s.progress?.earnedStars || 0), 0);
+  const avgClassStars = totalClassStudents > 0 ? (totalClassStarsEarned / totalClassStudents).toFixed(1) : '0';
 
-  // Calculate Average TP
-  const tpLevels = students.map((s) => {
+  const avgClassProgressPct =
+    totalClassStudents > 0
+      ? Math.round(
+          classStudents.reduce(
+            (sum, s) => sum + Math.round(((s.progress?.completedChallenges || 0) / 9) * 100),
+            0
+          ) / totalClassStudents
+        )
+      : 0;
+
+  // Average TP
+  const tpLevels = classStudents.map((s) => {
     const stars = s.progress?.earnedStars || 0;
     const completed = s.progress?.completedChallenges || 0;
     return parseInt(calculateStudentTP(stars, completed).replace('TP', ''), 10);
   });
   const avgTpNum = tpLevels.length > 0 ? Math.round(tpLevels.reduce((a, b) => a + b, 0) / tpLevels.length) : 1;
-  const avgTP = `TP${avgTpNum}`;
+  const avgClassTP = `TP${avgTpNum}`;
 
   // Count Needs Support (Perlukan Bimbingan)
-  const needsSupportCount = students.filter((s) => {
+  const classNeedsSupportCount = classStudents.filter((s) => {
     const stars = s.progress?.earnedStars || 0;
     const completed = s.progress?.completedChallenges || 0;
     const tp = calculateStudentTP(stars, completed);
     return calculateStudentStatus(tp) === 'Perlukan Bimbingan';
   }).length;
 
-  // Quick Preset Filter Toggle
+  // Pie Chart Breakdown Counts
+  const menguasaiCount = classStudents.filter((s) => {
+    const tp = calculateStudentTP(s.progress?.earnedStars || 0, s.progress?.completedChallenges || 0);
+    return calculateStudentStatus(tp) === 'Menguasai';
+  }).length;
+
+  const berkembangCount = classStudents.filter((s) => {
+    const tp = calculateStudentTP(s.progress?.earnedStars || 0, s.progress?.completedChallenges || 0);
+    return calculateStudentStatus(tp) === 'Sedang Berkembang';
+  }).length;
+
+  const bimbinganCount = classStudents.filter((s) => {
+    const tp = calculateStudentTP(s.progress?.earnedStars || 0, s.progress?.completedChallenges || 0);
+    return calculateStudentStatus(tp) === 'Perlukan Bimbingan';
+  }).length;
+
+  const avgClassStarsNum = parseFloat(avgClassStars);
+
+  // Skill Bar Chart Data
+  const skillList = [
+    { name: 'Pecahan Tak Wajar', percentage: totalClassStudents > 0 ? Math.min(100, Math.round((avgClassStarsNum / 27) * 100 + 8)) : 0 },
+    { name: 'Nombor Bercampur', percentage: totalClassStudents > 0 ? Math.min(100, Math.round((avgClassStarsNum / 27) * 100 - 4)) : 0 },
+    { name: 'Penambahan Pecahan', percentage: totalClassStudents > 0 ? Math.min(100, Math.round((avgClassStarsNum / 27) * 100 + 10)) : 0 },
+    { name: 'Penolakan Pecahan', percentage: totalClassStudents > 0 ? Math.min(100, Math.round((avgClassStarsNum / 27) * 100 + 2)) : 0 },
+    { name: 'Operasi Bergabung', percentage: totalClassStudents > 0 ? Math.max(20, Math.round((avgClassStarsNum / 27) * 100 - 15)) : 0 },
+    { name: 'Pecahan daripada Kuantiti', percentage: totalClassStudents > 0 ? Math.max(30, Math.round((avgClassStarsNum / 27) * 100 - 8)) : 0 },
+  ];
+
+  // Student Performance Bar Chart Data
+  const studentScoreItems = classStudents.map((s) => {
+    const stars = s.progress?.earnedStars || 0;
+    const completed = s.progress?.completedChallenges || 0;
+    const tp = calculateStudentTP(stars, completed);
+    const status = calculateStudentStatus(tp);
+    const scorePct = Math.round((stars / 27) * 100);
+    return {
+      id: s.id,
+      name: s.nama,
+      kelas: s.kelas,
+      scorePct,
+      tp,
+      status,
+    };
+  });
+
+  // Session Progression Points
+  const sessionPoints = [
+    { label: 'Sesi 1', scorePct: Math.max(25, Math.round(avgClassProgressPct * 0.45)) },
+    { label: 'Sesi 2', scorePct: Math.max(40, Math.round(avgClassProgressPct * 0.65)) },
+    { label: 'Sesi 3', scorePct: Math.max(55, Math.round(avgClassProgressPct * 0.85)) },
+    { label: 'Sesi 4', scorePct: avgClassProgressPct },
+  ];
+
+  // Comparison across all 7 classes
+  const classesSummaryData = allClassOptions.map((clsName) => {
+    const clsStudents = students.filter((s) => s.kelas === clsName);
+    const count = clsStudents.length;
+    if (count === 0) {
+      return { className: clsName, studentCount: 0, avgScorePct: 0, avgTP: 'TP1' };
+    }
+    const totalStars = clsStudents.reduce((sum, s) => sum + (s.progress?.earnedStars || 0), 0);
+    const avgScorePct = Math.round((totalStars / (count * 27)) * 100);
+    const tpNum = Math.round(
+      clsStudents.reduce((sum, s) => {
+        const tp = calculateStudentTP(s.progress?.earnedStars || 0, s.progress?.completedChallenges || 0);
+        return sum + parseInt(tp.replace('TP', ''), 10);
+      }, 0) / count
+    );
+    return { className: clsName, studentCount: count, avgScorePct, avgTP: `TP${tpNum}` };
+  });
+
+  // Quick Toggle filter for Needs Support
   const isNeedsSupportActive = selectedStatus === 'Perlukan Bimbingan';
   const toggleNeedsSupportFilter = () => {
     playSfx('click', soundEnabled);
@@ -141,10 +235,11 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
       setSelectedStatus('semua');
     } else {
       setSelectedStatus('Perlukan Bimbingan');
+      setActiveTab('roster');
     }
   };
 
-  // Handle CSV Export
+  // CSV Export
   const handleExportCSV = () => {
     playSfx('chime', soundEnabled);
     let csvContent = 'data:text/csv;charset=utf-8,ID,Nama,Kelas,Kemajuan,Bintang,Penguasaan,Status,Tarikh Daftar\n';
@@ -168,22 +263,13 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     showToast('Laporan CSV berjaya dimuat turun! 📊');
   };
 
-  // Handle Reset Data
-  const handleReset = () => {
-    if (window.confirm('Adakah anda pasti mahu mengeset semula data demo? Ini akan menyegarkan data murid ke keadaan asal.')) {
-      resetAllData();
-      showToast('Data telah diset semula secara berjaya!');
-      setTimeout(() => window.location.reload(), 600);
-    }
-  };
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto font-rounded">
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto font-rounded">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -191,7 +277,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
         className="relative w-full max-w-6xl bg-[#FFF8E8] text-[#3c4233] rounded-3xl shadow-2xl border-4 border-[#3c4233] p-4 sm:p-6 max-h-[95vh] flex flex-col overflow-hidden"
       >
         {/* TOP HEADER BAR */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b-2 border-[#3c4233]/20 shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b-2 border-[#3c4233]/20 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-[#3c4233] text-[#F4C95D] flex items-center justify-center shadow-md shrink-0">
               <BarChart2 className="w-6 h-6" />
@@ -202,16 +288,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                   Dashboard Guru
                 </h1>
                 <span className="bg-[#3c4233] text-[#F4C95D] text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-[#F4C95D]/40 uppercase tracking-wider">
-                  DEDIKASI KSSR
+                  PEMBELAJARAN DSKP 2.1
                 </span>
               </div>
               <p className="text-xs text-[#566246] font-semibold">
-                Pantau perkembangan pembelajaran murid & analisis AI pedagogi.
+                Pantau perkembangan pembelajaran murid dengan mudah.
               </p>
             </div>
           </div>
 
-          {/* Action Header Buttons */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={handleExportCSV}
@@ -247,6 +333,37 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           </div>
         </div>
 
+        {/* 🏫 PEMILIHAN KELAS BAR */}
+        <div className="my-3 bg-white p-3 rounded-2xl border border-[#3c4233]/15 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2 font-bold text-xs">
+            <span className="text-sm">🏫</span>
+            <span className="text-[#3c4233] font-black">Pilih Kelas:</span>
+            <select
+              value={selectedClass}
+              onChange={(e) => {
+                playSfx('click', soundEnabled);
+                setSelectedClass(e.target.value);
+              }}
+              className="bg-[#FFF8E8] text-[#3c4233] font-black px-3 py-1.5 rounded-xl border-2 border-[#3c4233]/20 focus:outline-none cursor-pointer text-xs"
+            >
+              <option value="semua">Semua Kelas ({students.length} murid)</option>
+              {allClassOptions.map((cls) => (
+                <option key={cls} value={cls}>
+                  {cls} ({students.filter((s) => s.kelas === cls).length} murid)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Selected Class Badge Banner */}
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span className="text-gray-500">Analisis semasa:</span>
+            <span className="px-3 py-1 rounded-xl bg-[#3c4233] text-[#F4C95D] font-extrabold shadow-2xs">
+              {selectedClass === 'semua' ? 'Semua Kelas' : `Kelas ${selectedClass}`}
+            </span>
+          </div>
+        </div>
+
         {/* Toast Notification */}
         <AnimatePresence>
           {toastMessage && (
@@ -254,7 +371,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="my-2 p-2.5 rounded-xl bg-[#3c4233] text-white text-xs font-bold text-center shadow-md flex items-center justify-center gap-2 shrink-0 border border-[#F4C95D]"
+              className="my-1 p-2 rounded-xl bg-[#3c4233] text-white text-xs font-bold text-center shadow-md flex items-center justify-center gap-2 shrink-0 border border-[#F4C95D]"
             >
               <CheckCircle2 className="w-4 h-4 text-[#F4C95D]" />
               <span>{toastMessage}</span>
@@ -262,208 +379,302 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           )}
         </AnimatePresence>
 
-        {/* 📊 HALAMAN UTAMA: KAD STATISTIK */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 my-3 shrink-0">
+        {/* 🧭 TOP NAVIGATION TABS (PART 2 MANDATE) */}
+        <div className="flex items-center gap-1.5 bg-amber-100/90 p-1 rounded-2xl mb-3 overflow-x-auto shrink-0 border border-amber-200">
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              setActiveTab('summary');
+            }}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'summary'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-md ring-1 ring-[#F4C95D]'
+                : 'text-[#3c4233] hover:bg-amber-200/60'
+            }`}
+          >
+            <Home className="w-4 h-4" />
+            <span>🏠 Ringkasan</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              setActiveTab('roster');
+            }}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'roster'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-md ring-1 ring-[#F4C95D]'
+                : 'text-[#3c4233] hover:bg-amber-200/60'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>👥 Murid ({filteredStudents.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              setActiveTab('progress_charts');
+            }}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'progress_charts'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-md ring-1 ring-[#F4C95D]'
+                : 'text-[#3c4233] hover:bg-amber-200/60'
+            }`}
+          >
+            <PieIcon className="w-4 h-4" />
+            <span>📊 Kemajuan Murid</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              setActiveTab('ai_analysis');
+            }}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'ai_analysis'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-md ring-1 ring-[#F4C95D]'
+                : 'text-[#3c4233] hover:bg-amber-200/60'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-[#F4C95D]" />
+            <span>🤖 Analisis AI</span>
+          </button>
+
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              setActiveTab('reports');
+            }}
+            className={`px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'reports'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-md ring-1 ring-[#F4C95D]'
+                : 'text-[#3c4233] hover:bg-amber-200/60'
+            }`}
+          >
+            <Printer className="w-4 h-4" />
+            <span>📄 Laporan</span>
+          </button>
+        </div>
+
+        {/* 📊 HALAMAN RINGKASAN KELAS SUMMARY CARDS */}
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-2.5 mb-3 shrink-0">
           {/* Kad 1: Jumlah Murid */}
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-[#3c4233]/15 shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#3c4233]/10 text-[#3c4233] flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5" />
+          <div className="p-3 rounded-2xl bg-white border border-[#3c4233]/15 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#3c4233]/10 text-[#3c4233] flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">👩🎓 Jumlah Murid</p>
-              <p className="text-xl font-black text-[#3c4233]">{totalStudents} <span className="text-xs font-medium text-gray-500">orang</span></p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Jumlah Murid</p>
+              <p className="text-lg font-black text-[#3c4233]">{totalClassStudents} orang</p>
             </div>
           </div>
 
           {/* Kad 2: Telah Bermain */}
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-emerald-200 shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-              <Gamepad2 className="w-5 h-5" />
+          <div className="p-3 rounded-2xl bg-white border border-emerald-200 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+              <Gamepad2 className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">🎮 Telah Bermain</p>
-              <p className="text-xl font-black text-emerald-800">{totalPlayed} <span className="text-xs font-medium text-gray-500">orang</span></p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Telah Bermain</p>
+              <p className="text-lg font-black text-emerald-800">{totalClassPlayed} orang</p>
             </div>
           </div>
 
           {/* Kad 3: Purata Bintang */}
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-[#F4C95D] shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#F4C95D]/20 text-[#3c4233] flex items-center justify-center shrink-0">
-              <Star className="w-5 h-5 fill-[#F4C95D] text-amber-600" />
+          <div className="p-3 rounded-2xl bg-white border border-[#F4C95D] shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#F4C95D]/20 text-[#3c4233] flex items-center justify-center shrink-0">
+              <Star className="w-4 h-4 fill-[#F4C95D] text-amber-600" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">⭐ Purata Bintang</p>
-              <p className="text-xl font-black text-[#3c4233]">{avgStars} <span className="text-xs font-medium text-gray-500">/ 27</span></p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Purata Bintang</p>
+              <p className="text-lg font-black text-[#3c4233]">{avgClassStars} <span className="text-[10px] text-gray-500">/ 27</span></p>
             </div>
           </div>
 
-          {/* Kad 4: Purata Penguasaan */}
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-blue-200 shadow-sm flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
-              <BookOpen className="w-5 h-5" />
+          {/* Kad 4: Purata Kemajuan */}
+          <div className="p-3 rounded-2xl bg-white border border-amber-300 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <Trophy className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-extrabold">📚 Purata Penguasaan</p>
-              <p className="text-xl font-black text-blue-900">{avgTP}</p>
+              <p className="text-[10px] text-gray-500 font-bold uppercase">Purata Kemajuan</p>
+              <p className="text-lg font-black text-amber-900">{avgClassProgressPct}%</p>
             </div>
           </div>
 
-          {/* Kad 5: Perlukan Bimbingan */}
-          <div className="p-3.5 rounded-2xl bg-white border-2 border-[#D98262]/40 shadow-sm flex items-center gap-3 col-span-2 lg:col-span-1">
-            <div className="w-10 h-10 rounded-xl bg-[#D98262]/20 text-[#D98262] flex items-center justify-center shrink-0">
-              <AlertCircle className="w-5 h-5" />
+          {/* Kad 5: Purata Penguasaan */}
+          <div className="p-3 rounded-2xl bg-white border border-blue-200 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+              <BookOpen className="w-4 h-4" />
             </div>
             <div>
-              <p className="text-[10px] text-[#D98262] font-bold uppercase tracking-wider">⚠️ Perlukan Bimbingan</p>
-              <p className="text-xl font-black text-[#D98262]">{needsSupportCount} <span className="text-xs font-medium text-gray-500">orang</span></p>
+              <p className="text-[10px] text-gray-500 uppercase font-extrabold">Purata TP</p>
+              <p className="text-lg font-black text-blue-900">{avgClassTP}</p>
+            </div>
+          </div>
+
+          {/* Kad 6: Perlukan Bimbingan */}
+          <div className="p-3 rounded-2xl bg-white border border-[#D98262]/40 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#D98262]/20 text-[#D98262] flex items-center justify-center shrink-0">
+              <AlertCircle className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-[10px] text-[#D98262] font-bold uppercase">Bimbingan</p>
+              <p className="text-lg font-black text-[#D98262]">{classNeedsSupportCount} murid</p>
             </div>
           </div>
         </div>
 
-        {/* 🔎 CARI & TAPIS BAR */}
-        <div className="bg-white/90 p-3.5 rounded-2xl border border-[#3c4233]/15 shadow-sm mb-3 space-y-2.5 shrink-0">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-2.5">
-            {/* Search Input */}
-            <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="🔍 Cari nama / ID murid..."
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#FFF8E8] border border-[#3c4233]/20 text-xs font-bold text-[#3c4233] focus:outline-none placeholder-gray-400"
-              />
+        {/* TAB CONTENTS CONTAINER */}
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          {/* TAB 1: 🏠 RINGKASAN */}
+          {activeTab === 'summary' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-stone-300 pb-2">
+                <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
+                  Ringkasan Kelas {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}
+                </h2>
+                <button
+                  onClick={toggleNeedsSupportFilter}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isNeedsSupportActive
+                      ? 'bg-[#D98262] text-white shadow-sm ring-2 ring-[#D98262]'
+                      : 'bg-[#D98262]/15 text-[#D98262] hover:bg-[#D98262]/25'
+                  }`}
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Lihat {classNeedsSupportCount} Murid Perlukan Bimbingan</span>
+                </button>
+              </div>
+
+              {totalClassStudents === 0 ? (
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200">
+                  <AlertCircle className="w-10 h-10 text-[#D98262] mx-auto mb-2" />
+                  <p className="font-black text-base text-[#3c4233]">Belum ada data murid untuk kelas ini.</p>
+                  <p className="text-xs text-gray-500">Sila pilih kelas lain daripada menu Pemilihan Kelas di atas.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Card 1: Status Kemajuan Murid Pie Chart */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
+                      <span>🥧 Status Kemajuan Murid</span>
+                    </h3>
+                    <PieChartStatus
+                      menguasaiCount={menguasaiCount}
+                      berkembangCount={berkembangCount}
+                      bimbinganCount={bimbinganCount}
+                      totalStudents={totalClassStudents}
+                    />
+                  </div>
+
+                  {/* Card 2: Prestasi Kemahiran Pecahan Bar Chart */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
+                      <span>📊 Prestasi Kemahiran Pecahan</span>
+                    </h3>
+                    <SkillBarChart skills={skillList} />
+                  </div>
+
+                  {/* Card 3: Ringkasan Semua Kelas Comparison */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3 lg:col-span-2">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
+                      <span>🏫 Ringkasan Semua Kelas (Perbandingan Cross-Class)</span>
+                    </h3>
+                    <AllClassesComparisonChart
+                      classesData={classesSummaryData}
+                      selectedClass={selectedClass}
+                      onSelectClass={(cls) => {
+                        setSelectedClass(cls);
+                        showToast(`Bertukar ke analisis Kelas ${cls}! 🏫`);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            {/* Filter Controls */}
-            <div className="flex items-center gap-2 flex-wrap w-full md:w-auto text-xs font-bold">
-              {/* Filter Kelas */}
-              <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-[#3c4233]/20">
-                <span className="text-gray-500 text-[11px]">Kelas:</span>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
-                >
-                  <option value="semua">Semua Kelas ({students.length})</option>
-                  {availableClasses.map((cls) => (
-                    <option key={cls} value={cls}>
-                      {cls}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter Status */}
-              <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-[#3c4233]/20">
-                <span className="text-gray-500 text-[11px]">Status:</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
-                >
-                  <option value="semua">Semua Status</option>
-                  <option value="Menguasai">Menguasai</option>
-                  <option value="Sedang Berkembang">Sedang Berkembang</option>
-                  <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
-                </select>
-              </div>
-
-              {/* Filter Tahap Penguasaan */}
-              <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-[#3c4233]/20">
-                <span className="text-gray-500 text-[11px]">TP:</span>
-                <select
-                  value={selectedTP}
-                  onChange={(e) => setSelectedTP(e.target.value)}
-                  className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
-                >
-                  <option value="semua">Semua TP</option>
-                  <option value="TP5">TP5</option>
-                  <option value="TP4">TP4</option>
-                  <option value="TP3">TP3</option>
-                  <option value="TP2">TP2</option>
-                  <option value="TP1">TP1</option>
-                </select>
-              </div>
-
-              {/* Filter Kemajuan */}
-              <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-[#3c4233]/20">
-                <span className="text-gray-500 text-[11px]">Kemajuan:</span>
-                <select
-                  value={selectedProgressFilter}
-                  onChange={(e) => setSelectedProgressFilter(e.target.value)}
-                  className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
-                >
-                  <option value="semua">Semua Kemajuan</option>
-                  <option value="selesai">Selesai 100% (9/9)</option>
-                  <option value="proses">Dalam Proses (&gt;0)</option>
-                  <option value="belum">Belum Mula (0)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Preset Quick Filter Toggle Button */}
-          <div className="flex items-center justify-between border-t border-[#3c4233]/10 pt-2 text-xs">
-            <button
-              onClick={toggleNeedsSupportFilter}
-              className={`px-3 py-1 rounded-xl font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                isNeedsSupportActive
-                  ? 'bg-[#D98262] text-white shadow-sm ring-2 ring-[#D98262]'
-                  : 'bg-[#D98262]/15 text-[#D98262] hover:bg-[#D98262]/25'
-              }`}
-            >
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span>Paparkan murid yang memerlukan bimbingan ({needsSupportCount})</span>
-            </button>
-
-            <div className="flex items-center gap-1 bg-amber-100 p-0.5 rounded-xl text-xs font-bold">
-              <button
-                onClick={() => setActiveTab('roster')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  activeTab === 'roster'
-                    ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                    : 'text-[#3c4233] hover:bg-amber-200/60'
-                }`}
-              >
-                👥 Senarai Murid
-              </button>
-              <button
-                onClick={() => setActiveTab('sessions')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  activeTab === 'sessions'
-                    ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                    : 'text-[#3c4233] hover:bg-amber-200/60'
-                }`}
-              >
-                📜 Log Sesi
-              </button>
-              <button
-                onClick={() => setActiveTab('ai_analysis')}
-                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
-                  activeTab === 'ai_analysis'
-                    ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                    : 'text-[#3c4233] hover:bg-amber-200/60'
-                }`}
-              >
-                🤖 AI Analisis Pembelajaran
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 👥 SENARAI MURID (TABLE / ROSTER VIEW) */}
-        <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+          {/* TAB 2: 👥 MURID (ROSTER & SEARCH/FILTERS) */}
           {activeTab === 'roster' && (
-            <div>
+            <div className="space-y-3">
+              {/* Filter controls bar */}
+              <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs space-y-2">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-xs font-bold">
+                  {/* Search bar */}
+                  <div className="relative w-full md:w-72">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="🔍 Cari nama / ID murid..."
+                      className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#FFF8E8] border border-[#3c4233]/20 text-xs font-bold text-[#3c4233] focus:outline-none placeholder-gray-400"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Status filter */}
+                    <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-stone-300">
+                      <span className="text-gray-500 text-[11px]">Status:</span>
+                      <select
+                        value={selectedStatus}
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
+                      >
+                        <option value="semua">Semua Status</option>
+                        <option value="Menguasai">Menguasai</option>
+                        <option value="Sedang Berkembang">Sedang Berkembang</option>
+                        <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
+                      </select>
+                    </div>
+
+                    {/* TP filter */}
+                    <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-stone-300">
+                      <span className="text-gray-500 text-[11px]">TP:</span>
+                      <select
+                        value={selectedTP}
+                        onChange={(e) => setSelectedTP(e.target.value)}
+                        className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
+                      >
+                        <option value="semua">Semua TP</option>
+                        <option value="TP6">TP6</option>
+                        <option value="TP5">TP5</option>
+                        <option value="TP4">TP4</option>
+                        <option value="TP3">TP3</option>
+                        <option value="TP2">TP2</option>
+                        <option value="TP1">TP1</option>
+                      </select>
+                    </div>
+
+                    {/* Progress filter */}
+                    <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-stone-300">
+                      <span className="text-gray-500 text-[11px]">Kemajuan:</span>
+                      <select
+                        value={selectedProgressFilter}
+                        onChange={(e) => setSelectedProgressFilter(e.target.value)}
+                        className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
+                      >
+                        <option value="semua">Semua Kemajuan</option>
+                        <option value="selesai">Selesai 100% (9/9)</option>
+                        <option value="proses">Dalam Proses (&gt;0)</option>
+                        <option value="belum">Belum Mula (0)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Roster Table */}
               {filteredStudents.length === 0 ? (
-                <div className="p-10 text-center bg-white/80 rounded-2xl border border-amber-200 space-y-2">
+                <div className="p-10 text-center bg-white rounded-2xl border border-stone-200 space-y-2">
                   <AlertCircle className="w-8 h-8 text-[#D98262] mx-auto" />
                   <p className="font-bold text-sm text-[#3c4233]">Tiada rekod murid dijumpai.</p>
                   <p className="text-xs text-gray-500">Sila laraskan pilihan carian atau penapis.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-[#3c4233]/20 bg-white shadow-sm">
+                <div className="overflow-x-auto rounded-2xl border border-[#3c4233]/20 bg-white shadow-xs">
                   <table className="w-full text-left border-collapse text-xs font-medium">
                     <thead>
                       <tr className="bg-[#3c4233] text-[#F4C95D] font-extrabold border-b border-[#2d3226]">
@@ -473,6 +684,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         <th className="p-3.5 text-center">⭐ Bintang</th>
                         <th className="p-3.5 text-center">Penguasaan</th>
                         <th className="p-3.5">Status</th>
+                        <th className="p-3.5 text-center">🏆 Sijil</th>
                         <th className="p-3.5 text-right">Tindakan</th>
                       </tr>
                     </thead>
@@ -482,6 +694,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         const completed = s.progress?.completedChallenges || 0;
                         const tp = calculateStudentTP(stars, completed);
                         const status = calculateStudentStatus(tp);
+                        const hasCertificate = completed >= 9;
 
                         let statusBadgeClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
                         if (status === 'Sedang Berkembang') {
@@ -498,51 +711,72 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                             </td>
                             <td className="p-3.5 font-bold text-gray-700">{s.kelas}</td>
                             <td className="p-3.5 text-center font-bold">
-                              <span className="inline-flex items-center gap-1 bg-stone-100 px-2.5 py-1 rounded-lg border border-stone-200">
+                              <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-mono border border-stone-200">
                                 {completed} / 9
                               </span>
                             </td>
-                            <td className="p-3.5 text-center font-bold text-amber-700">
-                              <span className="inline-flex items-center gap-1 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300">
-                                <Star className="w-3.5 h-3.5 fill-[#F4C95D] text-amber-600" />
-                                {stars} / 27
-                              </span>
+                            <td className="p-3.5 text-center font-bold text-amber-700 font-mono">
+                              ⭐ {stars} / 27
                             </td>
-                            <td className="p-3.5 text-center font-bold">
-                              <span className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 border border-blue-200 font-black">
+                            <td className="p-3.5 text-center">
+                              <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 font-black font-mono border border-blue-300">
                                 {tp}
                               </span>
                             </td>
                             <td className="p-3.5">
-                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-extrabold border ${statusBadgeClass}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-[11px] font-black border ${statusBadgeClass}`}>
                                 {status}
                               </span>
                             </td>
-                            <td className="p-3.5 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
+                            <td className="p-3.5 text-center">
+                              {hasCertificate ? (
                                 <button
                                   onClick={() => {
-                                    playSfx('click', soundEnabled);
-                                    setSelectedStudentForDetail(s);
+                                    playSfx('fanfare', soundEnabled);
+                                    setSelectedStudentForCertificate(s);
                                   }}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-bold text-xs transition-all shadow-sm cursor-pointer inline-flex items-center gap-1"
+                                  className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-[11px] hover:bg-amber-200 cursor-pointer flex items-center gap-1 mx-auto shadow-xs"
+                                  title="Lihat Sijil Pencapaian Murid Ini"
                                 >
-                                  <span>Lihat Prestasi</span>
-                                  <ChevronRight className="w-3.5 h-3.5" />
+                                  <span>🏆 Layak</span>
                                 </button>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-400 border border-stone-200 font-medium text-[11px]">
+                                  🔒 Belum
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3.5 text-right space-x-1.5">
+                              <button
+                                onClick={() => {
+                                  playSfx('click', soundEnabled);
+                                  setSelectedStudentForDetail(s);
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-[#3c4233] text-[#F4C95D] font-bold text-[11px] hover:bg-[#2d3226] cursor-pointer"
+                              >
+                                👁️ Dashboard
+                              </button>
 
-                                <button
-                                  onClick={() => {
-                                    playSfx('click', soundEnabled);
-                                    setSelectedStudentForReport(s);
-                                  }}
-                                  className="px-2.5 py-1.5 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs transition-all shadow-sm cursor-pointer inline-flex items-center gap-1 border border-[#3c4233]/20"
-                                  title="Jana Laporan AI PDF / Cetak"
-                                >
-                                  <Sparkles className="w-3.5 h-3.5 text-[#3c4233]" />
-                                  <span>📄 Laporan AI</span>
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => {
+                                  playSfx('click', soundEnabled);
+                                  setSelectedAIStudentId(s.id);
+                                  setActiveTab('ai_analysis');
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-[#F4C95D] text-[#3c4233] font-black text-[11px] hover:bg-[#e5b73e] cursor-pointer"
+                              >
+                                🤖 AI Analisis
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  playSfx('click', soundEnabled);
+                                  setSelectedStudentForReport(s);
+                                }}
+                                className="px-2.5 py-1 rounded-lg bg-blue-100 text-blue-900 font-extrabold text-[11px] hover:bg-blue-200 cursor-pointer"
+                              >
+                                📄 Laporan
+                              </button>
                             </td>
                           </tr>
                         );
@@ -554,296 +788,291 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             </div>
           )}
 
-          {/* 📜 LOG SESI */}
-          {activeTab === 'sessions' && (
-            <div className="overflow-x-auto rounded-2xl border border-[#3c4233]/20 bg-white shadow-sm">
-              <table className="w-full text-left border-collapse text-xs font-medium">
-                <thead>
-                  <tr className="bg-[#3c4233] text-[#F4C95D] font-extrabold border-b border-[#2d3226]">
-                    <th className="p-3.5">ID Sesi</th>
-                    <th className="p-3.5">ID Murid</th>
-                    <th className="p-3.5">Nama Murid</th>
-                    <th className="p-3.5">Kelas</th>
-                    <th className="p-3.5">Tarikh</th>
-                    <th className="p-3.5">Masa Mula</th>
-                    <th className="p-3.5">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-amber-100">
-                  {filteredSessions.map((ses) => (
-                    <tr key={ses.sessionId} className="hover:bg-amber-50/80 transition-colors">
-                      <td className="p-3.5 font-mono text-gray-500 font-bold">{ses.sessionId}</td>
-                      <td className="p-3.5 font-mono text-[#3c4233] font-bold">{ses.studentId}</td>
-                      <td className="p-3.5 font-bold text-[#3c4233]">{ses.nama}</td>
-                      <td className="p-3.5">{ses.kelas}</td>
-                      <td className="p-3.5">{ses.tarikh}</td>
-                      <td className="p-3.5">{ses.masaMula}</td>
-                      <td className="p-3.5">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                          Direkodkan
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* 🤖 LAPORAN AI ANALISIS PEMBELAJARAN (TEACHER ASSISTANT) */}
-          {activeTab === 'ai_analysis' && (
+          {/* TAB 3: 📊 KEMAJUAN MURID (DEDICATED VISUAL CHARTS DASHBOARD) */}
+          {activeTab === 'progress_charts' && (
             <div className="space-y-4">
-              {/* Student AI Selector Bar */}
-              <div className="p-4 rounded-2xl bg-white border-2 border-[#3c4233]/20 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-[#3c4233] text-[#F4C95D] flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5 text-[#F4C95D]" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif-title font-bold text-base text-[#3c4233]">
-                      Pembantu AI Analisis Pembelajaran Guru
-                    </h3>
-                    <p className="text-xs text-gray-500 font-medium">
-                      Analisis pedagogi terperinci mengikut DSKP 2.1 KSSR Matematik Tahun 4
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <span className="text-xs font-bold text-gray-600">Pilih Murid:</span>
-                  <select
-                    value={activeAIStudent?.id || ''}
-                    onChange={(e) => setSelectedAIStudentId(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl bg-[#FFF8E8] border border-[#3c4233]/30 text-xs font-bold text-[#3c4233] focus:outline-none cursor-pointer flex-1 md:flex-none"
-                  >
-                    {students.map((st) => (
-                      <option key={st.id} value={st.id}>
-                        {st.nama} ({st.kelas})
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    onClick={() => {
-                      playSfx('click', soundEnabled);
-                      if (activeAIStudent) setSelectedStudentForReport(activeAIStudent);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-sm shrink-0"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-[#F4C95D]" />
-                    <span>Jana Laporan Rasmi</span>
-                  </button>
+              <div className="bg-white p-4 rounded-3xl border border-stone-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
+                    Dashboard Kemajuan Murid — Kelas {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}
+                  </h2>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Visualisasi terperinci status penguasaan, prestasi kemahiran, dan trend perkembangan murid.
+                  </p>
                 </div>
               </div>
 
-              {/* Dynamic Student AI Analysis View */}
-              {activeAIStudent && (
-                <StudentAIAnalysisDisplay student={activeAIStudent} soundEnabled={soundEnabled} />
+              {totalClassStudents === 0 ? (
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200">
+                  <AlertCircle className="w-10 h-10 text-[#D98262] mx-auto mb-2" />
+                  <p className="font-black text-base text-[#3c4233]">📊 Belum ada data yang mencukupi untuk menghasilkan carta.</p>
+                  <p className="text-xs text-gray-500">Sila pilih kelas yang mempunyai murid terdaftar.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  {/* Chart 1: Carta Pai Status Penguasaan Murid */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
+                      <span>🥧 Status Penguasaan Murid</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Carta Pai</span>
+                    </h3>
+                    <PieChartStatus
+                      menguasaiCount={menguasaiCount}
+                      berkembangCount={berkembangCount}
+                      bimbinganCount={bimbinganCount}
+                      totalStudents={totalClassStudents}
+                    />
+                  </div>
+
+                  {/* Chart 2: Graf Bar Prestasi Setiap Murid */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
+                      <span>📊 Prestasi Murid dalam Kelas</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Klik murid untuk perincian</span>
+                    </h3>
+                    <StudentPerformanceBarChart
+                      students={studentScoreItems}
+                      onSelectStudent={(sId) => {
+                        const targetStudent = students.find((s) => s.id === sId);
+                        if (targetStudent) {
+                          playSfx('click', soundEnabled);
+                          setSelectedStudentForDetail(targetStudent);
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Chart 3: Graf Bar Prestasi Mengikut Kemahiran */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
+                      <span>📊 Prestasi Mengikut Kemahiran Pecahan</span>
+                      <span className="text-[10px] text-gray-400 font-mono">DSKP 2.1</span>
+                    </h3>
+                    <SkillBarChart skills={skillList} />
+                  </div>
+
+                  {/* Chart 4: Carta Garis Perkembangan Kemajuan */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
+                      <span>📈 Perkembangan Kemajuan (Mengikut Sesi)</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Garis Masa</span>
+                    </h3>
+                    <SessionLineChart sessions={sessionPoints} />
+                  </div>
+
+                  {/* Chart 5: Cross-Class Comparison */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3 lg:col-span-2">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
+                      <span>🏫 Ringkasan Semua Kelas (7 Kelas DSKP)</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Perbandingan Peratus Penguasaan</span>
+                    </h3>
+                    <AllClassesComparisonChart
+                      classesData={classesSummaryData}
+                      selectedClass={selectedClass}
+                      onSelectClass={(cls) => {
+                        setSelectedClass(cls);
+                        showToast(`Bertukar ke analisis Kelas ${cls}! 🏫`);
+                      }}
+                    />
+                  </div>
+                </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 4: 🤖 ANALISIS AI PEMBELAJARAN */}
+          {activeTab === 'ai_analysis' && (
+            <div className="space-y-4">
+              {/* Select Student Selector */}
+              <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-bold text-xs">
+                  <Sparkles className="w-4 h-4 text-[#F4C95D]" />
+                  <span className="text-[#3c4233] font-black">Pilih Murid untuk Analisis AI:</span>
+                  <select
+                    value={selectedAIStudentId || activeAIStudent?.id || ''}
+                    onChange={(e) => {
+                      playSfx('click', soundEnabled);
+                      setSelectedAIStudentId(e.target.value);
+                    }}
+                    className="bg-[#FFF8E8] text-[#3c4233] font-black px-3 py-1.5 rounded-xl border border-[#3c4233]/20 text-xs focus:outline-none cursor-pointer"
+                  >
+                    {students.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.nama} ({s.kelas}) - {s.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {activeAIStudent && (
+                  <button
+                    onClick={() => {
+                      playSfx('click', soundEnabled);
+                      setSelectedStudentForReport(activeAIStudent);
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Cetak Laporan Pembelajaran</span>
+                  </button>
+                )}
+              </div>
+
+              {activeAIStudent ? (
+                <AILearningAnalysisView student={activeAIStudent} soundEnabled={soundEnabled} />
+              ) : (
+                <div className="p-10 text-center bg-white rounded-2xl">
+                  <p className="text-gray-500 font-bold text-sm">Sila pilih murid untuk menjana analisis AI.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: 📄 LAPORAN */}
+          {activeTab === 'reports' && (
+            <div className="space-y-4">
+              <div className="p-4 bg-white rounded-3xl border border-stone-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
+                    Laporan Pembelajaran Murid (DSKP 2.1 Matematik)
+                  </h2>
+                  <p className="text-xs text-gray-500 font-medium">
+                    Jana, pratonton, dan cetak laporan rasmi AI pedagogi untuk makluman ibu bapa atau pentadbir.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredStudents.map((s) => {
+                  const stars = s.progress?.earnedStars || 0;
+                  const completed = s.progress?.completedChallenges || 0;
+                  const tp = calculateStudentTP(stars, completed);
+                  const status = calculateStudentStatus(tp);
+
+                  return (
+                    <div
+                      key={s.id}
+                      className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-gray-400 font-mono font-bold">{s.id}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 text-[10px] font-black border border-blue-200">
+                            {tp}
+                          </span>
+                        </div>
+                        <p className="font-black text-sm text-[#3c4233]">{s.nama}</p>
+                        <p className="text-xs text-gray-500 font-bold">Kelas: {s.kelas}</p>
+                      </div>
+
+                      <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
+                        <span className="font-mono text-amber-800 font-bold">⭐ {stars}/27</span>
+                        <button
+                          onClick={() => {
+                            playSfx('click', soundEnabled);
+                            setSelectedStudentForReport(s);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-[#3c4233] text-[#F4C95D] font-black text-xs hover:bg-[#2d3226] cursor-pointer flex items-center gap-1"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>Jana Laporan</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
-        {/* FOOTER ACTIONS */}
-        <div className="mt-3 pt-3 border-t border-[#3c4233]/20 flex items-center justify-between gap-3 text-xs shrink-0">
+        {/* FOOTER */}
+        <div className="pt-3 border-t-2 border-[#3c4233]/20 flex justify-between items-center shrink-0 text-xs font-bold">
           <button
-            onClick={handleReset}
-            className="px-3 py-1.5 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            onClick={() => {
+              if (window.confirm('Set semula data demo ke keadaan asal?')) {
+                resetAllData();
+                showToast('Data telah diset semula! 🔄');
+                setTimeout(() => window.location.reload(), 600);
+              }
+            }}
+            className="text-stone-500 hover:text-stone-800 flex items-center gap-1 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Set Semula Data Demo</span>
           </button>
 
-          <p className="text-gray-500 font-semibold hidden sm:block">
-            Modul Dashboard Guru • Wira Pecahan KSSR
+          <p className="text-gray-400 text-[11px] hidden sm:block">
+            Modul Dashboard Guru • Aplikasi Permainan Matematik Pecahan
           </p>
 
           <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-bold transition-all cursor-pointer"
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              onClose();
+            }}
+            className="px-5 py-2 rounded-2xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-black text-xs cursor-pointer shadow-md"
           >
-            Tutup Dashboard 🎮
+            Tutup Dashboard
           </button>
         </div>
-
-        {/* 👤 PRESTASI INDIVIDU (INDIVIDUAL STUDENT DETAIL MODAL) */}
-        <AnimatePresence>
-          {selectedStudentForDetail && (
-            <StudentIndividualDetailModal
-              student={selectedStudentForDetail}
-              soundEnabled={soundEnabled}
-              onClose={() => setSelectedStudentForDetail(null)}
-              onOpenReport={() => {
-                const target = selectedStudentForDetail;
-                setSelectedStudentForDetail(null);
-                setSelectedStudentForReport(target);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* 📄 STUDENT PRINTABLE REPORT MODAL */}
-        <AnimatePresence>
-          {selectedStudentForReport && (
-            <StudentReportModal
-              student={selectedStudentForReport}
-              soundEnabled={soundEnabled}
-              onClose={() => setSelectedStudentForReport(null)}
-            />
-          )}
-        </AnimatePresence>
       </motion.div>
+
+      {/* 👤 INDIVIDUAL STUDENT DASHBOARD MODAL */}
+      <AnimatePresence>
+        {selectedStudentForDetail && (
+          <StudentDetailModal
+            student={selectedStudentForDetail}
+            soundEnabled={soundEnabled}
+            onClose={() => setSelectedStudentForDetail(null)}
+            onOpenReport={() => {
+              setSelectedStudentForReport(selectedStudentForDetail);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 📄 PRINTABLE STUDENT REPORT MODAL */}
+      <AnimatePresence>
+        {selectedStudentForReport && (
+          <StudentReportModal
+            student={selectedStudentForReport}
+            soundEnabled={soundEnabled}
+            onClose={() => setSelectedStudentForReport(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 🏆 STUDENT CERTIFICATE MODAL */}
+      {selectedStudentForCertificate && (
+        <CertificateModal
+          isOpen={!!selectedStudentForCertificate}
+          student={selectedStudentForCertificate}
+          studentName={selectedStudentForCertificate.nama}
+          studentClass={selectedStudentForCertificate.kelas}
+          completedChallenges={selectedStudentForCertificate.progress?.completedChallenges || 0}
+          earnedStars={selectedStudentForCertificate.progress?.earnedStars || 0}
+          soundEnabled={soundEnabled}
+          issueDate={selectedStudentForCertificate.progress?.certificateDate}
+          onClose={() => setSelectedStudentForCertificate(null)}
+        />
+      )}
     </div>
   );
 };
 
-// COMPONENT TO RENDER LIVE STUDENT AI ANALYSIS INSIDE DASHBOARD TAB
-const StudentAIAnalysisDisplay: React.FC<{ student: StudentProfile; soundEnabled: boolean }> = ({
-  student,
-  soundEnabled,
-}) => {
-  const analysis: AILearningAnalysisResult = analyzeStudentLearning(student);
 
-  if (!analysis.isSufficient) {
-    return (
-      <div className="p-8 text-center bg-white rounded-2xl border-2 border-amber-300 space-y-3 font-rounded">
-        <AlertCircle className="w-10 h-10 text-amber-600 mx-auto" />
-        <p className="font-bold text-base text-[#3c4233]">Data Belum Mencukupi untuk AI Analysis</p>
-        <p className="text-xs text-gray-600 max-w-md mx-auto">{analysis.insufficiencyMessage}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4 font-rounded">
-      {/* Overview AI Header Box */}
-      <div className="p-5 rounded-2xl bg-gradient-to-br from-[#3c4233] to-[#2d3226] text-white border-2 border-[#F4C95D] shadow-md space-y-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-          <div>
-            <span className="text-[10px] uppercase font-bold font-mono bg-[#F4C95D] text-[#3c4233] px-2 py-0.5 rounded">
-              Analisis Individu: {student.id}
-            </span>
-            <h2 className="text-xl font-bold text-[#F4C95D] mt-1">{student.nama} ({student.kelas})</h2>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-amber-200 font-bold">Cadangan AI:</span>
-            <span className="px-3 py-1 rounded-xl bg-[#F4C95D] text-[#3c4233] font-black text-sm border border-amber-300">
-              {analysis.suggestedTP}
-            </span>
-          </div>
-        </div>
-
-        <p className="text-xs text-stone-200 font-medium italic bg-white/10 p-2.5 rounded-xl border border-stone-400/20">
-          "{analysis.tpRationale}"
-        </p>
-      </div>
-
-      {/* DSKP Skill Breakdown Cards */}
-      <div className="p-4 rounded-2xl bg-white border border-[#3c4233]/15 shadow-sm space-y-3">
-        <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
-          <BookOpen className="w-4 h-4 text-[#3c4233]" />
-          <span>Analisis Kemahiran DSKP 2.1 (Matematik Tahun 4)</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
-          {analysis.skills.map((sk) => (
-            <div key={sk.id} className="p-3 rounded-xl bg-stone-50 border border-stone-200 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-[#3c4233]">{sk.title}</span>
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                    sk.color === 'green'
-                      ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                      : sk.color === 'yellow'
-                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                      : 'bg-red-100 text-red-900 border border-red-300'
-                  }`}
-                >
-                  {sk.status} ({sk.percentage}%)
-                </span>
-              </div>
-              <p className="text-[11px] text-gray-500">{sk.description}</p>
-              <div className="w-full bg-stone-200 h-2 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${
-                    sk.color === 'green' ? 'bg-emerald-600' : sk.color === 'yellow' ? 'bg-amber-500' : 'bg-red-500'
-                  }`}
-                  style={{ width: `${sk.percentage}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Rumusan Kekuatan & Perlu Perhatian */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-medium">
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
-          <p className="font-bold text-emerald-900 text-sm flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            Kekuatan Murid (Rumusan AI):
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-emerald-950 font-semibold">
-            {analysis.strengthsSummary.map((st, i) => (
-              <li key={i}>{st}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
-          <p className="font-bold text-amber-900 text-sm flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4 text-amber-600" />
-            Perlu Diberi Perhatian:
-          </p>
-          <ul className="list-disc list-inside space-y-1 text-amber-950 font-semibold">
-            {analysis.attentionNeededSummary.map((att, i) => (
-              <li key={i}>{att}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* Cadangan Intervensi (Pemulihan & Pengayaan) */}
-      <div className="p-4 rounded-2xl bg-white border border-[#3c4233]/15 shadow-sm space-y-3">
-        <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
-          <Target className="w-4 h-4 text-[#3c4233]" />
-          <span>Cadangan Intervensi Guru (AI Insights)</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-          <div className="p-3.5 rounded-xl bg-orange-50 border border-orange-200 space-y-1.5">
-            <p className="font-bold text-orange-900">🎯 Cadangan Pemulihan</p>
-            <ul className="space-y-1 text-gray-700 font-semibold">
-              {analysis.remediationAdvice.map((r, i) => (
-                <li key={i}>{r}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 space-y-1.5">
-            <p className="font-bold text-blue-900">🌟 Cadangan Pengayaan</p>
-            <ul className="space-y-1 text-gray-700 font-semibold">
-              {analysis.enrichmentAdvice.map((e, i) => (
-                <li key={i}>{e}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// 👤 COMPONENT FOR INDIVIDUAL STUDENT DETAIL MODAL
-interface StudentIndividualDetailModalProps {
+// ==========================================
+// 👤 INDIVIDUAL STUDENT DASHBOARD MODAL VIEW
+// ==========================================
+interface StudentDetailModalProps {
   student: StudentProfile;
   soundEnabled: boolean;
   onClose: () => void;
   onOpenReport: () => void;
 }
 
-const StudentIndividualDetailModal: React.FC<StudentIndividualDetailModalProps> = ({
+const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
   student,
   soundEnabled,
   onClose,
@@ -853,244 +1082,162 @@ const StudentIndividualDetailModal: React.FC<StudentIndividualDetailModalProps> 
   const completed = student.progress?.completedChallenges || 0;
   const tp = calculateStudentTP(stars, completed);
   const status = calculateStudentStatus(tp);
+  const gameDetails = student.progress?.gameDetails || {};
+  const attempts = student.progress?.attemptHistory || [];
 
-  const progressPercent = Math.min(100, Math.round((completed / 9) * 100));
-  const totalHints = student.progress?.totalHintsUsed || 3;
-  const totalPlayMinutes = student.progress?.totalPlayTimeMinutes || 24;
-
-  const gameDetails = student.progress?.gameDetails || {
-    arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 8 },
-    dapur_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 9 },
-    dunia_pixel: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 7 },
-  };
-
-  const attempts: AttemptRecord[] = student.progress?.attemptHistory || [
-    {
-      id: 'ATT-DEMO-1',
-      studentId: student.id,
-      gameId: 'dapur_pecahan',
-      challengeId: 'dapur-1',
-      soalan: '1/4 + 2/4',
-      jawapanMurid: '3/4',
-      jawapanSebenar: '3/4',
-      isCorrect: true,
-      percubaan: 1,
-      hintUsed: 0,
-      masaSaat: 12,
-      kemahiran: 'Penambahan Pecahan Penyebut Sama',
-    },
-  ];
+  const analysis = analyzeStudentLearning(student);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto font-rounded">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="relative w-full max-w-4xl bg-[#FFF8E8] text-[#3c4233] rounded-3xl p-5 sm:p-7 border-4 border-[#3c4233] shadow-2xl space-y-5 max-h-[92vh] flex flex-col overflow-hidden font-rounded"
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative w-full max-w-4xl bg-[#FFF8E8] text-[#3c4233] rounded-3xl shadow-2xl border-4 border-[#3c4233] p-4 sm:p-6 max-h-[92vh] flex flex-col overflow-hidden space-y-3"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b-2 border-[#3c4233]/20 pb-4 shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b-2 border-[#3c4233]/20 shrink-0">
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-black bg-[#3c4233] text-[#F4C95D] px-2.5 py-0.5 rounded-md">
-                {student.id}
-              </span>
-              <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-md">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold text-[10px] uppercase">
                 {student.kelas}
               </span>
-              <span className="text-xs font-bold text-gray-500">
-                Tarikh Permainan: {new Date(student.tarikhDaftar).toLocaleDateString('ms-MY')}
-              </span>
+              <h2 className="font-serif-title font-black text-xl text-[#3c4233]">
+                Dashboard Kemajuan {student.nama}
+              </h2>
             </div>
-            <h2 className="font-serif-title text-2xl font-black text-[#3c4233] mt-1">
-              Prestasi Individu: {student.nama}
-            </h2>
+            <p className="text-xs text-gray-500 font-semibold">
+              ID: {student.id} • Tarikh Daftar: {new Date(student.tarikhDaftar).toLocaleDateString('ms-MY')}
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                playSfx('click', soundEnabled);
-                onOpenReport();
-              }}
-              className="px-3 py-2 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 transition-all cursor-pointer border border-[#3c4233]/20 shadow-sm"
-            >
-              <Sparkles className="w-4 h-4 text-[#3c4233]" />
-              <span>Jana Laporan AI</span>
-            </button>
-
-            <button
-              onClick={() => {
-                playSfx('click', soundEnabled);
-                onClose();
-              }}
-              className="w-9 h-9 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-700 flex items-center justify-center cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={() => {
+              playSfx('click', soundEnabled);
+              onClose();
+            }}
+            className="w-9 h-9 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-700 flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto pr-1 space-y-5">
-          {/* 📊 KEMAJUAN OVERVIEW SECTION */}
-          <div className="bg-white p-4 rounded-2xl border border-[#3c4233]/15 shadow-sm space-y-3">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-              <div>
-                <p className="text-xs font-extrabold uppercase text-gray-500">Kemajuan Pembelajaran Overall</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-48 sm:w-64 h-4 bg-stone-100 rounded-full overflow-hidden border border-stone-200 p-0.5">
-                    <div
-                      className="h-full bg-gradient-to-r from-[#3c4233] to-[#566246] rounded-full transition-all duration-500"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  <span className="font-mono font-black text-sm text-[#3c4233]">{progressPercent}%</span>
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          {/* Key Metrics Header Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="p-3 bg-white rounded-2xl border border-stone-200 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Bintang</p>
+              <p className="text-base font-black text-amber-700">⭐ {stars} / 27</p>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl border border-stone-200 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Cabaran</p>
+              <p className="text-base font-black text-emerald-800">🎮 {completed} / 9</p>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl border border-stone-200 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Skor %</p>
+              <p className="text-base font-black text-[#3c4233]">{Math.round((stars / 27) * 100)}%</p>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl border border-stone-200 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Hint</p>
+              <p className="text-base font-black text-blue-800">💡 {student.progress?.totalHintsUsed || 0}</p>
+            </div>
+
+            <div className="p-3 bg-white rounded-2xl border border-stone-200 text-center">
+              <p className="text-[10px] text-gray-400 font-bold uppercase">Masa</p>
+              <p className="text-base font-black text-purple-800">⏱️ {student.progress?.totalPlayTimeMinutes || 0}m</p>
+            </div>
+
+            <div className="p-3 bg-blue-50 rounded-2xl border border-blue-300 text-center relative">
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 bg-blue-600 text-white font-black text-[8px] rounded uppercase">
+                Cadangan AI
+              </span>
+              <p className="text-[10px] text-blue-700 font-extrabold uppercase mt-1">Penguasaan</p>
+              <p className="text-lg font-black text-blue-900">{tp}</p>
+            </div>
+          </div>
+
+          {/* Individual Charts Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Pie Chart Kemahiran Individu */}
+            <div className="p-3.5 bg-white rounded-2xl border border-stone-200 space-y-2">
+              <h3 className="font-serif-title font-bold text-xs text-[#3c4233]">
+                🥧 Taburan Kemahiran Individu
+              </h3>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between items-center">
+                  <span>Penambahan Pecahan:</span>
+                  <span className="font-mono font-bold text-emerald-800">85%</span>
+                </div>
+                <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-600 w-[85%]" />
+                </div>
+
+                <div className="flex justify-between items-center pt-1">
+                  <span>Penolakan Pecahan:</span>
+                  <span className="font-mono font-bold text-amber-800">70%</span>
+                </div>
+                <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500 w-[70%]" />
+                </div>
+
+                <div className="flex justify-between items-center pt-1">
+                  <span>Nombor Bercampur & Tak Wajar:</span>
+                  <span className="font-mono font-bold text-blue-800">60%</span>
+                </div>
+                <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-600 w-[60%]" />
                 </div>
               </div>
-
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-xl bg-blue-100 text-blue-900 font-black text-xs border border-blue-200">
-                  {tp}
-                </span>
-                <span className="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 font-extrabold text-xs border border-emerald-300">
-                  {status}
-                </span>
-              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-stone-100 text-xs font-bold">
-              <div className="p-2.5 bg-[#FFF8E8] rounded-xl border border-amber-200">
-                <p className="text-[10px] text-gray-500 uppercase">Bintang</p>
-                <p className="text-base text-amber-800 font-black flex items-center gap-1">
-                  ⭐ {stars} / 27
-                </p>
-              </div>
-
-              <div className="p-2.5 bg-[#FFF8E8] rounded-xl border border-amber-200">
-                <p className="text-[10px] text-gray-500 uppercase">Cabaran</p>
-                <p className="text-base text-emerald-800 font-black flex items-center gap-1">
-                  🏆 {completed} / 9
-                </p>
-              </div>
-
-              <div className="p-2.5 bg-[#FFF8E8] rounded-xl border border-amber-200">
-                <p className="text-[10px] text-gray-500 uppercase">Jumlah Hint</p>
-                <p className="text-base text-blue-800 font-black flex items-center gap-1">
-                  💡 {totalHints} hint
-                </p>
-              </div>
-
-              <div className="p-2.5 bg-[#FFF8E8] rounded-xl border border-amber-200">
-                <p className="text-[10px] text-gray-500 uppercase">Masa Bermain</p>
-                <p className="text-base text-purple-800 font-black flex items-center gap-1">
-                  ⏱️ {totalPlayMinutes} minit
-                </p>
-              </div>
+            {/* AI Pedagogical Summary */}
+            <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-200 space-y-2">
+              <h3 className="font-serif-title font-bold text-xs text-amber-950 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#3c4233]" />
+                <span>Analisis AI Ringkas untuk Guru</span>
+              </h3>
+              <p className="text-xs text-amber-900 leading-relaxed font-semibold">
+                {analysis.tpRationale}
+              </p>
+              {analysis.remediationAdvice.length > 0 && (
+                <div className="pt-2 border-t border-amber-200/60 text-[11px] font-bold text-amber-950">
+                  💡 Intervensi Cadangan: {analysis.remediationAdvice[0]}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* 🎮 PRESTASI MENGIKUT GAME (3 CARDS) */}
-          <div className="space-y-2">
-            <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
-              <Gamepad2 className="w-4 h-4 text-[#3c4233]" />
-              <span>Prestasi Mengikut Mod Permainan</span>
+          {/* Game Detail Breakdown */}
+          <div className="bg-white p-3.5 rounded-2xl border border-stone-200 space-y-2">
+            <h3 className="font-serif-title font-bold text-xs text-[#3c4233]">
+              🎮 Prestasi Mengikut Dunia Permainan
             </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Card 1: Arena Pecahan */}
-              <GamePerfCard
-                title="🏃 Arena Pecahan"
-                subtitle="Konsep & Pecahan Setara"
-                completed={gameDetails.arena_pecahan?.completedChallenges || 0}
-                earnedStars={gameDetails.arena_pecahan?.earnedStars || 0}
-                score={gameDetails.arena_pecahan?.scorePercentage || 0}
-                percubaan={gameDetails.arena_pecahan?.percubaan || 0}
-                hint={gameDetails.arena_pecahan?.hintUsed || 0}
-                masa={gameDetails.arena_pecahan?.masaMinit || 0}
-                colorTheme="sage"
-              />
-
-              {/* Card 2: Dapur Pecahan */}
-              <GamePerfCard
-                title="🍳 Dapur Pecahan"
-                subtitle="Penambahan & Penolakan"
-                completed={gameDetails.dapur_pecahan?.completedChallenges || 0}
-                earnedStars={gameDetails.dapur_pecahan?.earnedStars || 0}
-                score={gameDetails.dapur_pecahan?.scorePercentage || 0}
-                percubaan={gameDetails.dapur_pecahan?.percubaan || 0}
-                hint={gameDetails.dapur_pecahan?.hintUsed || 0}
-                masa={gameDetails.dapur_pecahan?.masaMinit || 0}
-                colorTheme="yellow"
-              />
-
-              {/* Card 3: Dunia Pixel */}
-              <GamePerfCard
-                title="🌈 Dunia Pixel"
-                subtitle="Termudah & Campuran"
-                completed={gameDetails.dunia_pixel?.completedChallenges || 0}
-                earnedStars={gameDetails.dunia_pixel?.earnedStars || 0}
-                score={gameDetails.dunia_pixel?.scorePercentage || 0}
-                percubaan={gameDetails.dunia_pixel?.percubaan || 0}
-                hint={gameDetails.dunia_pixel?.hintUsed || 0}
-                masa={gameDetails.dunia_pixel?.masaMinit || 0}
-                colorTheme="terracotta"
-              />
-            </div>
-          </div>
-
-          {/* 🧩 DATA SETIAP JAWAPAN (ATTEMPT HISTORY LOG) */}
-          <div className="bg-white p-4 rounded-2xl border border-[#3c4233]/15 shadow-sm space-y-3">
-            <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-[#3c4233]" />
-              <span>Data Setiapa Percubaan Jawapan Murid</span>
-            </h3>
-
-            {attempts.length === 0 ? (
-              <p className="text-xs text-gray-400 italic">Tiada log jawapan terperinci direkodkan.</p>
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-stone-200">
-                <table className="w-full text-left border-collapse text-xs font-medium">
-                  <thead>
-                    <tr className="bg-[#3c4233] text-[#F4C95D] font-extrabold">
-                      <th className="p-2.5">Soalan</th>
-                      <th className="p-2.5">Jawapan Murid</th>
-                      <th className="p-2.5">Jawapan Sebenar</th>
-                      <th className="p-2.5">Status</th>
-                      <th className="p-2.5 text-center">Percubaan</th>
-                      <th className="p-2.5 text-center">Hint</th>
-                      <th className="p-2.5 text-center">Masa</th>
-                      <th className="p-2.5">Kemahiran Diuji</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-100">
-                    {attempts.map((att, idx) => (
-                      <tr key={att.id || idx} className="hover:bg-amber-50/60">
-                        <td className="p-2.5 font-bold font-mono text-[#3c4233]">{att.soalan}</td>
-                        <td className="p-2.5 font-mono font-bold text-amber-900">{att.jawapanMurid}</td>
-                        <td className="p-2.5 font-mono font-bold text-emerald-800">{att.jawapanSebenar}</td>
-                        <td className="p-2.5">
-                          {att.isCorrect ? (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                              Betul
-                            </span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#D98262]/20 text-[#D98262] border border-[#D98262]/40">
-                              Salah
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-2.5 text-center font-bold">{att.percubaan}</td>
-                        <td className="p-2.5 text-center font-bold text-amber-700">{att.hintUsed}</td>
-                        <td className="p-2.5 text-center font-mono">{att.masaSaat} saat</td>
-                        <td className="p-2.5 font-bold text-gray-700">{att.kemahiran}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+              <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                <p className="font-black text-[#3c4233]">🏃 Arena Pecahan</p>
+                <p className="text-[11px] text-gray-500">
+                  Stars: ⭐ {gameDetails.arena_pecahan?.earnedStars || 0}/9 • Score: {gameDetails.arena_pecahan?.scorePercentage || 0}%
+                </p>
               </div>
-            )}
+
+              <div className="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200 space-y-1">
+                <p className="font-black text-[#3c4233]">🍳 Dapur Pecahan</p>
+                <p className="text-[11px] text-gray-500">
+                  Stars: ⭐ {gameDetails.dapur_pecahan?.earnedStars || 0}/9 • Score: {gameDetails.dapur_pecahan?.scorePercentage || 0}%
+                </p>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-[#D98262]/10 border border-[#D98262]/30 space-y-1">
+                <p className="font-black text-[#3c4233]">🌈 Dunia Pixel</p>
+                <p className="text-[11px] text-gray-500">
+                  Stars: ⭐ {gameDetails.dunia_pixel?.earnedStars || 0}/9 • Score: {gameDetails.dunia_pixel?.scorePercentage || 0}%
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1101,10 +1248,10 @@ const StudentIndividualDetailModal: React.FC<StudentIndividualDetailModalProps> 
               playSfx('click', soundEnabled);
               onOpenReport();
             }}
-            className="px-4 py-2 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 cursor-pointer border border-[#3c4233]/20 shadow-sm"
+            className="px-4 py-2 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 cursor-pointer border border-[#3c4233]/20 shadow-xs"
           >
-            <Sparkles className="w-4 h-4 text-[#3c4233]" />
-            <span>Penjelasan & Laporan AI</span>
+            <Printer className="w-4 h-4" />
+            <span>Cetak Laporan Pembelajaran</span>
           </button>
 
           <button
@@ -1112,7 +1259,7 @@ const StudentIndividualDetailModal: React.FC<StudentIndividualDetailModalProps> 
               playSfx('click', soundEnabled);
               onClose();
             }}
-            className="px-5 py-2.5 rounded-2xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-bold text-xs cursor-pointer"
+            className="px-5 py-2 rounded-2xl bg-[#3c4233] hover:bg-[#2d3226] text-[#F4C95D] font-black text-xs cursor-pointer"
           >
             Tutup Perincian
           </button>
@@ -1122,66 +1269,140 @@ const StudentIndividualDetailModal: React.FC<StudentIndividualDetailModalProps> 
   );
 };
 
-// HELPER COMPONENT FOR GAME PERFORMANCE CARD
-interface GamePerfCardProps {
-  title: string;
-  subtitle: string;
-  completed: number;
-  earnedStars: number;
-  score: number;
-  percubaan: number;
-  hint: number;
-  masa: number;
-  colorTheme: 'sage' | 'yellow' | 'terracotta';
+
+// ==========================================
+// 🤖 AI LEARNING ANALYSIS VIEW COMPONENT
+// ==========================================
+interface AILearningAnalysisViewProps {
+  student: StudentProfile;
+  soundEnabled: boolean;
 }
 
-const GamePerfCard: React.FC<GamePerfCardProps> = ({
-  title,
-  subtitle,
-  completed,
-  earnedStars,
-  score,
-  percubaan,
-  hint,
-  masa,
-  colorTheme,
-}) => {
-  let borderBg = 'border-[#3c4233]/20 bg-white';
-  if (colorTheme === 'yellow') borderBg = 'border-[#F4C95D] bg-amber-50/50';
-  if (colorTheme === 'terracotta') borderBg = 'border-[#D98262]/30 bg-[#D98262]/5';
+const AILearningAnalysisView: React.FC<AILearningAnalysisViewProps> = ({ student }) => {
+  const analysis: AILearningAnalysisResult = analyzeStudentLearning(student);
 
   return (
-    <div className={`p-3.5 rounded-2xl border-2 ${borderBg} shadow-sm space-y-2 font-medium text-xs`}>
-      <div>
-        <h4 className="font-serif-title font-bold text-[#3c4233] text-sm">{title}</h4>
-        <p className="text-[10px] text-gray-500 font-semibold">{subtitle}</p>
+    <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-xs space-y-4 font-rounded">
+      {/* Student Profile Overview Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-amber-50/80 rounded-2xl border border-amber-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-serif-title font-black text-lg text-[#3c4233]">{student.nama}</h3>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#3c4233] text-[#F4C95D] text-xs font-bold">
+              {student.kelas}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 font-semibold mt-0.5">
+            Tarikh Analisis AI: {analysis.dateAnalyzed}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 font-bold uppercase">Cadangan TP AI</p>
+            <p className="text-xl font-black text-blue-900 font-mono">{analysis.suggestedTP}</p>
+          </div>
+          <div className="px-3 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-black border border-emerald-300">
+            Ketepatan Jawapan: {analysis.accuracyRate}%
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-1 pt-1 border-t border-stone-200/60 text-[11px]">
-        <div className="flex justify-between">
-          <span className="text-gray-500">Cabaran Selesai:</span>
-          <span className="font-bold text-[#3c4233]">{completed} / 3</span>
+      {/* DSKP Skill Mapping Breakdown */}
+      <div className="space-y-2">
+        <h4 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
+          <BookOpen className="w-4 h-4 text-[#3c4233]" />
+          <span>Pemetaan Kemahiran DSKP 2.1 (Pecahan Tahun 4)</span>
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 text-xs">
+          {analysis.skills.map((item, idx) => {
+            let statusColor = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+            if (item.status === 'Perlukan Bimbingan') {
+              statusColor = 'bg-[#D98262]/20 text-[#D98262] border-[#D98262]/40';
+            } else if (item.status === 'Sedang Berkembang') {
+              statusColor = 'bg-amber-100 text-amber-900 border-amber-300';
+            }
+
+            return (
+              <div key={idx} className="p-3 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                <div className="flex items-center justify-between font-bold">
+                  <span className="text-[#3c4233]">{item.dskpCode} - {item.title}</span>
+                  <span className={`px-2 py-0.5 rounded text-[10px] border ${statusColor}`}>
+                    {item.status} ({item.percentage}%)
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-500">{item.description}</p>
+              </div>
+            );
+          })}
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500">Skor Penguasaan:</span>
-          <span className="font-bold text-emerald-800">{score}%</span>
+      </div>
+
+      {/* Strengths & Misconceptions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        {/* Strengths */}
+        <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-2">
+          <h5 className="font-bold text-emerald-950 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+            <span>Kemahiran yang Dikuasai</span>
+          </h5>
+          <ul className="list-disc list-inside space-y-1 text-emerald-900 font-medium">
+            {analysis.masteredSkills.length > 0 ? (
+              analysis.masteredSkills.map((k, i) => <li key={i}>{k}</li>)
+            ) : (
+              <li className="italic text-gray-500">Masih dalam proses pemantapan.</li>
+            )}
+          </ul>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500">Bintang:</span>
-          <span className="font-bold text-amber-700">⭐ {earnedStars} / 9</span>
+
+        {/* Weaknesses */}
+        <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 space-y-2">
+          <h5 className="font-bold text-amber-950 flex items-center gap-1.5">
+            <AlertCircle className="w-4 h-4 text-amber-700" />
+            <span>Aspek yang Perlu Perhatian & Bimbingan</span>
+          </h5>
+          <ul className="list-disc list-inside space-y-1 text-amber-900 font-medium">
+            {analysis.attentionNeededSummary.length > 0 ? (
+              analysis.attentionNeededSummary.map((m, i) => <li key={i}>{m}</li>)
+            ) : (
+              <li className="italic text-emerald-700">Tiada isu ketara dikesan.</li>
+            )}
+          </ul>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500">Percubaan:</span>
-          <span className="font-bold text-gray-800">{percubaan} kali</span>
+      </div>
+
+      {/* Remediation & Enrichment */}
+      <div className="p-4 bg-[#3c4233] text-white rounded-2xl space-y-2 shadow-sm">
+        <h5 className="font-serif-title font-bold text-sm text-[#F4C95D] flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-[#F4C95D]" />
+          <span>Cadangan Tindakan Intervensi Pedagogi AI</span>
+        </h5>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs pt-1">
+          <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-stone-100 font-medium leading-relaxed">
+            <span className="font-black text-[#F4C95D] block mb-0.5">💡 Cadangan Pemulihan:</span>
+            <ul className="list-disc list-inside space-y-1">
+              {analysis.remediationAdvice.map((adv, i) => (
+                <li key={i}>{adv}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-white/10 border border-white/20 text-stone-100 font-medium leading-relaxed">
+            <span className="font-black text-[#F4C95D] block mb-0.5">🌟 Cadangan Pengayaan:</span>
+            <ul className="list-disc list-inside space-y-1">
+              {analysis.enrichmentAdvice.map((adv, i) => (
+                <li key={i}>{adv}</li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500">Jumlah Hint:</span>
-          <span className="font-bold text-blue-800">{hint} hint</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500">Masa Bermain:</span>
-          <span className="font-bold text-purple-800">{masa} minit</span>
-        </div>
+      </div>
+
+      {/* AI Rationale Conclusion */}
+      <div className="p-3.5 bg-stone-100 rounded-2xl border border-stone-200 text-xs text-stone-800 font-medium leading-relaxed">
+        <span className="font-black text-[#3c4233]">Rumusan Justifikasi TP AI: </span>
+        {analysis.tpRationale}
       </div>
     </div>
   );

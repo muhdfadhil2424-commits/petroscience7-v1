@@ -27,6 +27,7 @@ import {
 import { playSfx, toggleDuniaPixelBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
 import { AlyaCharacter } from './AlyaCharacter';
+import { FormattedMathText } from './MathFraction';
 
 import bannerDuniaPixel from '../assets/images/banner_dunia_pixel_1785426808447.jpg';
 import mapDunia1Img from '../assets/images/map_dunia1_hutan_1785733906195.jpg';
@@ -1505,15 +1506,15 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                     <h3 className="font-black text-xl text-white">
                       {activeEncounterMonster.name}
                     </h3>
-                    <p className="text-sm text-[#FFD54A] font-bold">
-                      Keperluan: {activeEncounterMonster.questionBadge}
+                    <p className="text-sm text-[#FFD54A] font-bold flex items-center gap-1">
+                      Keperluan: <FormattedMathText text={activeEncounterMonster.questionBadge} size="sm" />
                     </p>
                   </div>
                 </div>
 
-                <p className="text-base sm:text-lg text-[#FFF8E8] bg-slate-950/90 p-4 rounded-2xl border-2 border-slate-800 leading-relaxed font-bold">
-                  "{activeEncounterMonster.questionText}"
-                </p>
+                <div className="text-base sm:text-lg text-[#FFF8E8] bg-slate-950/90 p-4 rounded-2xl border-2 border-slate-800 leading-relaxed font-bold">
+                  "<FormattedMathText text={activeEncounterMonster.questionText} size="lg" />"
+                </div>
               </div>
 
               {/* Visual Grid representation if available */}
@@ -1559,7 +1560,7 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                       }`}
                     >
                       <span className="text-xl">🟪</span>
-                      <span>{opt}</span>
+                      <FormattedMathText text={opt} size="lg" />
                     </button>
                   ))}
                 </div>
@@ -1574,7 +1575,7 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                       : 'bg-red-950/95 border-red-400 text-red-200'
                   }`}
                 >
-                  {feedbackMessage.text}
+                  <FormattedMathText text={feedbackMessage.text} size="sm" />
                 </div>
               )}
 

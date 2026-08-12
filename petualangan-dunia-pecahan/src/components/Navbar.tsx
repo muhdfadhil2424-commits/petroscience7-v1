@@ -15,6 +15,7 @@ interface NavbarProps {
   onOpenHowToPlay?: () => void;
   onOpenStudentProfile?: () => void;
   onOpenTeacherLogin?: () => void;
+  onOpenCertificate?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,6 +28,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenHowToPlay,
   onOpenStudentProfile,
   onOpenTeacherLogin,
+  onOpenCertificate,
 }) => {
   return (
     <header className="sticky top-0 z-40 w-full px-3 sm:px-6 py-2.5 bg-[#3c4233] text-white shadow-md border-b border-[#2d3226]">
@@ -113,7 +115,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>{completedChallenges} / 9 Cabaran</span>
           </motion.div>
 
-          {/* DSKP / How to Play Button */}
+          {/* Nota Pecahan / How to Play Button */}
           {onOpenHowToPlay && (
             <motion.button
               whileHover={{ scale: 1.03 }}
@@ -125,7 +127,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="hidden sm:flex items-center gap-1.5 bg-[#2d3226] hover:bg-[#23271e] text-white px-3 py-1.5 rounded-xl border border-[#4d5442] text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
             >
               <BookOpen className="w-4 h-4 text-amber-300" />
-              <span>Nota DSKP</span>
+              <span>Nota Pecahan</span>
+            </motion.button>
+          )}
+
+          {/* Sijil Pencapaian Button */}
+          {onOpenCertificate && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                playSfx('click', soundEnabled);
+                onOpenCertificate();
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-extrabold shadow-sm cursor-pointer transition-all ${
+                completedChallenges >= 9
+                  ? 'bg-gradient-to-r from-amber-500 to-[#D98262] text-white border border-amber-300 ring-2 ring-amber-400/40 animate-pulse'
+                  : 'bg-[#2d3226] hover:bg-[#23271e] text-amber-200 border border-[#4d5442]'
+              }`}
+              title={completedChallenges >= 9 ? 'Lihat Sijil Master Pecahan Anda!' : 'Selesaikan 9 Cabaran Untuk Sijil'}
+            >
+              {completedChallenges >= 9 ? (
+                <Trophy className="w-4 h-4 text-amber-200" />
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+              )}
+              <span>{completedChallenges >= 9 ? '🏆 Sijil' : '📜 Sijil'}</span>
             </motion.button>
           )}
 

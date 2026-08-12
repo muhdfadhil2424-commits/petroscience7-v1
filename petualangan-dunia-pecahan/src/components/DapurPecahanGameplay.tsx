@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
+import { FormattedMathText } from './MathFraction';
 
 // Assets
 import bannerDapur from '../assets/images/banner_dapur_pecahan_1785426792370.jpg';
@@ -1599,24 +1600,24 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                           {/* Markings */}
                           <div className="absolute inset-x-0 top-0 h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">
-                              4/4 (100%)
+                              <FormattedMathText text="4/4" size="xs" /> (100%)
                             </span>
                             <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded">Penuh</span>
                           </div>
                           <div className="absolute inset-x-0 top-[25%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">
-                              3/4 (75%)
+                              <FormattedMathText text="3/4" size="xs" /> (75%)
                             </span>
                           </div>
                           <div className="absolute inset-x-0 top-[50%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">
-                              2/4 (50%)
+                              <FormattedMathText text="2/4" size="xs" /> (50%)
                             </span>
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded">1/2</span>
+                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded"><FormattedMathText text="1/2" size="xs" /></span>
                           </div>
                           <div className="absolute inset-x-0 top-[75%] h-[25%] z-20 flex items-start justify-between px-2 pt-1">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300">
-                              1/4 (25%)
+                              <FormattedMathText text="1/4" size="xs" /> (25%)
                             </span>
                           </div>
 
@@ -1723,7 +1724,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                       : 'bg-[#FFF8E8] border-amber-300 text-[#4A3728]'
                   }`}
                 >
-                  {feedback.text}
+                  <FormattedMathText text={feedback.text} size="sm" />
                 </div>
               )}
 
@@ -1754,7 +1755,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                           }`}
                         >
                           <span>🥛</span>
-                          <span>{opt.label}</span>
+                          <FormattedMathText text={opt.label} size="lg" />
                         </motion.button>
                       );
                     })}
@@ -2100,7 +2101,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                       />
                     </div>
                     <span className="text-xs font-bold text-amber-950 bg-white px-3 py-1 rounded-full border border-amber-300 shadow-xs">
-                      Isi Mangkuk Gula: {bowlFillLevel}/4 ({bowlFillLevel === 3 ? '3/4 Penuh' : bowlFillLevel === 1 ? '1/4 Penuh' : 'Kosong'})
+                      Isi Mangkuk Gula: <FormattedMathText text={`${bowlFillLevel}/4 (${bowlFillLevel === 3 ? '3/4 Penuh' : bowlFillLevel === 1 ? '1/4 Penuh' : 'Kosong'})`} size="xs" />
                     </span>
                   </div>
                 </div>
@@ -2117,7 +2118,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                       : 'bg-[#FFF8E8] border-amber-300 text-[#4A3728]'
                   }`}
                 >
-                  {feedback.text}
+                  <FormattedMathText text={feedback.text} size="sm" />
                 </div>
               )}
             </div>
@@ -2202,22 +2203,22 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                           {/* 3/4 (75%) Line */}
                           <div className="absolute inset-x-0 top-[25%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              3/4 (75%)
+                              <FormattedMathText text="3/4" size="xs" /> (75%)
                             </span>
                           </div>
 
                           {/* 2/4 (50%) Line */}
                           <div className="absolute inset-x-0 top-[50%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              2/4 (50%)
+                              <FormattedMathText text="2/4" size="xs" /> (50%)
                             </span>
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded">1/2</span>
+                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded"><FormattedMathText text="1/2" size="xs" /></span>
                           </div>
 
                           {/* 1/4 (25%) Line */}
                           <div className="absolute inset-x-0 top-[75%] h-[25%] z-20 flex items-start justify-between px-2 pt-1">
                             <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              1/4 (25%)
+                              <FormattedMathText text="1/4" size="xs" /> (25%)
                             </span>
                           </div>
 
@@ -2339,7 +2340,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                       : 'bg-[#FFF8E8] border-amber-300 text-[#4A3728]'
                   }`}
                 >
-                  {feedback.text}
+                  <FormattedMathText text={feedback.text} size="sm" />
                 </div>
               )}
 
@@ -2369,7 +2370,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                         }`}
                       >
                         <span>🥛</span>
-                        <span>{opt.label}</span>
+                        <FormattedMathText text={opt.label} size="lg" />
                       </motion.button>
                     );
                   })}

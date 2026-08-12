@@ -19,6 +19,7 @@ import { DuniaPixelGameplay } from './components/DuniaPixelGameplay';
 import { StudentProfileModal } from './components/StudentProfileModal';
 import { TeacherLoginModal } from './components/TeacherLoginModal';
 import { TeacherDashboardModal } from './components/TeacherDashboardModal';
+import { CertificateModal } from './components/CertificateModal';
 import {
   getCurrentStudent,
   saveStudentProgress,
@@ -48,6 +49,81 @@ const DEFAULT_SETTINGS: GameSettings = {
   unlockAllWorlds: false,
 };
 
+export const TOTAL_CHALLENGES = 9;
+
+export function migrateProgressData(raw: any): UserProgress {
+  if (!raw || typeof raw !== 'object') {
+    return DEFAULT_PROGRESS;
+  }
+
+  let completedIds: string[] = Array.isArray(raw.completedChallengeIds) ? [...raw.completedChallengeIds] : [];
+  let cStars: Record<string, number> = typeof raw.challengeStars === 'object' && raw.challengeStars ? { ...raw.challengeStars } : {};
+
+  const worldStars = raw.worldStars || { arena: 0, dapur: 0, pixel: 0 };
+  const aStars = worldStars.arena || 0;
+  const dStars = worldStars.dapur || 0;
+  const pStars = worldStars.pixel || 0;
+
+  // Reconstruct missing challenge IDs from world stars or legacy completion count
+  if (completedIds.length === 0) {
+    if (aStars >= 3 || raw.completedChallenges >= 1) { if (!completedIds.includes('arena-1')) completedIds.push('arena-1'); cStars['arena-1'] = cStars['arena-1'] || Math.min(3, Math.max(1, aStars)); }
+    if (aStars >= 6 || raw.completedChallenges >= 2) { if (!completedIds.includes('arena-2')) completedIds.push('arena-2'); cStars['arena-2'] = cStars['arena-2'] || Math.min(3, Math.max(1, aStars - 3)); }
+    if (aStars >= 9 || raw.completedChallenges >= 3) { if (!completedIds.includes('arena-3')) completedIds.push('arena-3'); cStars['arena-3'] = cStars['arena-3'] || 3; }
+
+    if (dStars >= 3 || raw.completedChallenges >= 4) { if (!completedIds.includes('dapur-1')) completedIds.push('dapur-1'); cStars['dapur-1'] = cStars['dapur-1'] || Math.min(3, Math.max(1, dStars)); }
+    if (dStars >= 6 || raw.completedChallenges >= 5) { if (!completedIds.includes('dapur-2')) completedIds.push('dapur-2'); cStars['dapur-2'] = cStars['dapur-2'] || Math.min(3, Math.max(1, dStars - 3)); }
+    if (dStars >= 9 || raw.completedChallenges >= 6) { if (!completedIds.includes('dapur-3')) completedIds.push('dapur-3'); cStars['dapur-3'] = cStars['dapur-3'] || 3; }
+
+    if (pStars >= 3 || raw.completedChallenges >= 7) { if (!completedIds.includes('pixel-1')) completedIds.push('pixel-1'); cStars['pixel-1'] = cStars['pixel-1'] || Math.min(3, Math.max(1, pStars)); }
+    if (pStars >= 6 || raw.completedChallenges >= 8) { if (!completedIds.includes('pixel-2')) completedIds.push('pixel-2'); cStars['pixel-2'] = cStars['pixel-2'] || Math.min(3, Math.max(1, pStars - 3)); }
+    if (pStars >= 9 || raw.completedChallenges >= 9) { if (!completedIds.includes('pixel-3')) completedIds.push('pixel-3'); cStars['pixel-3'] = cStars['pixel-3'] || 3; }
+  }
+
+  // If raw indicates 9 challenges completed or certificate earned, enforce all 9 IDs
+  if (raw.completedChallenges >= TOTAL_CHALLENGES || raw.certificateEarned) {
+    const allNine = ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3', 'pixel-1', 'pixel-2', 'pixel-3'];
+    allNine.forEach((id) => {
+      if (!completedIds.includes(id)) {
+        completedIds.push(id);
+      }
+      if (!cStars[id]) {
+        cStars[id] = 3;
+      }
+    });
+  }
+
+  const uniqueCompletedIds = Array.from(new Set(completedIds));
+  const newCompletedCount = Math.min(TOTAL_CHALLENGES, uniqueCompletedIds.length);
+  const isCertificateEarned = newCompletedCount >= TOTAL_CHALLENGES || !!raw.certificateEarned;
+
+  const totalEarnedStars = Object.values(cStars).reduce((sum, v) => sum + (v || 0), 0) || raw.earnedStars || 0;
+
+  const unlockedWorlds: string[] = Array.isArray(raw.unlockedWorlds) ? [...raw.unlockedWorlds] : ['arena'];
+  if ((uniqueCompletedIds.some(id => id.startsWith('arena')) || aStars >= 1) && !unlockedWorlds.includes('dapur')) {
+    unlockedWorlds.push('dapur');
+  }
+  if ((uniqueCompletedIds.some(id => id.startsWith('dapur')) || dStars >= 1 || newCompletedCount >= 3) && !unlockedWorlds.includes('pixel')) {
+    unlockedWorlds.push('pixel');
+  }
+
+  return {
+    ...DEFAULT_PROGRESS,
+    ...raw,
+    completedChallenges: newCompletedCount,
+    completedChallengeIds: uniqueCompletedIds,
+    challengeStars: cStars,
+    earnedStars: totalEarnedStars,
+    unlockedWorlds,
+    worldStars: {
+      arena: (cStars['arena-1'] || 0) + (cStars['arena-2'] || 0) + (cStars['arena-3'] || 0) || worldStars.arena || 0,
+      dapur: (cStars['dapur-1'] || 0) + (cStars['dapur-2'] || 0) + (cStars['dapur-3'] || 0) || worldStars.dapur || 0,
+      pixel: (cStars['pixel-1'] || 0) + (cStars['pixel-2'] || 0) + (cStars['pixel-3'] || 0) || worldStars.pixel || 0,
+    },
+    certificateEarned: isCertificateEarned,
+    certificateDate: raw.certificateDate || (isCertificateEarned ? new Date().toISOString() : undefined),
+  };
+}
+
 export default function App() {
   const [currentView, setCurrentView] = useState<'hub' | 'pizza_pecahan' | 'arena_pecahan' | 'dapur_pecahan' | 'dunia_pixel'>('hub');
 
@@ -62,47 +138,15 @@ export default function App() {
     try {
       const activeStudent = getCurrentStudent();
       if (activeStudent && activeStudent.progress) {
-        return activeStudent.progress;
+        return migrateProgressData(activeStudent.progress);
       }
 
       const savedStr = localStorage.getItem(PROGRESS_STORAGE_KEY);
-      if (!savedStr) return DEFAULT_PROGRESS;
-      const parsed: UserProgress = JSON.parse(savedStr);
-
-      // Reconstruct completedChallengeIds & challengeStars if missing/empty
-      let completedIds = parsed.completedChallengeIds || [];
-      let cStars = parsed.challengeStars || {};
-
-      if (completedIds.length === 0) {
-        // Reconstruct from worldStars
-        const aStars = parsed.worldStars?.arena || 0;
-        const dStars = parsed.worldStars?.dapur || 0;
-        const pStars = parsed.worldStars?.pixel || 0;
-
-        if (aStars >= 3) { completedIds.push('arena-1'); cStars['arena-1'] = Math.min(3, aStars); }
-        if (aStars >= 6) { completedIds.push('arena-2'); cStars['arena-2'] = Math.min(3, aStars - 3); }
-        if (aStars >= 9) { completedIds.push('arena-3'); cStars['arena-3'] = 3; }
-
-        if (dStars >= 3) { completedIds.push('dapur-1'); cStars['dapur-1'] = Math.min(3, dStars); }
-        if (dStars >= 6) { completedIds.push('dapur-2'); cStars['dapur-2'] = Math.min(3, dStars - 3); }
-        if (dStars >= 9) { completedIds.push('dapur-3'); cStars['dapur-3'] = 3; }
-
-        if (pStars >= 3) { completedIds.push('pixel-1'); cStars['pixel-1'] = Math.min(3, pStars); }
-        if (pStars >= 6) { completedIds.push('pixel-2'); cStars['pixel-2'] = Math.min(3, pStars - 3); }
-        if (pStars >= 9) { completedIds.push('pixel-3'); cStars['pixel-3'] = 3; }
+      if (savedStr) {
+        const parsed = JSON.parse(savedStr);
+        return migrateProgressData(parsed);
       }
-
-      const totalCompleted = Math.min(9, completedIds.length);
-      const totalEarnedStars = Object.values(cStars).reduce((sum, val) => sum + val, 0) || parsed.earnedStars || 0;
-
-      return {
-        ...DEFAULT_PROGRESS,
-        ...parsed,
-        completedChallenges: totalCompleted,
-        earnedStars: totalEarnedStars,
-        completedChallengeIds: completedIds,
-        challengeStars: cStars,
-      };
+      return DEFAULT_PROGRESS;
     } catch {
       return DEFAULT_PROGRESS;
     }
@@ -121,6 +165,7 @@ export default function App() {
   const [isCaraBermainOpen, setIsCaraBermainOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGrandVictoryOpen, setIsGrandVictoryOpen] = useState(false);
+  const [isCertificateOpen, setIsCertificateOpen] = useState(false);
   const [lockedWorld, setLockedWorld] = useState<WorldInfo | null>(null);
   const [activeWorldPreview, setActiveWorldPreview] = useState<WorldInfo | null>(null);
 
@@ -148,7 +193,10 @@ export default function App() {
   const handleStudentStart = (student: StudentProfile) => {
     setCurrentStudentState(student);
     if (student.progress) {
-      setProgress(student.progress);
+      const migrated = migrateProgressData(student.progress);
+      setProgress(migrated);
+    } else {
+      setProgress(DEFAULT_PROGRESS);
     }
     setIsStudentProfileOpen(false);
   };
@@ -268,7 +316,10 @@ export default function App() {
         newBadges.push('Master Pecahan');
       }
 
-      if (newCompletedCount >= 9 && prev.completedChallenges < 9) {
+      const isCertEarned = newCompletedCount >= TOTAL_CHALLENGES || prev.certificateEarned;
+      const certDate = prev.certificateDate || (isCertEarned ? new Date().toISOString() : undefined);
+
+      if (newCompletedCount >= TOTAL_CHALLENGES && prev.completedChallenges < TOTAL_CHALLENGES) {
         triggerGrandVictory = true;
       }
 
@@ -281,6 +332,8 @@ export default function App() {
         completedChallengeIds: updatedCompletedIds,
         challengeStars: updatedChallengeStars,
         badges: newBadges,
+        certificateEarned: isCertEarned,
+        certificateDate: certDate,
       };
     });
 
@@ -398,6 +451,7 @@ export default function App() {
         onOpenHowToPlay={() => setIsCaraBermainOpen(true)}
         onOpenStudentProfile={() => setIsStudentProfileOpen(true)}
         onOpenTeacherLogin={() => setIsTeacherLoginOpen(true)}
+        onOpenCertificate={() => setIsCertificateOpen(true)}
       />
 
       {/* Main Container */}
@@ -485,6 +539,21 @@ export default function App() {
         earnedStars={progress.earnedStars}
         badges={progress.badges}
         onClose={() => setIsGrandVictoryOpen(false)}
+        onOpenCertificate={() => setIsCertificateOpen(true)}
+      />
+
+      {/* Certificate Modal */}
+      <CertificateModal
+        isOpen={isCertificateOpen}
+        student={currentStudent}
+        studentName={currentStudent?.nama || 'Aiman Hakim'}
+        studentClass={currentStudent?.kelas || '4 Asah'}
+        completedChallenges={progress.completedChallenges}
+        earnedStars={progress.earnedStars}
+        progressOverride={progress}
+        soundEnabled={settings.soundEnabled}
+        issueDate={progress.certificateDate}
+        onClose={() => setIsCertificateOpen(false)}
       />
 
       {/* Student Profile & Teacher Modals */}

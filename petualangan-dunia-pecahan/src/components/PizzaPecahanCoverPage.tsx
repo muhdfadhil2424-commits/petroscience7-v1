@@ -18,6 +18,7 @@ import {
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
 import { PizzaPecahanGameplay } from './PizzaPecahanGameplay';
+import { MathFraction, FormattedMathText } from './MathFraction';
 
 // Asset Imports
 import heroBg from '../assets/images/pizza_shop_hero_bg_1785465229798.jpg';
@@ -303,7 +304,9 @@ export const PizzaPecahanCoverPage: React.FC<PizzaPecahanCoverPageProps> = ({
                   className="absolute -top-4 -left-2 bg-white/95 p-2 rounded-2xl shadow-xl border-2 border-[#F4C95D] flex items-center gap-2 z-20"
                 >
                   <span className="text-2xl">🍕</span>
-                  <span className="font-rounded font-bold text-xs text-[#4A3728]">1/2 Pizza</span>
+                  <span className="font-rounded font-bold text-xs text-[#4A3728] flex items-center gap-1">
+                    <FormattedMathText text="1/2" size="xs" /> Pizza
+                  </span>
                 </motion.div>
 
                 {/* Floating Item 2: Cheese */}
@@ -453,7 +456,7 @@ export const PizzaPecahanCoverPage: React.FC<PizzaPecahanCoverPageProps> = ({
                 />
               </div>
               <div className="bg-white p-3.5 rounded-2xl border border-[#F6C7A8] shadow-sm relative text-sm sm:text-base font-rounded font-bold text-[#4A3728] flex-1">
-                <p>“Saya mahu <span className="text-[#D98262] font-black underline decoration-wavy">3/4</span> pizza keju!”</p>
+                <p className="flex items-center gap-1">“Saya mahu <span className="text-[#D98262] font-black inline-flex"><FormattedMathText text="3/4" size="md" /></span> pizza keju!”</p>
               </div>
             </div>
 
@@ -478,16 +481,16 @@ export const PizzaPecahanCoverPage: React.FC<PizzaPecahanCoverPageProps> = ({
                 </svg>
 
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="bg-[#4A3728]/90 text-amber-300 font-bold text-xs px-2 py-1 rounded-md shadow-md">
-                    3/4 Keju
+                  <span className="bg-[#4A3728]/90 text-amber-300 font-bold text-xs px-2 py-1 rounded-md shadow-md inline-flex items-center gap-1">
+                    <FormattedMathText text="3/4" size="xs" /> Keju
                   </span>
                 </div>
               </div>
 
               {/* Fraction Description Callout */}
               <div className="flex flex-col items-center sm:items-start text-center sm:text-left space-y-1.5">
-                <div className="text-4xl sm:text-5xl font-serif-title font-black text-amber-300 tracking-wider">
-                  3 / 4
+                <div className="text-amber-300">
+                  <MathFraction num={3} den={4} size="2xl" />
                 </div>
                 <div className="bg-[#b37446] text-white text-xs sm:text-sm font-bold px-3 py-1 rounded-xl shadow-sm">
                   3 daripada 4 bahagian
