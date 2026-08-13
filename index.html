@@ -169,6 +169,7 @@
             align-items: center;
             gap: 12px;
             margin-bottom: 10px;
+            text-transform: uppercase;
         }
 
         #bahan1 .desc {
@@ -297,7 +298,6 @@
         .fill-sad { background: #7c3aed; }
         .fill-sleepy { background: #2563eb; }
 
-        /* REKABENTUK MODAL POP-UP ZON CERIA */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -352,7 +352,6 @@
             transform: scale(1.02);
         }
 
-        /* BAHAGIAN ZON CERIA CONTAINER (DIPBESARKAN) */
         .zon-ceria-card {
             margin-top: 30px;
             padding: 30px;
@@ -480,8 +479,8 @@
 </head>
 <body>
 
-    <!-- AUDIO PLAYER LAGU GOYANG DUMANG (Tersembunyi) -->
-    <audio id="audioGoyangDumang" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto" loop></audio>
+    <!-- AUDIO MP3 LOKAL GOYANG DUMANG -->
+    <audio id="audioGoyangDumang" src="goyang-dumang.mp3" preload="auto" loop></audio>
 
     <div class="container">
         <header>
@@ -555,7 +554,7 @@
                     </div>
                 </div>
 
-                <!-- Container Paparan Zon Ceria (DIPBESARKAN) -->
+                <!-- Container Paparan Zon Ceria -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA</h3>
                   <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
@@ -566,7 +565,7 @@
 
             </div>
 
-            <!-- BAHAN 2 (Dapur Pecahan Chef Alya) -->
+            <!-- BAHAN 2 -->
             <div id="bahan2" class="module-content">
                 <div id="m2-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #94a3b8;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px; color: #f43f5e;"></i>
@@ -576,7 +575,7 @@
                 <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
             </div>
 
-            <!-- BAHAN 3 (Petualangan Dunia Pecahan) -->
+            <!-- BAHAN 3 -->
             <div id="bahan3" class="module-content">
                 <div id="m3-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #f59e0b;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px;"></i>
@@ -674,7 +673,7 @@
             isUnlocked = true;
 
             if (timerZonCeria) clearTimeout(timerZonCeria);
-            hentiKameraEmosi(); // Auto tutup kamera emosi bila terbuka
+            hentiKameraEmosi();
 
             document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
             document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
@@ -769,7 +768,6 @@
                 btnText.innerText = "Hentikan Kamera";
                 isCameraOn = true;
 
-                // MULAKAN TIMER 12 SAAT
                 mulaSemakTimerEmosi();
 
             } catch (err) {
@@ -848,23 +846,18 @@
             }
         }
 
-        // --- LOGIK ZON CERIA & TIMER 12 SAAT ---
         function mulaSemakTimerEmosi() {
             if (timerZonCeria) clearTimeout(timerZonCeria);
 
-            // Dinaikkan kepada 12 saat (12000 milisaat)
             timerZonCeria = setTimeout(() => {
                 if (currentScorePercent < 70 && !isUnlocked) {
-                    // Auto tutup kamera emosi apabila pop-up keluar
                     hentiKameraEmosi();
                     
-                    // Mainkan lagu Goyang Dumang
                     const audio = document.getElementById("audioGoyangDumang");
                     if(audio) {
-                        audio.play().catch(e => console.log("Audio play blocked by browser policy"));
+                        audio.play().catch(e => console.log("Audio play error/blocked"));
                     }
 
-                    // Paparkan modal pop-up Zon Ceria
                     document.getElementById("zonCeriaModal").style.display = "flex";
                 }
             }, 12000);
@@ -876,7 +869,6 @@
             initZonCeriaPose();
         }
 
-        // Model Teachable Machine Pose
         const POSE_URL = "https://teachablemachine.withgoogle.com/models/8_OFVuL_i/";
         let poseModel, poseWebcam, poseCtx, poseLabelContainer, poseMaxPredictions;
 
@@ -887,7 +879,7 @@
             poseModel = await tmPose.load(modelURL, metadataURL);
             poseMaxPredictions = poseModel.getTotalClasses();
 
-            const size = 350; // Saiz kamera Zon Ceria dibesarkan
+            const size = 350; 
             const flip = true; 
             poseWebcam = new tmPose.Webcam(size, size, flip); 
             await poseWebcam.setup(); 
@@ -938,7 +930,6 @@
             }
         }
 
-        // FUNGSI AUTOMATIK PELARASAN KETINGGIAN IFRAME
         function resizeIframe(obj) {
             try {
                 if (obj && obj.contentWindow && obj.contentWindow.document.body) {
