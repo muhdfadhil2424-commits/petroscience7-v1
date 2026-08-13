@@ -8,6 +8,7 @@ import {
   generateNextStudentId,
   setCurrentStudent,
   startNewGameSession,
+  ALL_CLASSES,
 } from '../utils/studentSessionManager';
 import { playSfx } from '../utils/audio';
 import { AlyaCharacter } from './AlyaCharacter';
@@ -19,7 +20,7 @@ interface StudentProfileModalProps {
   onOpenTeacherLogin: () => void;
 }
 
-const PRESET_CLASSES = ['3 Bestari', '3 Cerdik', '3 Pintar', '4 Bestari', '4 Cemerlang', '4 Gemilang'];
+const PRESET_CLASSES = ALL_CLASSES;
 
 export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   isOpen,
@@ -28,7 +29,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   onOpenTeacherLogin,
 }) => {
   const [nama, setNama] = useState('');
-  const [kelas, setKelas] = useState('4 Bestari');
+  const [kelas, setKelas] = useState('3 Asah');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSelectExistingMode, setIsSelectExistingMode] = useState(false);
   const [selectedExistingStudentId, setSelectedExistingStudentId] = useState('');

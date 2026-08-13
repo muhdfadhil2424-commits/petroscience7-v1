@@ -44,7 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-serif-title font-bold text-base sm:text-lg md:text-xl text-white tracking-wide leading-tight">
-                Petualangan Dunia Pecahan
+                Kembara Dunia Pecahan
               </span>
               <span className="bg-[#b37446] text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-md shadow-sm">
                 Tahun 3

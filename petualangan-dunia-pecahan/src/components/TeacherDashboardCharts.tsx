@@ -488,3 +488,134 @@ export const AllClassesComparisonChart: React.FC<AllClassesComparisonChartProps>
     </div>
   );
 };
+
+
+// ==========================================
+// 🏆 6. GRAF BAR — TAHAP PENCAPAIAN KATEGORI
+// ==========================================
+export interface MasteryCategoryItem {
+  category: string;
+  count: number;
+  total: number;
+  color: string;
+}
+
+export const MasteryCategoryBarChart: React.FC<{ items: MasteryCategoryItem[] }> = ({ items }) => {
+  return (
+    <div className="space-y-3 font-rounded">
+      {items.map((item, idx) => {
+        const pct = item.total > 0 ? Math.round((item.count / item.total) * 100) : 0;
+        return (
+          <div key={idx} className="space-y-1">
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-[#3c4233] font-black">{item.category}</span>
+              <span className="text-gray-600 font-mono text-[11px]">
+                {item.count} orang ({pct}%)
+              </span>
+            </div>
+            <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden border border-stone-200 p-0.5">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.5, delay: idx * 0.08 }}
+                className={`h-full rounded-full ${item.color}`}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
+// ==========================================
+// 🎮 7. GRAF BAR — PURATA PENCAPAIAN SETIAP PERMAINAN
+// ==========================================
+export interface GameAverageItem {
+  gameName: string;
+  avgScorePct: number;
+  icon: string;
+}
+
+export const GameAverageBarChart: React.FC<{ games: GameAverageItem[] }> = ({ games }) => {
+  return (
+    <div className="space-y-3 font-rounded">
+      {games.map((g, idx) => (
+        <div key={idx} className="space-y-1">
+          <div className="flex items-center justify-between text-xs font-bold">
+            <span className="text-[#3c4233] font-black flex items-center gap-1.5">
+              <span>{g.icon}</span>
+              <span>{g.gameName}</span>
+            </span>
+            <span className="font-mono text-xs font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+              {g.avgScorePct}%
+            </span>
+          </div>
+          <div className="w-full h-3.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200 p-0.5">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${g.avgScorePct}%` }}
+              transition={{ duration: 0.6, delay: idx * 0.1 }}
+              className="h-full rounded-full bg-[#3c4233]"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
+// ==========================================
+// ⭐ 8. GRAF BAR — JUMLAH BINTANG MURID
+// ==========================================
+export interface StudentStarItem {
+  id: string;
+  name: string;
+  stars: number;
+  maxStars: number;
+  scorePct: number;
+}
+
+export const StudentStarsBarChart: React.FC<{
+  students: StudentStarItem[];
+  onSelectStudent?: (id: string) => void;
+}> = ({ students, onSelectStudent }) => {
+  if (!students || students.length === 0) return null;
+
+  return (
+    <div className="space-y-2 font-rounded max-h-[320px] overflow-y-auto pr-1">
+      {students.map((st, idx) => {
+        const pct = Math.round((st.stars / st.maxStars) * 100);
+        return (
+          <div
+            key={st.id}
+            onClick={() => onSelectStudent && onSelectStudent(st.id)}
+            className="p-2 rounded-xl bg-white hover:bg-amber-50 border border-stone-200 transition-all cursor-pointer space-y-1 shadow-2xs group"
+          >
+            <div className="flex items-center justify-between text-xs font-bold">
+              <span className="text-[#3c4233] font-black group-hover:text-amber-800 transition-colors">
+                {st.name}
+              </span>
+              <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                <span className="text-amber-800 font-extrabold flex items-center gap-0.5">
+                  ⭐ {st.stars} / {st.maxStars}
+                </span>
+                <span className="text-gray-500 font-bold">({st.scorePct}%)</span>
+              </div>
+            </div>
+            <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.5, delay: idx * 0.02 }}
+                className="h-full rounded-full bg-amber-500"
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};

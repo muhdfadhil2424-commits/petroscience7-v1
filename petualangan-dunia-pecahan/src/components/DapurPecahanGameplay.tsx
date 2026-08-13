@@ -2506,7 +2506,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                       }}
                       className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-rounded font-extrabold text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer border-b-4 border-emerald-800"
                     >
-                      <span>➡️ TERUSKAN PETUALANGAN</span>
+                      <span>➡️ TERUSKAN KEMBARA</span>
                     </button>
                   </div>
                 </>

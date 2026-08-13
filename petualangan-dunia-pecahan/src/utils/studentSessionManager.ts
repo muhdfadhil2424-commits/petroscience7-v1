@@ -1,10 +1,12 @@
 import { StudentProfile, GameSession, TeacherAuth, UserProgress, AttemptRecord } from '../types';
+import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
+import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
 
-const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v3';
-const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v3';
-const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v3';
-const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v3';
-const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v3';
+const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v6';
+const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v6';
+const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v6';
+const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v6';
+const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v6';
 
 // Helper to calculate Tahap Penguasaan (TP1 - TP6) based on stars & completed challenges
 export function calculateStudentTP(stars: number, completed: number): string {
@@ -16,7 +18,11 @@ export function calculateStudentTP(stars: number, completed: number): string {
 }
 
 // Helper to calculate Status (Menguasai, Sedang Berkembang, Perlukan Bimbingan)
-export function calculateStudentStatus(tp: string): 'Menguasai' | 'Sedang Berkembang' | 'Perlukan Bimbingan' {
+export function calculateStudentStatus(tp: string, completed?: number): 'Menguasai' | 'Sedang Berkembang' | 'Perlukan Bimbingan' {
+  if (completed !== undefined) {
+    if (completed >= 9) return 'Menguasai';
+    if (completed > 0) return 'Sedang Berkembang';
+  }
   if (tp === 'TP6' || tp === 'TP5' || tp === 'TP4') return 'Menguasai';
   if (tp === 'TP3') return 'Sedang Berkembang';
   return 'Perlukan Bimbingan';
@@ -41,6 +47,8 @@ const DEFAULT_USER_PROGRESS: UserProgress = {
 };
 
 export const ALL_CLASSES = [
+  '3 Asah',
+  '3 Berkelah',
   '4 Asah',
   '4 Berkelah',
   '5 Asah',
@@ -52,6 +60,8 @@ export const ALL_CLASSES = [
 
 // INITIAL SEED DATA FOR PROTOTYPE DEMO
 const DEMO_STUDENTS: StudentProfile[] = [
+  ...CLASS_3_ASAH_STUDENTS,
+  ...CLASS_3_BERKELAH_STUDENTS,
   // 4 Asah
   {
     id: 'MURID-001',
@@ -455,10 +465,10 @@ export function initializeStorageWithSeed(): void {
       localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
     } else {
-      // Check if existing data lacks any of the standard 7 classes, if so refresh seed
+      // Check if existing data lacks 3 Asah (must have 40 students)
       const parsed: StudentProfile[] = JSON.parse(existing);
-      const hasStandardClass = parsed.some((s) => ALL_CLASSES.includes(s.kelas));
-      if (!hasStandardClass) {
+      const class3Asah = parsed.filter((s) => s.kelas === '3 Asah');
+      if (class3Asah.length < 40) {
         localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
         localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
       }

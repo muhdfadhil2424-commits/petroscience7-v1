@@ -68,7 +68,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
               {/* Main Heading */}
               <h1 className="font-serif-title font-bold text-3xl sm:text-4xl md:text-5xl lg:text-5xl text-amber-100 tracking-tight leading-tight mb-3">
-                Selamat Datang ke Petualangan Dunia Pecahan!
+                Selamat Datang ke Kembara Dunia Pecahan!
               </h1>
 
               {/* Description */}

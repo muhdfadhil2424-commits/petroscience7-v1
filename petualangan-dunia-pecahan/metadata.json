@@ -1,5 +1,5 @@
 {
-  "name": "Petualangan Dunia Pecahan",
+  "name": "Kembara Dunia Pecahan",
   "description": "Muka depan interaktif permainan Matematik Tahun 3 bertemakan Pecahan dengan 3 dunia pengembaraan: Arena, Dapur, dan Dunia Pixel.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -172,7 +172,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <div className="text-center pt-2 border-t border-gray-100">
             <span className="text-xs font-rounded font-bold text-gray-400">
-              Petualangan Dunia Pecahan v1.0 • Tahun 3
+              Kembara Dunia Pecahan v1.0 • Tahun 3
             </span>
           </div>
         </motion.div>
