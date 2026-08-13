@@ -10,9 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Teachable Machine Pose Library -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    
+    <!-- TensorFlow & Teachable Machine Libraries (Image + Pose) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+
     <style>
         :root {
             --bg-dark: #0f1423;
@@ -31,7 +34,7 @@
             color: var(--text-main);
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
-            overflow-x: hidden; /* Mengelakkan scrollbar mendatar */
+            overflow-x: hidden;
         }
 
         body {
@@ -230,15 +233,14 @@
             text-align: center;
         }
 
-        /* REKABENTUK IFRAME TANPA SCROLLBAR KEDUA */
         .iframe-container {
             width: 100%;
-            height: 100vh; /* Ketinggian asas, akan dilaraskan oleh JavaScript */
+            height: 100vh;
             border: none;
             border-radius: 16px;
             background: transparent;
             display: block;
-            overflow: hidden; /* Menghapuskan scrollbar dalaman */
+            overflow: hidden;
         }
 
         .emotion-bar-container {
@@ -294,6 +296,79 @@
         .fill-neutral { background: #e11d48; }
         .fill-sad { background: #7c3aed; }
         .fill-sleepy { background: #2563eb; }
+
+        /* REKABENTUK MODAL POP-UP ZON CERIA */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #171d30;
+            border: 2px solid #e5a93c;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal-card h3 {
+            color: #f59e0b;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .modal-card p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .btn-modal {
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn-modal:hover {
+            transform: scale(1.02);
+        }
+
+        /* BAHAGIAN ZON CERIA CONTAINER */
+        .zon-ceria-card {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(15, 20, 35, 0.8);
+            border: 1px solid #e5a93c;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .zon-ceria-card h3 {
+            color: #e5a93c;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.4rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
 
         .floating-robot-widget {
             position: fixed;
@@ -476,6 +551,16 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Container Paparan Zon Ceria (Teachable Machine Pose) -->
+                <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
+                  <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA</h3>
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                    <canvas id="canvas" style="border: 2px solid #e5a93c; border-radius: 12px; background: #000;"></canvas>
+                    <div id="label-container-pose" style="text-align: left; font-family: monospace; font-size: 0.9rem; background: #171d30; padding: 12px; border-radius: 10px; width: 100%; max-width: 280px; color: #fff;"></div>
+                  </div>
+                </div>
+
             </div>
 
             <!-- BAHAN 2 (Dapur Pecahan Chef Alya) -->
@@ -495,9 +580,21 @@
                     <h3>Modul Terkunci</h3>
                     <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 70% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
                 </div>
-<iframe id="m3-iframe" src="https://petualangan-dunia-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>            </div>
+                <iframe id="m3-iframe" src="https://petualangan-dunia-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
+            </div>
 
         </div>
+    </div>
+
+    <!-- Pop-up Modal Ke Zon Ceria -->
+    <div id="zonCeriaModal" style="display: none;" class="modal-overlay">
+      <div class="modal-card">
+        <h3>Mood Anda Belum Mencapai 70%!</h3>
+        <p>Mari ceriakan diri anda sebentar di Zon Ceria sebelum meneruskan.</p>
+        <button onclick="bukaZonCeria()" class="btn-modal">
+          Ke Zon Ceria
+        </button>
+      </div>
     </div>
 
     <!-- FLOATING ROBOT WIDGET -->
@@ -533,29 +630,6 @@
         </div>
     </div>
 
-    <!-- TENSORFLOW & TEACHABLE MACHINE LIBRARIES (IMAGE + POSE) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
-<!-- Pop-up Modal Ke Zon Ceria -->
-<div id="zonCeriaModal" style="display: none;" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-  <div class="bg-gray-800 text-white p-6 rounded-2xl max-w-md w-full text-center border border-gray-700 shadow-2xl">
-    <h3 class="text-2xl font-bold text-yellow-400 mb-2">Mood Anda Belum Mencapai 70%!</h3>
-    <p class="text-gray-300 mb-6">Mari ceriakan diri anda sebentar di Zon Ceria sebelum meneruskan.</p>
-    <button onclick="bukaZonCeria()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-xl w-full transition shadow-lg">
-      Ke Zon Ceria
-    </button>
-  </div>
-</div>
-
-<!-- Container Paparan Zon Ceria (Teachable Machine Pose) -->
-<div id="zonCeriaSection" style="display: none;" class="mt-6 p-6 bg-gray-900 rounded-2xl border border-yellow-500/30 text-center">
-  <h3 class="text-xl font-bold text-yellow-400 mb-4">ZON CERIA</h3>
-  <div class="flex flex-col items-center gap-4">
-    <canvas id="canvas" class="border-2 border-gray-700 rounded-lg bg-black"></canvas>
-    <div id="label-container" class="text-left font-mono text-sm bg-gray-800 p-3 rounded-lg w-full max-w-xs text-white"></div>
-  </div>
-</div>
     <script>
         const URL = "https://teachablemachine.withgoogle.com/models/Zcg9co-dz/";
 
@@ -563,6 +637,9 @@
         let isCameraOn = false;
         let isUnlocked = false;
         let currentDialog = "Hai semua! Saya EduBot! Tekan butang Mula Pengimbas Kamera dan tunjukkan emosi gembira/neutral melebihi 70% untuk membuka semua modul!";
+
+        let timerZonCeria = null;
+        let currentScorePercent = 0;
 
         function switchTab(tabIndex) {
             if (!isUnlocked && tabIndex !== 1) {
@@ -592,6 +669,8 @@
         function unlockAllModules() {
             if (isUnlocked) return;
             isUnlocked = true;
+
+            if (timerZonCeria) clearTimeout(timerZonCeria);
 
             document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
             document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
@@ -678,12 +757,16 @@
                     btnText.innerText = "Hentikan Kamera";
                     isCameraOn = true;
 
+                    // MULAKAN TIMER 7 SAAT
+                    mulaSemakTimerEmosi();
+
                 } catch (err) {
                     alert("Gagal memuatkan kamera/model. Sila pastikan kebenaran kamera diberikan.");
                     btnText.innerText = "Mula Pengimbas Kamera";
                 }
             } else {
                 if (webcam && webcam.stop) await webcam.stop();
+                if (timerZonCeria) clearTimeout(timerZonCeria);
 
                 webcamContainer.innerHTML = "";
                 placeholder.style.display = "block";
@@ -737,8 +820,89 @@
                 }
             }
 
-            if ((happyVal >= 70 || neutralVal >= 70) && !isUnlocked) {
+            // Simpan skor tertinggi antara Happy atau Neutral untuk semakan timer
+            currentScorePercent = Math.max(happyVal, neutralVal);
+
+            if (currentScorePercent >= 70 && !isUnlocked) {
                 unlockAllModules();
+            }
+        }
+
+        // --- LOGIK ZON CERIA & TIMER 7 SAAT ---
+        function mulaSemakTimerEmosi() {
+            if (timerZonCeria) clearTimeout(timerZonCeria);
+
+            timerZonCeria = setTimeout(() => {
+                // Jika emosi masih di bawah 70% dan modul belum terbuka selepas 7 saat
+                if (currentScorePercent < 70 && !isUnlocked) {
+                    document.getElementById("zonCeriaModal").style.display = "flex";
+                }
+            }, 7000);
+        }
+
+        function bukaZonCeria() {
+            document.getElementById("zonCeriaModal").style.display = "none";
+            document.getElementById("zonCeriaSection").style.display = "block";
+            initZonCeriaPose();
+        }
+
+        // Model Teachable Machine Pose
+        const POSE_URL = "https://teachablemachine.withgoogle.com/models/8_OFVuL_i/";
+        let poseModel, poseWebcam, poseCtx, poseLabelContainer, poseMaxPredictions;
+
+        async function initZonCeriaPose() {
+            const modelURL = POSE_URL + "model.json";
+            const metadataURL = POSE_URL + "metadata.json";
+
+            poseModel = await tmPose.load(modelURL, metadataURL);
+            poseMaxPredictions = poseModel.getTotalClasses();
+
+            const size = 220;
+            const flip = true; 
+            poseWebcam = new tmPose.Webcam(size, size, flip); 
+            await poseWebcam.setup(); 
+            await poseWebcam.play();
+            window.requestAnimationFrame(loopZonCeria);
+
+            const canvas = document.getElementById("canvas");
+            canvas.width = size; 
+            canvas.height = size;
+            poseCtx = canvas.getContext("2d");
+            
+            poseLabelContainer = document.getElementById("label-container-pose");
+            poseLabelContainer.innerHTML = ""; 
+            for (let i = 0; i < poseMaxPredictions; i++) { 
+                poseLabelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loopZonCeria() {
+            poseWebcam.update(); 
+            await predictZonCeria();
+            window.requestAnimationFrame(loopZonCeria);
+        }
+
+        async function predictZonCeria() {
+            const { pose, posenetOutput } = await poseModel.estimatePose(poseWebcam.canvas);
+            const prediction = await poseModel.predict(posenetOutput);
+
+            for (let i = 0; i < poseMaxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(0) + "%";
+                if (poseLabelContainer.childNodes[i]) {
+                    poseLabelContainer.childNodes[i].innerHTML = classPrediction;
+                }
+            }
+            drawPoseZonCeria(pose);
+        }
+
+        function drawPoseZonCeria(pose) {
+            if (poseWebcam.canvas) {
+                poseCtx.drawImage(poseWebcam.canvas, 0, 0);
+                if (pose) {
+                    const minPartConfidence = 0.5;
+                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, poseCtx);
+                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, poseCtx);
+                }
             }
         }
 
@@ -769,7 +933,6 @@
             resizeIframe(this);
         });
 
-        // Selang masa untuk memastikan saiz dilaraskan jika terdapat animasi kandungan dalam iframe
         setInterval(() => {
             if (isUnlocked) {
                 const activeM2 = document.getElementById('m2-iframe');
@@ -782,87 +945,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => { speakText(currentDialog); }, 800);
         });
-        // --- LOGIK ZON CERIA & TIMER 7 SAAT ---
-let timerZonCeria = null;
-let currentScorePercent = 0; // Mengambil bacaan emosi dari pengimbas kamera
-
-// Panggil fungsi ini apabila kamera pengecaman emosi mula mengimbas
-function mulaSemakTimerEmosi() {
-  if (timerZonCeria) clearTimeout(timerZonCeria);
-
-  // Tetapkan pemasa 7 saat (7000ms)
-  timerZonCeria = setTimeout(() => {
-    // Jika skor emosi kurang dari 70% selepas 7 saat
-    if (currentScorePercent < 70) {
-      document.getElementById("zonCeriaModal").style.display = "flex";
-    }
-  }, 7000);
-}
-
-// Apabila butang "Ke Zon Ceria" ditekan pada pop-up
-function bukaZonCeria() {
-  document.getElementById("zonCeriaModal").style.display = "none";
-  document.getElementById("zonCeriaSection").style.display = "block";
-  initZonCeriaPose();
-}
-
-// Model Teachable Machine Pose
-const POSE_URL = "https://teachablemachine.withgoogle.com/models/8_OFVuL_i/";
-let poseModel, poseWebcam, poseCtx, poseLabelContainer, poseMaxPredictions;
-
-async function initZonCeriaPose() {
-    const modelURL = POSE_URL + "model.json";
-    const metadataURL = POSE_URL + "metadata.json";
-
-    poseModel = await tmPose.load(modelURL, metadataURL);
-    poseMaxPredictions = poseModel.getTotalClasses();
-
-    const size = 200;
-    const flip = true; 
-    poseWebcam = new tmPose.Webcam(size, size, flip); 
-    await poseWebcam.setup(); 
-    await poseWebcam.play();
-    window.requestAnimationFrame(loopZonCeria);
-
-    const canvas = document.getElementById("canvas");
-    canvas.width = size; canvas.height = size;
-    poseCtx = canvas.getContext("2d");
-    poseLabelContainer = document.getElementById("label-container");
-    poseLabelContainer.innerHTML = ""; 
-    for (let i = 0; i < poseMaxPredictions; i++) { 
-        poseLabelContainer.appendChild(document.createElement("div"));
-    }
-}
-
-async function loopZonCeria(timestamp) {
-    poseWebcam.update(); 
-    await predictZonCeria();
-    window.requestAnimationFrame(loopZonCeria);
-}
-
-async function predictZonCeria() {
-    const { pose, posenetOutput } = await poseModel.estimatePose(poseWebcam.canvas);
-    const prediction = await poseModel.predict(posenetOutput);
-
-    for (let i = 0; i < poseMaxPredictions; i++) {
-        const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-        if (poseLabelContainer.childNodes[i]) {
-            poseLabelContainer.childNodes[i].innerHTML = classPrediction;
-        }
-    }
-    drawPoseZonCeria(pose);
-}
-
-function drawPoseZonCeria(pose) {
-    if (poseWebcam.canvas) {
-        poseCtx.drawImage(poseWebcam.canvas, 0, 0);
-        if (pose) {
-            const minPartConfidence = 0.5;
-            tmPose.drawKeypoints(pose.keypoints, minPartConfidence, poseCtx);
-            tmPose.drawSkeleton(pose.keypoints, minPartConfidence, poseCtx);
-        }
-    }
-}
     </script>
 </body>
 </html>
