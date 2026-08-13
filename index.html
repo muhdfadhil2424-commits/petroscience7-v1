@@ -42,6 +42,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
 
         /* LATAR BELAKANG BERCORAK POLKA-DOT */
@@ -52,6 +53,38 @@
             padding: 20px 25px 50px 25px;
         }
 
+        /* EMOJI DEKORASI LATAR BELAKANG (RANDOM & FLOATING) */
+        .bg-emoji-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-emoji {
+            position: absolute;
+            user-select: none;
+            opacity: 0.22;
+            animation: floatRandom 6s ease-in-out infinite alternate;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+        }
+
+        @keyframes floatRandom {
+            0% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+            }
+            50% {
+                transform: translateY(-15px) rotate(8deg) scale(1.05);
+            }
+            100% {
+                transform: translateY(12px) rotate(-8deg) scale(0.95);
+            }
+        }
+
         .container {
             width: 100%;
             max-width: 1280px;
@@ -59,24 +92,26 @@
             display: flex;
             flex-direction: column;
             gap: 22px;
+            position: relative;
+            z-index: 1;
         }
 
-        /* HERO BANNER KEMAS SEPERTI RUJUKAN 1 */
+        /* HERO BANNER - DIBUANG DARI MASKOT CHEF ALYA */
         .hero-banner {
             background: #2d3528;
             border-radius: 28px;
-            padding: 38px 45px;
+            padding: 40px 48px;
             color: var(--text-light);
             box-shadow: 0 12px 30px rgba(45, 53, 40, 0.12);
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
         }
 
         .hero-content {
-            max-width: 680px;
+            max-width: 850px;
             z-index: 2;
         }
 
@@ -105,49 +140,10 @@
 
         .hero-banner p {
             color: #dbe4d8;
-            font-size: 1rem;
+            font-size: 1.05rem;
             margin: 0;
             line-height: 1.6;
             font-weight: 500;
-        }
-
-        .mascot-card {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            z-index: 2;
-        }
-
-        .mascot-avatar {
-            font-size: 2.2rem;
-            background: #ffffff;
-            width: 52px;
-            height: 52px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .mascot-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .mascot-title {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 1.05rem;
-            color: var(--accent-gold);
-            font-weight: 600;
-        }
-
-        .mascot-sub {
-            font-size: 0.78rem;
-            color: #dbe4d8;
         }
 
         /* TABS STYLING */
@@ -443,9 +439,7 @@
             transform: scale(1.03);
         }
 
-        /* ------------------------------------------------------------- */
-        /* ZON CERIA POSE SECTION (DENGAN REKA BENTUK GRAFIK CERIA & KANAK-KANAK) */
-        /* ------------------------------------------------------------- */
+        /* ZON CERIA POSE SECTION */
         .zon-ceria-card {
             margin-top: 35px;
             padding: 40px 30px;
@@ -459,7 +453,6 @@
             overflow: hidden;
         }
 
-        /* Dekorasikan Zon Ceria dengan Elemen Bintang Bercahaya / Konfeti */
         .zon-ceria-card::before {
             content: "🎈 🎈";
             position: absolute;
@@ -556,7 +549,6 @@
             background: var(--accent-green);
         }
 
-        /* SUSUNAN UTAMA ZON CERIA DENGAN ILUSTRASI RUJUKAN GAMBAR 3 */
         .zon-ceria-layout {
             display: flex;
             align-items: center;
@@ -568,7 +560,6 @@
             z-index: 2;
         }
 
-        /* Ilustrasi Karakter Sisi (Mengaitkan Tema Belon & Kanak-Kanak Ceria) */
         .side-illustration {
             flex: 1;
             display: flex;
@@ -581,14 +572,6 @@
             padding: 20px;
             max-width: 220px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-        }
-
-        .side-illustration img {
-            width: 100%;
-            max-width: 160px;
-            height: auto;
-            border-radius: 16px;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
         }
 
         .illustration-text {
@@ -719,7 +702,7 @@
 
         @media (max-width: 768px) {
             body { padding: 12px; }
-            .hero-banner { padding: 25px; flex-direction: column; text-align: center; gap: 20px; }
+            .hero-banner { padding: 28px; text-align: center; justify-content: center; }
             .hero-banner h1 { font-size: 2.1rem; }
             .module-tabs { grid-template-columns: 1fr; }
             .camera-grid { grid-template-columns: 1fr; }
@@ -730,24 +713,19 @@
 </head>
 <body>
 
+    <!-- LAPISAN EMOJI FLOATING DI LATAR BELAKANG -->
+    <div class="bg-emoji-layer" id="emojiLayer"></div>
+
     <!-- AUDIO MP3 LOKAL -->
     <audio id="audioGoyangDumang" src="goyang-dumang.mp3" preload="auto" loop></audio>
 
     <div class="container">
-        <!-- HERO BANNER KEMAS (SEPERTI GAMBAR RUJUKAN 1) -->
+        <!-- HERO BANNER (KAD CHEF ALYA DIBUANG) -->
         <header class="hero-banner">
             <div class="hero-content">
                 <div class="pill-badge">✨ PORTAL PEMBELAJARAN EDUSENSE</div>
                 <h1>Selamat Datang ke Dunia Pecahan!</h1>
                 <p>Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
-            </div>
-            
-            <div class="mascot-card">
-                <div class="mascot-avatar">👩‍🍳</div>
-                <div class="mascot-info">
-                    <span class="mascot-title">Chef Alya</span>
-                    <span class="mascot-sub">Pembimbing Anda</span>
-                </div>
             </div>
         </header>
 
@@ -773,7 +751,7 @@
             <!-- BAHAN 1 -->
             <div id="bahan1" class="module-content active">
                 <h2><i class="fa-solid fa-face-smile" style="color: var(--card-accent);"></i> Semak Mood Saya</h2>
-                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sehingga 70% untuk membuka kunci Modul 2 & 3!</p>
+                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Modul 2 & 3!</p>
 
                 <button class="btn-camera" id="btnCamera" onclick="toggleCamera()">
                     <i class="fa-solid fa-play"></i> <span id="btnCamText">Mula Pengimbas Kamera</span>
@@ -817,13 +795,12 @@
                     </div>
                 </div>
 
-                <!-- CONTAINER PAPARAN ZON CERIA (DENGAN REKA BENTUK GRAFIK CERIA KANAK-KANAK) -->
+                <!-- CONTAINER ZON CERIA -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA <i class="fa-solid fa-star" style="color: #ffd166; font-size: 1.8rem;"></i></h3>
                   
-                  <!-- Target Pose Display -->
                   <div class="pose-target-box">
-                      <div class="pose-target-title">TUGASAN POSE <span id="poseStepNum">1</span> / 5:</div>
+                      <div class="pose-target-title">TUGASAN POSE <span id="poseStepNum">1</span> / 5 (Sasaran: 80%):</div>
                       <div class="pose-target-name" id="targetPoseName">THUMBS UP POSE</div>
                       <div class="pose-progress-tracker">
                           <div class="dot-step active" id="dot-0"></div>
@@ -834,13 +811,10 @@
                       </div>
                   </div>
 
-                  <!-- Susunan Grafik & Kamera Pose -->
                   <div class="zon-ceria-layout">
                     
-                    <!-- Ilustrasi Kiri: Budak Lelaki Keriangan -->
                     <div class="side-illustration">
                         <svg viewBox="0 0 160 180" width="130" height="150" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- SVG Ilustrasi Ceria Budak Lelaki & Belon -->
                             <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
                             <path d="M50 45 C50 20, 110 20, 110 45" fill="#f4a261"/>
                             <rect x="55" y="22" width="50" height="15" rx="7" fill="#e07a5f"/>
@@ -854,16 +828,13 @@
                         <div class="illustration-text">Jom Bergerak! 🎈</div>
                     </div>
 
-                    <!-- Kamera Canvas -->
                     <div class="camera-pose-wrapper">
                         <canvas id="canvas"></canvas>
                         <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.05rem; background: rgba(255,255,255,0.08); padding: 12px 18px; border-radius: 16px; width: 100%; max-width: 380px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
                     </div>
 
-                    <!-- Ilustrasi Kanan: Budak Perempuan Keriangan -->
                     <div class="side-illustration">
                         <svg viewBox="0 0 160 180" width="130" height="150" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <!-- SVG Ilustrasi Ceria Budak Perempuan & Belon -->
                             <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
                             <path d="M45 40 Q80 15 115 40 C125 70, 35 70, 45 40 Z" fill="#9c6644"/>
                             <circle cx="70" cy="50" r="4" fill="#2d3528"/>
@@ -904,10 +875,10 @@
         </div>
     </div>
 
-    <!-- Pop-up Modal Ke Zon Ceria -->
+    <!-- Modal Ke Zon Ceria -->
     <div id="zonCeriaModal" style="display: none;" class="modal-overlay">
       <div class="modal-card">
-        <h3>Mood Anda Belum Mencapai 70%!</h3>
+        <h3>Mood Anda Belum Mencapai 80%!</h3>
         <p>Mari ceriakan diri anda sebentar di Zon Ceria dan selesaikan 5 gaya pose untuk buka modul!</p>
         <button onclick="bukaZonCeria()" class="btn-modal">
           Ke Zon Ceria
@@ -949,6 +920,34 @@
     </div>
 
     <script>
+        // JANEFEST EMOJI RANDOM GENERATOR
+        function generateBackgroundEmojis() {
+            const container = document.getElementById('emojiLayer');
+            const emojis = ['⭐', '✨', '🎈', '🍕', '🍰', '🍕', '🎨', '🚀', '🌟', '🥳', '🧁', '🍦', '🍩', '🎯', '🧩'];
+            const totalEmojis = 25;
+
+            for (let i = 0; i < totalEmojis; i++) {
+                const span = document.createElement('span');
+                span.className = 'floating-emoji';
+                span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+
+                // Kedudukan rawak
+                const topPos = Math.random() * 95;
+                const leftPos = Math.random() * 95;
+                const fontSize = 1.2 + Math.random() * 1.6; // Saiz 1.2rem - 2.8rem
+                const duration = 4 + Math.random() * 5; // Masa animasi 4s - 9s
+                const delay = Math.random() * 3; // Kelewatan animasi
+
+                span.style.top = `${topPos}vh`;
+                span.style.left = `${leftPos}vw`;
+                span.style.fontSize = `${fontSize}rem`;
+                span.style.animationDuration = `${duration}s`;
+                span.style.animationDelay = `${delay}s`;
+
+                container.appendChild(span);
+            }
+        }
+
         const URL = "https://teachablemachine.withgoogle.com/models/Zcg9co-dz/";
 
         let model, webcam, maxPredictions;
@@ -1173,7 +1172,8 @@
 
             currentScorePercent = Math.max(happyVal, neutralVal);
 
-            if (currentScorePercent >= 70 && !isUnlocked) {
+            /* DITAMBAHKAN KEPADA 80% UNTUK PASS EMOSI */
+            if (currentScorePercent >= 80 && !isUnlocked) {
                 unlockAllModules();
             }
         }
@@ -1182,7 +1182,8 @@
             if (timerZonCeria) clearTimeout(timerZonCeria);
 
             timerZonCeria = setTimeout(() => {
-                if (currentScorePercent < 70 && !isUnlocked) {
+                /* DITAMBAHKAN KEPADA 80% UNTUK LULUS EMOSI */
+                if (currentScorePercent < 80 && !isUnlocked) {
                     hentiKameraEmosi();
                     
                     const audio = document.getElementById("audioGoyangDumang");
@@ -1283,7 +1284,7 @@
                 }
             }
 
-            // SYARAT KELAYAKAN POSE KEKAL 80%:
+            /* SYARAT KELAYAKAN POSE NAIK KEPADA 80%: */
             if (currentTargetScore >= 80 && !isPoseTransitioning && !isUnlocked) {
                 isPoseTransitioning = true;
                 
@@ -1351,6 +1352,7 @@
         }, 1000);
 
         window.addEventListener('DOMContentLoaded', () => {
+            generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
         });
     </script>
