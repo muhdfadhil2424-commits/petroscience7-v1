@@ -490,8 +490,9 @@
 
         .speech-text {
             color: #e2e8f0;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             line-height: 1.35;
+            font-weight: 600;
         }
 
         .robot-avatar {
@@ -676,7 +677,7 @@
                 </div>
             </div>
             <div class="speech-text" id="botSpeechText">
-                Hai semua! Saya EduBot! Tekan butang Mula Kamera & tunjukkan emosi gembira/neutral melebihi 70% untuk buka modul!
+                Hai semua! Saya EduBot! Tekan Mula Kamera untuk mula!
             </div>
         </div>
 
@@ -704,25 +705,25 @@
         let model, webcam, maxPredictions;
         let isCameraOn = false;
         let isUnlocked = false;
-        let currentDialog = "Hai semua! Saya EduBot! Tekan butang Mula Pengimbas Kamera dan tunjukkan emosi gembira/neutral melebihi 70% untuk membuka semua modul!";
+        let currentDialog = "Hai semua! Saya EduBot! Tekan Mula Kamera untuk mula!";
 
         let timerZonCeria = null;
         let currentScorePercent = 0;
 
-        // --- ZON CERIA POSE SYSTEM ---
+        // --- SKRIP ROBOT MENGIKUT PERMINTAAN PERSIS ANDA ---
         const POSE_LIST = [
-            { name: "THUMBS UP POSE", key: "thumbs" },
-            { name: "LOVE POSE", key: "love" },
-            { name: "OKAY POSE", key: "okay" },
-            { name: "PEACE POSE", key: "peace" },
-            { name: "STAR JUMP POSE", key: "star" }
+            { name: "THUMBS UP POSE", key: "thumbs", prompt: "Buat Thumbs Up Pose!" },
+            { name: "LOVE POSE", key: "love", prompt: "Love Pose pula!" },
+            { name: "OKAY POSE", key: "okay", prompt: "Okay Pose pula!" },
+            { name: "PEACE POSE", key: "peace", prompt: "Peace Pose pula macam mana!" },
+            { name: "STAR JUMP POSE", key: "star", prompt: "Last, Star Jump Pose !" }
         ];
         let currentPoseIndex = 0;
         let isPoseTransitioning = false;
 
         function switchTab(tabIndex) {
             if (!isUnlocked && tabIndex !== 1) {
-                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila selesaikan cabaran di Modul 1 dahulu.");
+                updateBotSpeech("Modul terkunci! Selesaikan Modul 1 dahulu.");
                 return;
             }
 
@@ -735,13 +736,13 @@
             if (content) content.classList.add('active');
 
             if (tabIndex === 2) {
-                updateBotSpeech("Selamat datang ke Dapur Pecahan Chef Alya!");
+                updateBotSpeech("Selamat datang ke Dapur Pecahan!");
                 resizeIframe(document.getElementById('m2-iframe'));
             } else if (tabIndex === 3) {
-                updateBotSpeech("Selamat datang ke Petualangan Dunia Pecahan!");
+                updateBotSpeech("Selamat datang ke Dunia Pecahan!");
                 resizeIframe(document.getElementById('m3-iframe'));
             } else if (tabIndex === 1) {
-                updateBotSpeech("Ini modul SEMAK MOOD SAYA! Tunjukkan senyuman kamu di hadapan kamera.");
+                updateBotSpeech("Semak mood kamu di sini!");
             }
         }
 
@@ -771,7 +772,7 @@
             document.getElementById('m3-locked').style.display = 'none';
             document.getElementById('m3-iframe').style.display = 'block';
 
-            updateBotSpeech("Tahniah! Kelima-lima pose Zon Ceria berjaya dilakukan! Modul 2 dan Modul 3 telah DIBUKA sepenuhnya!");
+            updateBotSpeech("Tahniah! Modul dibuka!");
         }
 
         function speakText(text) {
@@ -779,8 +780,8 @@
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'ms-MY';
-                utterance.pitch = 1.4;
-                utterance.rate = 1.05;
+                utterance.pitch = 1.3;
+                utterance.rate = 1.1; 
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -818,7 +819,7 @@
                 await mulaKameraEmosi();
             } else {
                 await hentiKameraEmosi();
-                updateBotSpeech("Kamera telah ditutup!");
+                updateBotSpeech("Kamera ditutup!");
             }
         }
 
@@ -855,7 +856,7 @@
                 mulaSemakTimerEmosi();
 
             } catch (err) {
-                alert("Gagal memuatkan kamera/model. Sila pastikan kebenaran kamera diberikan.");
+                alert("Gagal memuatkan kamera. Sila beri kebenaran.");
                 btnText.innerText = "Mula Pengimbas Kamera";
             }
         }
@@ -939,7 +940,7 @@
                     
                     const audio = document.getElementById("audioGoyangDumang");
                     if(audio) {
-                        audio.play().catch(e => console.log("Audio play error/blocked"));
+                        audio.play().catch(e => console.log("Audio play blocked"));
                     }
 
                     document.getElementById("zonCeriaModal").style.display = "flex";
@@ -951,10 +952,8 @@
             document.getElementById("zonCeriaModal").style.display = "none";
             document.getElementById("zonCeriaSection").style.display = "block";
             
-            // Set semula pose tracker
             currentPoseIndex = 0;
             updatePoseUI();
-            
             initZonCeriaPose();
         }
 
@@ -975,7 +974,7 @@
                     }
                 }
 
-                updateBotSpeech(`Tugasan Zon Ceria: Sila buat ${target.name} sehingga mencapai sekurang-kurangnya 70%!`);
+                updateBotSpeech(target.prompt);
             }
         }
 
@@ -1032,29 +1031,24 @@
                     poseLabelContainer.childNodes[i].innerHTML = classPrediction;
                 }
 
-                // Semak peratusan untuk pose yang diminta sekarang
                 if (currentTargetKey && className.toLowerCase().includes(currentTargetKey)) {
                     currentTargetScore = parseInt(probPercent);
                 }
             }
 
-            // Jika peratusan mencapai 70% atau lebih
             if (currentTargetScore >= 70 && !isPoseTransitioning && !isUnlocked) {
                 isPoseTransitioning = true;
                 
-                // Tandakan dot siap
                 document.getElementById(`dot-${currentPoseIndex}`).className = "dot-step completed";
 
                 if (currentPoseIndex < POSE_LIST.length - 1) {
                     currentPoseIndex++;
-                    updateBotSpeech(`Hebat! ${POSE_LIST[currentPoseIndex-1].name} berjaya! Sekarang, buat ${POSE_LIST[currentPoseIndex].name}!`);
-                    
+                    updatePoseUI();
+
                     setTimeout(() => {
-                        updatePoseUI();
                         isPoseTransitioning = false;
-                    }, 2000);
+                    }, 1500);
                 } else {
-                    // Kelima-lima pose telah berjaya!
                     unlockAllModules();
                 }
             }
