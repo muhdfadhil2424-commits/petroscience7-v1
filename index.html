@@ -44,13 +44,11 @@
             overflow-x: hidden;
         }
 
-        /* LATAR BELAKANG BERCORAK POLKA-DOT CERIA */
+        /* LATAR BELAKANG BERCORAK POLKA-DOT */
         body {
             background-image: 
-                radial-gradient(#e2d8bd 1.5px, transparent 1.5px),
-                radial-gradient(circle at 10% 20%, rgba(244, 162, 97, 0.18) 0%, transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(224, 122, 95, 0.15) 0%, transparent 45%);
-            background-size: 24px 24px, 100% 100%, 100% 100%;
+                radial-gradient(#e2d8bd 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
             padding: 20px 25px 50px 25px;
         }
 
@@ -63,19 +61,18 @@
             gap: 22px;
         }
 
-        /* HERO BANNER BERGAYA STORYBOOK & KIDS FRIENDLY */
+        /* HERO BANNER KEMAS SEPERTI RUJUKAN 1 */
         .hero-banner {
-            background: linear-gradient(135deg, #2d3528 0%, #1f251c 100%);
-            border-radius: 32px;
-            padding: 40px 48px;
+            background: #2d3528;
+            border-radius: 28px;
+            padding: 38px 45px;
             color: var(--text-light);
-            box-shadow: 0 18px 40px rgba(45, 53, 40, 0.18);
+            box-shadow: 0 12px 30px rgba(45, 53, 40, 0.12);
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 3px solid #3d4737;
         }
 
         .hero-content {
@@ -87,66 +84,53 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(244, 162, 97, 0.25);
+            background: rgba(244, 162, 97, 0.2);
             color: var(--accent-gold);
-            padding: 8px 18px;
-            border-radius: 30px;
-            font-size: 0.88rem;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
             font-weight: 800;
             margin-bottom: 16px;
-            border: 1.5px solid rgba(244, 162, 97, 0.4);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid rgba(244, 162, 97, 0.3);
         }
 
         .hero-banner h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-size: 2.8rem;
             font-weight: 700;
             margin: 0 0 12px 0;
-            line-height: 1.25;
+            line-height: 1.2;
             color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .hero-banner p {
             color: #dbe4d8;
-            font-size: 1.05rem;
+            font-size: 1rem;
             margin: 0;
             line-height: 1.6;
             font-weight: 500;
         }
 
-        /* ELEMEN ILUSTRASI & DEKORASI HERO */
-        .hero-decorations {
+        .mascot-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 12px 20px;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 14px;
             z-index: 2;
         }
 
-        .mascot-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(8px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
-            padding: 15px 22px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: floatSlow 4s ease-in-out infinite;
-        }
-
         .mascot-avatar {
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             background: #ffffff;
-            width: 65px;
-            height: 65px;
+            width: 52px;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
         .mascot-info {
@@ -156,64 +140,57 @@
 
         .mascot-title {
             font-family: 'Fredoka', sans-serif;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: var(--accent-gold);
+            font-weight: 600;
         }
 
         .mascot-sub {
-            font-size: 0.8rem;
-            color: #e2e8f0;
+            font-size: 0.78rem;
+            color: #dbe4d8;
         }
 
-        @keyframes floatSlow {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-8px) rotate(1deg); }
-        }
-
-        /* TABS STYLING MESRA KANAK-KANAK */
+        /* TABS STYLING */
         .module-tabs {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             background: #ffffff;
-            padding: 12px;
-            border-radius: 24px;
+            padding: 10px;
+            border-radius: 22px;
             border: 2px solid var(--border-warm);
-            box-shadow: 0 10px 30px rgba(45, 53, 40, 0.05);
+            box-shadow: 0 8px 25px rgba(45, 53, 40, 0.04);
         }
 
         .tab-btn {
             background: #f6f3e8;
             border: 2px solid transparent;
-            padding: 16px 22px;
-            border-radius: 18px;
+            padding: 15px 20px;
+            border-radius: 16px;
             color: var(--text-dark);
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 800;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.25s ease;
         }
 
         .tab-btn:hover {
-            transform: translateY(-3px);
             background: #ebdcc2;
-            border-color: var(--accent-gold);
         }
 
         .tab-btn.active {
             background: var(--card-accent);
             color: #ffffff;
             border-color: #c85a3f;
-            box-shadow: 0 8px 20px rgba(224, 122, 95, 0.35);
-            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(224, 122, 95, 0.3);
         }
 
         .badge-status {
             font-size: 0.78rem;
-            padding: 5px 12px;
+            padding: 4px 10px;
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -262,7 +239,7 @@
         #bahan1 h2 {
             font-family: 'Playfair Display', serif;
             color: var(--card-dark);
-            font-size: 2.3rem;
+            font-size: 2.2rem;
             display: flex;
             align-items: center;
             gap: 14px;
@@ -273,29 +250,29 @@
         #bahan1 .desc {
             color: var(--text-muted);
             margin-bottom: 28px;
-            font-size: 1.05rem;
+            font-size: 1rem;
             font-weight: 500;
         }
 
         .btn-camera {
-            background: linear-gradient(135deg, #e07a5f 0%, #d06043 100%);
+            background: var(--card-accent);
             color: white;
             border: none;
-            padding: 16px 32px;
-            font-size: 1.05rem;
+            padding: 15px 30px;
+            font-size: 1rem;
             font-weight: 800;
-            border-radius: 18px;
+            border-radius: 16px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 6px 18px rgba(224, 122, 95, 0.35);
+            box-shadow: 0 6px 18px rgba(224, 122, 95, 0.3);
             transition: all 0.25s ease;
         }
 
         .btn-camera:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 10px 22px rgba(224, 122, 95, 0.45);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(224, 122, 95, 0.4);
         }
 
         .camera-grid {
@@ -316,11 +293,6 @@
             justify-content: center;
             position: relative;
             padding: 22px;
-            transition: border-color 0.3s ease;
-        }
-
-        .view-box:hover {
-            border-color: var(--accent-gold);
         }
 
         .view-box .box-title {
@@ -334,12 +306,11 @@
             font-size: 0.78rem;
             font-weight: 800;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
         .placeholder-text {
             color: #a0aab0;
-            font-size: 1rem;
+            font-size: 0.98rem;
             text-align: center;
             font-weight: 600;
         }
@@ -464,72 +435,112 @@
             border-radius: 16px;
             cursor: pointer;
             width: 100%;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s;
             box-shadow: 0 6px 18px rgba(224, 122, 95, 0.3);
         }
 
         .btn-modal:hover {
             transform: scale(1.03);
-            box-shadow: 0 8px 22px rgba(224, 122, 95, 0.4);
         }
 
-        /* ZON CERIA POSE SECTION */
+        /* ------------------------------------------------------------- */
+        /* ZON CERIA POSE SECTION (DENGAN REKA BENTUK GRAFIK CERIA & KANAK-KANAK) */
+        /* ------------------------------------------------------------- */
         .zon-ceria-card {
             margin-top: 35px;
-            padding: 35px;
-            background: var(--card-dark);
+            padding: 40px 30px;
+            background: linear-gradient(180deg, #2a3426 0%, #1d241a 100%);
             color: #fff;
-            border-radius: 28px;
+            border-radius: 32px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.18);
-            border: 2px solid #3d4737;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+            border: 3px solid #3d4a37;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Dekorasikan Zon Ceria dengan Elemen Bintang Bercahaya / Konfeti */
+        .zon-ceria-card::before {
+            content: "🎈 🎈";
+            position: absolute;
+            top: 18px;
+            left: 25px;
+            font-size: 2.2rem;
+            opacity: 0.85;
+            animation: floatLeft 3.5s ease-in-out infinite alternate;
+        }
+
+        .zon-ceria-card::after {
+            content: "🎉 ✨";
+            position: absolute;
+            top: 18px;
+            right: 25px;
+            font-size: 2.2rem;
+            opacity: 0.85;
+            animation: floatRight 3.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatLeft {
+            0% { transform: translateY(0) rotate(-5deg); }
+            100% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        @keyframes floatRight {
+            0% { transform: translateY(0) rotate(5deg); }
+            100% { transform: translateY(-10px) rotate(-5deg); }
         }
 
         .zon-ceria-card h3 {
             color: var(--accent-gold);
             font-family: 'Playfair Display', serif;
-            font-size: 2.3rem;
+            font-size: 2.4rem;
             margin-top: 0;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
 
         .pose-target-box {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
             border: 2px dashed rgba(244, 162, 97, 0.6);
-            border-radius: 20px;
-            padding: 18px;
-            margin-bottom: 22px;
+            border-radius: 22px;
+            padding: 20px;
+            margin-bottom: 25px;
             display: inline-block;
             width: 100%;
-            max-width: 500px;
+            max-width: 520px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .pose-target-title {
             font-size: 0.88rem;
             color: #dbe4d8;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             margin-bottom: 6px;
             font-weight: 700;
         }
 
         .pose-target-name {
-            font-size: 1.6rem;
+            font-size: 1.7rem;
             font-weight: 800;
             color: var(--accent-gold);
             font-family: 'Fredoka', sans-serif;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
 
         .pose-progress-tracker {
             display: flex;
             justify-content: center;
-            gap: 12px;
-            margin-top: 14px;
+            gap: 14px;
+            margin-top: 15px;
         }
 
         .dot-step {
-            width: 15px;
-            height: 15px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: rgba(255,255,255,0.2);
             transition: all 0.3s;
@@ -537,12 +548,72 @@
 
         .dot-step.active {
             background: var(--accent-gold);
-            box-shadow: 0 0 14px var(--accent-gold);
+            box-shadow: 0 0 15px var(--accent-gold);
             transform: scale(1.3);
         }
 
         .dot-step.completed {
             background: var(--accent-green);
+        }
+
+        /* SUSUNAN UTAMA ZON CERIA DENGAN ILUSTRASI RUJUKAN GAMBAR 3 */
+        .zon-ceria-layout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 35px;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Ilustrasi Karakter Sisi (Mengaitkan Tema Belon & Kanak-Kanak Ceria) */
+        .side-illustration {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 20px;
+            max-width: 220px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .side-illustration img {
+            width: 100%;
+            max-width: 160px;
+            height: auto;
+            border-radius: 16px;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+        }
+
+        .illustration-text {
+            margin-top: 12px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.05rem;
+            color: #ffe6a7;
+            text-align: center;
+        }
+
+        .camera-pose-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #canvas {
+            border: 4px solid var(--accent-gold);
+            border-radius: 24px;
+            background: #111;
+            width: 380px;
+            height: 380px;
+            max-width: 100%;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
         }
 
         /* FLOATING ROBOT WIDGET */
@@ -629,32 +700,26 @@
         }
 
         .robot-avatar:hover {
-            transform: scale(1.1);
+            transform: scale(1.08);
         }
 
         .robot-svg {
             width: 100%;
             height: 100%;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-7px); }
         }
 
         .speech-bubble.minimized {
             display: none;
         }
 
-        @media (max-width: 900px) {
-            .hero-banner { flex-direction: column; text-align: center; gap: 20px; }
-            .hero-decorations { justify-content: center; }
+        @media (max-width: 950px) {
+            .zon-ceria-layout { flex-direction: column; }
+            .side-illustration { display: none; }
         }
 
         @media (max-width: 768px) {
             body { padding: 12px; }
-            .hero-banner { padding: 25px; }
+            .hero-banner { padding: 25px; flex-direction: column; text-align: center; gap: 20px; }
             .hero-banner h1 { font-size: 2.1rem; }
             .module-tabs { grid-template-columns: 1fr; }
             .camera-grid { grid-template-columns: 1fr; }
@@ -669,7 +734,7 @@
     <audio id="audioGoyangDumang" src="goyang-dumang.mp3" preload="auto" loop></audio>
 
     <div class="container">
-        <!-- HERO BANNER BERGAYA STORYBOOK -->
+        <!-- HERO BANNER KEMAS (SEPERTI GAMBAR RUJUKAN 1) -->
         <header class="hero-banner">
             <div class="hero-content">
                 <div class="pill-badge">✨ PORTAL PEMBELAJARAN EDUSENSE</div>
@@ -677,13 +742,11 @@
                 <p>Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
             </div>
             
-            <div class="hero-decorations">
-                <div class="mascot-card">
-                    <div class="mascot-avatar">👩‍🍳</div>
-                    <div class="mascot-info">
-                        <span class="mascot-title">Chef Alya</span>
-                        <span class="mascot-sub">Pembimbing Anda</span>
-                    </div>
+            <div class="mascot-card">
+                <div class="mascot-avatar">👩‍🍳</div>
+                <div class="mascot-info">
+                    <span class="mascot-title">Chef Alya</span>
+                    <span class="mascot-sub">Pembimbing Anda</span>
                 </div>
             </div>
         </header>
@@ -754,9 +817,9 @@
                     </div>
                 </div>
 
-                <!-- Container Paparan Zon Ceria -->
+                <!-- CONTAINER PAPARAN ZON CERIA (DENGAN REKA BENTUK GRAFIK CERIA KANAK-KANAK) -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
-                  <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA</h3>
+                  <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA <i class="fa-solid fa-star" style="color: #ffd166; font-size: 1.8rem;"></i></h3>
                   
                   <!-- Target Pose Display -->
                   <div class="pose-target-box">
@@ -771,9 +834,48 @@
                       </div>
                   </div>
 
-                  <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
-                    <canvas id="canvas" style="border: 3.5px solid var(--accent-gold); border-radius: 22px; background: #000; width: 420px; height: 420px; max-width: 100%;"></canvas>
-                    <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.1rem; background: rgba(255,255,255,0.08); padding: 15px; border-radius: 16px; width: 100%; max-width: 420px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
+                  <!-- Susunan Grafik & Kamera Pose -->
+                  <div class="zon-ceria-layout">
+                    
+                    <!-- Ilustrasi Kiri: Budak Lelaki Keriangan -->
+                    <div class="side-illustration">
+                        <svg viewBox="0 0 160 180" width="130" height="150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- SVG Ilustrasi Ceria Budak Lelaki & Belon -->
+                            <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
+                            <path d="M50 45 C50 20, 110 20, 110 45" fill="#f4a261"/>
+                            <rect x="55" y="22" width="50" height="15" rx="7" fill="#e07a5f"/>
+                            <circle cx="70" cy="50" r="4" fill="#2d3528"/>
+                            <circle cx="90" cy="50" r="4" fill="#2d3528"/>
+                            <path d="M72 62 Q80 70 88 62" stroke="#e07a5f" stroke-width="3" stroke-linecap="round" fill="none"/>
+                            <path d="M60 85 L100 85 L110 140 L50 140 Z" fill="#2a9d8f"/>
+                            <circle cx="35" cy="25" r="18" fill="#e07a5f"/>
+                            <path d="M35 43 L55 85" stroke="#ffffff" stroke-width="2" stroke-dasharray="3 3"/>
+                        </svg>
+                        <div class="illustration-text">Jom Bergerak! 🎈</div>
+                    </div>
+
+                    <!-- Kamera Canvas -->
+                    <div class="camera-pose-wrapper">
+                        <canvas id="canvas"></canvas>
+                        <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.05rem; background: rgba(255,255,255,0.08); padding: 12px 18px; border-radius: 16px; width: 100%; max-width: 380px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
+                    </div>
+
+                    <!-- Ilustrasi Kanan: Budak Perempuan Keriangan -->
+                    <div class="side-illustration">
+                        <svg viewBox="0 0 160 180" width="130" height="150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- SVG Ilustrasi Ceria Budak Perempuan & Belon -->
+                            <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
+                            <path d="M45 40 Q80 15 115 40 C125 70, 35 70, 45 40 Z" fill="#9c6644"/>
+                            <circle cx="70" cy="50" r="4" fill="#2d3528"/>
+                            <circle cx="90" cy="50" r="4" fill="#2d3528"/>
+                            <path d="M72 62 Q80 70 88 62" stroke="#e07a5f" stroke-width="3" stroke-linecap="round" fill="none"/>
+                            <path d="M55 85 L105 85 L115 140 L45 140 Z" fill="#f472b6"/>
+                            <circle cx="125" cy="25" r="18" fill="#457b9d"/>
+                            <path d="M125 43 L105 85" stroke="#ffffff" stroke-width="2" stroke-dasharray="3 3"/>
+                        </svg>
+                        <div class="illustration-text">Sorakkan Ceria! 🎉</div>
+                    </div>
+
                   </div>
                 </div>
 
