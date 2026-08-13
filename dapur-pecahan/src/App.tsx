@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DapurVideoModal } from './components/DapurVideoModal';
 import { DishId } from './types';
 import { DISHES_DATA } from './data/dishesData';
 import { HeaderNavbar } from './components/HeaderNavbar';
@@ -13,6 +14,7 @@ import { sounds } from './utils/audio';
 export default function App() {
   const [viewState, setViewState] = useState<'menu' | 'cooking' | 'dining'>('menu');
   const [selectedDishId, setSelectedDishId] = useState<DishId | null>(null);
+  const [showVideoModal, setShowVideoModal] = useState<boolean>(true);
 
   // Auto start BGM on first user interaction (browser gesture requirement)
   useEffect(() => {
@@ -91,6 +93,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-amber-50/40 text-slate-800 font-sans selection:bg-amber-300 selection:text-amber-950">
+      <DapurVideoModal 
+  isOpen={showVideoModal} 
+  onClose={() => setShowVideoModal(false)} 
+/>
       {/* Sticky Header Navbar */}
       <HeaderNavbar
         totalStars={totalStars}
