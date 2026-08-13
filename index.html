@@ -352,22 +352,22 @@
             transform: scale(1.02);
         }
 
-        /* BAHAGIAN ZON CERIA CONTAINER */
+        /* BAHAGIAN ZON CERIA CONTAINER (DIPBESARKAN) */
         .zon-ceria-card {
             margin-top: 30px;
-            padding: 20px;
-            background: rgba(15, 20, 35, 0.8);
-            border: 1px solid #e5a93c;
-            border-radius: 16px;
+            padding: 30px;
+            background: rgba(15, 20, 35, 0.9);
+            border: 2px solid #e5a93c;
+            border-radius: 20px;
             text-align: center;
         }
 
         .zon-ceria-card h3 {
             color: #e5a93c;
             font-family: 'Fredoka', sans-serif;
-            font-size: 1.4rem;
+            font-size: 2rem;
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .floating-robot-widget {
@@ -480,6 +480,9 @@
 </head>
 <body>
 
+    <!-- AUDIO PLAYER LAGU GOYANG DUMANG (Tersembunyi) -->
+    <audio id="audioGoyangDumang" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" preload="auto" loop></audio>
+
     <div class="container">
         <header>
             <h1>EDUSENSE</h1>
@@ -489,7 +492,7 @@
         <!-- MODUL TABS -->
         <div class="module-tabs">
             <button class="tab-btn active" data-tab="1" onclick="switchTab(1)">
-                <span><i class="fa-solid fa-camera-retro" style="margin-right: 8px;"></i> 1. Semak Mood Saya</span>
+                <span><i class="fa-solid fa-camera-retro" style="margin-right: 8px;"></i> 1. SEMAK MOOD SAYA</span>
             </button>
 
             <button class="tab-btn" data-tab="2" onclick="switchTab(2)">
@@ -552,12 +555,12 @@
                     </div>
                 </div>
 
-                <!-- Container Paparan Zon Ceria (Teachable Machine Pose) -->
+                <!-- Container Paparan Zon Ceria (DIPBESARKAN) -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA</h3>
-                  <div style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
-                    <canvas id="canvas" style="border: 2px solid #e5a93c; border-radius: 12px; background: #000;"></canvas>
-                    <div id="label-container-pose" style="text-align: left; font-family: monospace; font-size: 0.9rem; background: #171d30; padding: 12px; border-radius: 10px; width: 100%; max-width: 280px; color: #fff;"></div>
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <canvas id="canvas" style="border: 3px solid #e5a93c; border-radius: 16px; background: #000; width: 420px; height: 420px; max-width: 100%;"></canvas>
+                    <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.1rem; background: #171d30; padding: 15px; border-radius: 12px; width: 100%; max-width: 420px; color: #fff; border: 1px solid rgba(229, 169, 60, 0.3);"></div>
                   </div>
                 </div>
 
@@ -662,7 +665,7 @@
                 updateBotSpeech("Selamat datang ke Petualangan Dunia Pecahan!");
                 resizeIframe(document.getElementById('m3-iframe'));
             } else if (tabIndex === 1) {
-                updateBotSpeech("Ini modul Semak Mood Saya! Tunjukkan senyuman kamu di hadapan kamera.");
+                updateBotSpeech("Ini modul SEMAK MOOD SAYA! Tunjukkan senyuman kamu di hadapan kamera.");
             }
         }
 
@@ -671,6 +674,7 @@
             isUnlocked = true;
 
             if (timerZonCeria) clearTimeout(timerZonCeria);
+            hentiKameraEmosi(); // Auto tutup kamera emosi bila terbuka
 
             document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
             document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
@@ -727,56 +731,73 @@
         }
 
         async function toggleCamera() {
+            if (!isCameraOn) {
+                await mulaKameraEmosi();
+            } else {
+                await hentiKameraEmosi();
+                updateBotSpeech("Kamera telah ditutup!");
+            }
+        }
+
+        async function mulaKameraEmosi() {
             const btnText = document.getElementById('btnCamText');
             const placeholder = document.getElementById('camPlaceholder');
             const resultBox = document.getElementById('resultBox');
             const labelContainer = document.getElementById('label-container');
             const webcamContainer = document.getElementById("webcam-container");
 
-            if (!isCameraOn) {
-                btnText.innerText = "Memula Kamera...";
+            btnText.innerText = "Memula Kamera...";
 
-                try {
-                    const modelURL = URL + "model.json";
-                    const metadataURL = URL + "metadata.json";
+            try {
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
 
-                    model = await tmImage.load(modelURL, metadataURL);
-                    maxPredictions = model.getTotalClasses();
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
 
-                    webcam = new tmImage.Webcam(260, 260, true);
-                    await webcam.setup();
-                    await webcam.play();
-                    window.requestAnimationFrame(loop);
-
-                    webcamContainer.innerHTML = "";
-                    webcamContainer.appendChild(webcam.canvas);
-                    placeholder.style.display = "none";
-                    resultBox.style.display = "none";
-                    labelContainer.style.display = "flex";
-
-                    btnText.innerText = "Hentikan Kamera";
-                    isCameraOn = true;
-
-                    // MULAKAN TIMER 7 SAAT
-                    mulaSemakTimerEmosi();
-
-                } catch (err) {
-                    alert("Gagal memuatkan kamera/model. Sila pastikan kebenaran kamera diberikan.");
-                    btnText.innerText = "Mula Pengimbas Kamera";
-                }
-            } else {
-                if (webcam && webcam.stop) await webcam.stop();
-                if (timerZonCeria) clearTimeout(timerZonCeria);
+                webcam = new tmImage.Webcam(260, 260, true);
+                await webcam.setup();
+                await webcam.play();
+                window.requestAnimationFrame(loop);
 
                 webcamContainer.innerHTML = "";
-                placeholder.style.display = "block";
-                resultBox.style.display = "block";
-                labelContainer.style.display = "none";
-                btnText.innerText = "Mula Pengimbas Kamera";
-                isCameraOn = false;
+                webcamContainer.appendChild(webcam.canvas);
+                placeholder.style.display = "none";
+                resultBox.style.display = "none";
+                labelContainer.style.display = "flex";
 
-                updateBotSpeech("Kamera telah ditutup!");
+                btnText.innerText = "Hentikan Kamera";
+                isCameraOn = true;
+
+                // MULAKAN TIMER 12 SAAT
+                mulaSemakTimerEmosi();
+
+            } catch (err) {
+                alert("Gagal memuatkan kamera/model. Sila pastikan kebenaran kamera diberikan.");
+                btnText.innerText = "Mula Pengimbas Kamera";
             }
+        }
+
+        async function hentiKameraEmosi() {
+            const btnText = document.getElementById('btnCamText');
+            const placeholder = document.getElementById('camPlaceholder');
+            const resultBox = document.getElementById('resultBox');
+            const labelContainer = document.getElementById('label-container');
+            const webcamContainer = document.getElementById("webcam-container");
+
+            if (webcam && webcam.stop) {
+                await webcam.stop();
+            }
+            if (timerZonCeria) {
+                clearTimeout(timerZonCeria);
+            }
+
+            webcamContainer.innerHTML = "";
+            placeholder.style.display = "block";
+            resultBox.style.display = "block";
+            labelContainer.style.display = "none";
+            if(btnText) btnText.innerText = "Mula Pengimbas Kamera";
+            isCameraOn = false;
         }
 
         async function loop() {
@@ -820,7 +841,6 @@
                 }
             }
 
-            // Simpan skor tertinggi antara Happy atau Neutral untuk semakan timer
             currentScorePercent = Math.max(happyVal, neutralVal);
 
             if (currentScorePercent >= 70 && !isUnlocked) {
@@ -828,16 +848,26 @@
             }
         }
 
-        // --- LOGIK ZON CERIA & TIMER 7 SAAT ---
+        // --- LOGIK ZON CERIA & TIMER 12 SAAT ---
         function mulaSemakTimerEmosi() {
             if (timerZonCeria) clearTimeout(timerZonCeria);
 
+            // Dinaikkan kepada 12 saat (12000 milisaat)
             timerZonCeria = setTimeout(() => {
-                // Jika emosi masih di bawah 70% dan modul belum terbuka selepas 7 saat
                 if (currentScorePercent < 70 && !isUnlocked) {
+                    // Auto tutup kamera emosi apabila pop-up keluar
+                    hentiKameraEmosi();
+                    
+                    // Mainkan lagu Goyang Dumang
+                    const audio = document.getElementById("audioGoyangDumang");
+                    if(audio) {
+                        audio.play().catch(e => console.log("Audio play blocked by browser policy"));
+                    }
+
+                    // Paparkan modal pop-up Zon Ceria
                     document.getElementById("zonCeriaModal").style.display = "flex";
                 }
-            }, 7000);
+            }, 12000);
         }
 
         function bukaZonCeria() {
@@ -857,7 +887,7 @@
             poseModel = await tmPose.load(modelURL, metadataURL);
             poseMaxPredictions = poseModel.getTotalClasses();
 
-            const size = 220;
+            const size = 350; // Saiz kamera Zon Ceria dibesarkan
             const flip = true; 
             poseWebcam = new tmPose.Webcam(size, size, flip); 
             await poseWebcam.setup(); 
@@ -877,9 +907,11 @@
         }
 
         async function loopZonCeria() {
-            poseWebcam.update(); 
-            await predictZonCeria();
-            window.requestAnimationFrame(loopZonCeria);
+            if (poseWebcam && poseWebcam.canvas) {
+                poseWebcam.update(); 
+                await predictZonCeria();
+                window.requestAnimationFrame(loopZonCeria);
+            }
         }
 
         async function predictZonCeria() {
@@ -896,7 +928,7 @@
         }
 
         function drawPoseZonCeria(pose) {
-            if (poseWebcam.canvas) {
+            if (poseWebcam.canvas && poseCtx) {
                 poseCtx.drawImage(poseWebcam.canvas, 0, 0);
                 if (pose) {
                     const minPartConfidence = 0.5;
