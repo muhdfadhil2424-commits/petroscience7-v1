@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { DapurVideoSection } from './components/DapurVideoSection';
 import { DapurVideoModal } from './components/DapurVideoModal';
 import { DishId } from './types';
 import { DISHES_DATA } from './data/dishesData';
@@ -93,10 +94,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-amber-50/40 text-slate-800 font-sans selection:bg-amber-300 selection:text-amber-950">
-      <DapurVideoModal 
-  isOpen={showVideoModal} 
-  onClose={() => setShowVideoModal(false)} 
-/>
+     
       {/* Sticky Header Navbar */}
       <HeaderNavbar
         totalStars={totalStars}
@@ -110,6 +108,8 @@ export default function App() {
       {/* Main Content Router */}
       <main>
         {viewState === 'menu' && (
+          <>
+            <DapurVideoSection />
           <DishSelector
             dishes={DISHES_DATA}
             completedDishes={completedDishes}
@@ -117,6 +117,7 @@ export default function App() {
             onSelectDish={handleSelectDish}
             onViewDiningTable={() => setViewState('dining')}
           />
+        </>
         )}
 
         {viewState === 'cooking' && activeDish && (
