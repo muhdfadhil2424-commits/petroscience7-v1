@@ -53,7 +53,7 @@
             padding: 20px 25px 50px 25px;
         }
 
-        /* EMOJI DEKORASI LATAR BELAKANG Utama */
+        /* 3. LATAR BELAKANG UTAMA: HANYA EMOJI MUKA SAHAJA */
         .bg-emoji-layer {
             position: fixed;
             top: 0;
@@ -68,9 +68,9 @@
         .floating-emoji {
             position: absolute;
             user-select: none;
-            opacity: 0.85;
+            opacity: 0.75;
             animation: floatRandom 5s ease-in-out infinite alternate;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
         }
 
         @keyframes floatRandom {
@@ -78,10 +78,10 @@
                 transform: translateY(0px) rotate(0deg) scale(1);
             }
             50% {
-                transform: translateY(-18px) rotate(10deg) scale(1.08);
+                transform: translateY(-16px) rotate(8deg) scale(1.05);
             }
             100% {
-                transform: translateY(14px) rotate(-10deg) scale(0.92);
+                transform: translateY(12px) rotate(-8deg) scale(0.95);
             }
         }
 
@@ -453,7 +453,7 @@
             overflow: hidden;
         }
 
-        /* LAPISAN EMOJI MUKA DI DALAM ZON CERIA */
+        /* LAPISAN EMOJI ZON CERIA */
         .zon-ceria-emoji-layer {
             position: absolute;
             top: 0;
@@ -464,19 +464,19 @@
             z-index: 1;
         }
 
-        .face-emoji-floating {
+        .zon-ceria-emoji-floating {
             position: absolute;
             user-select: none;
-            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
             animation: pulseFloat 4s ease-in-out infinite alternate;
         }
 
         @keyframes pulseFloat {
             0% {
-                transform: translateY(0px) scale(1) rotate(-5deg);
+                transform: translateY(0px) scale(1) rotate(-6deg);
             }
             100% {
-                transform: translateY(-15px) scale(1.1) rotate(5deg);
+                transform: translateY(-12px) scale(1.1) rotate(6deg);
             }
         }
 
@@ -561,7 +561,7 @@
             z-index: 2;
         }
 
-        /* BAHAGIAN ILUSTRASI KIRI & KANAN (TANPA KOTAK) */
+        /* BAHAGIAN ILUSTRASI KIRI & KANAN */
         .side-illustration-group {
             display: flex;
             flex-direction: column;
@@ -736,7 +736,7 @@
 </head>
 <body>
 
-    <!-- LAPISAN EMOJI FLOATING DI LATAR BELAKANG -->
+    <!-- LAPISAN EMOJI MUKA FLOATING UTAMA (GAMBAR 2) -->
     <div class="bg-emoji-layer" id="emojiLayer"></div>
 
     <!-- AUDIO MP3 LOKAL -->
@@ -818,10 +818,10 @@
                     </div>
                 </div>
 
-                <!-- CONTAINER ZON CERIA -->
+                <!-- CONTAINER ZON CERIA (GAMBAR 1) -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   
-                  <!-- LAYER EMOJI MUKA FLOATING POSISI RAWAK -->
+                  <!-- LAPISAN EMOJI CONFETTI, DISCO & POSE (KIRI & KANAN SAHAJA) -->
                   <div class="zon-ceria-emoji-layer" id="zonCeriaEmojiLayer"></div>
 
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA <i class="fa-solid fa-star" style="color: #ffd166; font-size: 1.8rem;"></i></h3>
@@ -840,7 +840,7 @@
 
                   <div class="zon-ceria-layout">
                     
-                    <!-- KUMPULAN HIASAN KIRI (TANPA KOTAK) -->
+                    <!-- KUMPULAN HIASAN KIRI -->
                     <div class="side-illustration-group">
                         <div class="side-illustration">
                             <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -865,7 +865,7 @@
                         <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.05rem; background: rgba(255,255,255,0.08); padding: 12px 18px; border-radius: 16px; width: 100%; max-width: 380px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
                     </div>
 
-                    <!-- KUMPULAN HIASAN KANAN (TANPA KOTAK) -->
+                    <!-- KUMPULAN HIASAN KANAN -->
                     <div class="side-illustration-group">
                         <div class="side-illustration">
                             <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -956,20 +956,23 @@
     </div>
 
     <script>
-        // GENERATOR EMOJI TERAPUNG UTAMA UNTUK LATAR BELAKANG
+        // 3. GENERATOR EMOJI LATAR BELAKANG UTAMA (GAMBAR 2): HANYA EMOJI MUKA SAHAJA
         function generateBackgroundEmojis() {
             const container = document.getElementById('emojiLayer');
-            const emojis = ['⭐', '✨', '🎈', '🍕', '🍰', '🎨', '🚀', '🌟', '🥳', '🧁', '🍦', '🍩', '🎯', '🧩', '🎈', '✨'];
-            const totalEmojis = 30;
+            if (!container) return;
+            container.innerHTML = "";
+
+            const faceEmojis = ['😀', '😃', '😄', '😆', '🤩', '😎', '🥳', '🥰', '😜', '🤪', '😊', '😁', '🥳', '😃'];
+            const totalEmojis = 28;
 
             for (let i = 0; i < totalEmojis; i++) {
                 const span = document.createElement('span');
                 span.className = 'floating-emoji';
-                span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                span.innerText = faceEmojis[Math.floor(Math.random() * faceEmojis.length)];
 
                 const topPos = Math.random() * 92;
                 const leftPos = Math.random() * 95;
-                const fontSize = 1.8 + Math.random() * 1.8;
+                const fontSize = 1.8 + Math.random() * 1.6;
                 const duration = 3.5 + Math.random() * 4.5;
                 const delay = Math.random() * 2;
 
@@ -983,41 +986,49 @@
             }
         }
 
-        // GENERATOR EMOJI MUKA POSISI RAWAK KHUSUS DI DALAM ZON CERIA
-        function generateZonCeriaFaceEmojis() {
+        // 1 & 2. GENERATOR EMOJI KHUSUS ZON CERIA (GAMBAR 1)
+        // HANYA EMOJI CONFETTI, DISCO & 5 POSE | TERLETAK DI TEPI KIRI & KANAN SAHAJA (JAUH DARI TEKS & GAMBAR WATAK)
+        function generateZonCeriaThemeEmojis() {
             const container = document.getElementById('zonCeriaEmojiLayer');
             if(!container) return;
             container.innerHTML = "";
 
-            const faceEmojis = ['😀', '🥳', '😎', '🤩', '🥰', '🤪', '😄', '😃', '😁', '🎉', '🌟', '✨'];
-            const totalFaces = 14; 
+            // Emoji Confetti, Disco, dan 5 Pose
+            const themeEmojis = ['🎉', '🎊', '🪩', '✨', '🌟', '🪅', '👍', '🫶', '👌', '✌️', '⭐'];
 
-            for (let i = 0; i < totalFaces; i++) {
-                const span = document.createElement('span');
-                span.className = 'face-emoji-floating';
-                span.innerText = faceEmojis[Math.floor(Math.random() * faceEmojis.length)];
-
-                // Kedudukan rawak (Percentage dalam container Zon Ceria)
-                const topPos = 5 + Math.random() * 85; 
-                const leftPos = 4 + Math.random() * 90;
+            // Kedudukan selamat: Hanya di zon tepi kiri (3% - 18%) dan tepi kanan (82% - 95%)
+            // Kedudukan menegak dipisahkan jauh supaya tidak bertindih (Grid terancang)
+            const safePositions = [
+                // Sebelah Kiri (Sisi Luar & Atas/Bawah Gambar Lelaki)
+                { top: 8,  left: 4 },
+                { top: 28, left: 14 },
+                { top: 52, left: 3 },
+                { top: 78, left: 12 },
                 
-                // Mengelakkan tindanan tepat di tengah kamera
-                if (topPos > 30 && topPos < 80 && leftPos > 32 && leftPos < 68) {
-                    continue; 
-                }
+                // Sebelah Kanan (Sisi Luar & Atas/Bawah Gambar Perempuan)
+                { top: 10, left: 88 },
+                { top: 32, left: 93 },
+                { top: 58, left: 84 },
+                { top: 82, left: 91 }
+            ];
 
-                const fontSize = 1.8 + Math.random() * 1.6; // Saiz 1.8rem - 3.4rem
-                const duration = 3 + Math.random() * 3;
-                const delay = Math.random() * 2;
+            safePositions.forEach((pos, index) => {
+                const span = document.createElement('span');
+                span.className = 'zon-ceria-emoji-floating';
+                span.innerText = themeEmojis[index % themeEmojis.length];
 
-                span.style.top = `${topPos}%`;
-                span.style.left = `${leftPos}%`;
+                const fontSize = 1.8 + (index % 3) * 0.4; // Saiz sederhana 1.8rem - 2.6rem
+                const duration = 3 + (index % 4) * 0.8;
+                const delay = (index % 3) * 0.6;
+
+                span.style.top = `${pos.top}%`;
+                span.style.left = `${pos.left}%`;
                 span.style.fontSize = `${fontSize}rem`;
                 span.style.animationDuration = `${duration}s`;
                 span.style.animationDelay = `${delay}s`;
 
                 container.appendChild(span);
-            }
+            });
         }
 
         const URL = "https://teachablemachine.withgoogle.com/models/Zcg9co-dz/";
@@ -1270,7 +1281,7 @@
             document.getElementById("zonCeriaModal").style.display = "none";
             document.getElementById("zonCeriaSection").style.display = "block";
             
-            generateZonCeriaFaceEmojis(); // Jana emoji muka rawak setiap kali Zon Ceria dibuka
+            generateZonCeriaThemeEmojis(); // Jana emoji berpola khusus Zon Ceria (Kiri & Kanan sahaja)
             currentPoseIndex = 0;
             updatePoseUI();
             initZonCeriaPose();
