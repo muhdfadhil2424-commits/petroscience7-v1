@@ -354,8 +354,8 @@
 
         .zon-ceria-card {
             margin-top: 30px;
-            padding: 30px;
-            background: rgba(15, 20, 35, 0.9);
+            padding: 25px;
+            background: rgba(15, 20, 35, 0.95);
             border: 2px solid #e5a93c;
             border-radius: 20px;
             text-align: center;
@@ -366,7 +366,59 @@
             font-family: 'Fredoka', sans-serif;
             font-size: 2rem;
             margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        /* Target Pose Banner */
+        .pose-target-box {
+            background: linear-gradient(135deg, #1e1b4b, #311b92);
+            border: 2px dashed #818cf8;
+            border-radius: 14px;
+            padding: 12px;
             margin-bottom: 20px;
+            display: inline-block;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .pose-target-title {
+            font-size: 0.85rem;
+            color: #a5b4fc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .pose-target-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #38bdf8;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .pose-progress-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .dot-step {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+
+        .dot-step.active {
+            background: #38bdf8;
+            box-shadow: 0 0 10px #38bdf8;
+            transform: scale(1.2);
+        }
+
+        .dot-step.completed {
+            background: #22c55e;
         }
 
         .floating-robot-widget {
@@ -557,6 +609,20 @@
                 <!-- Container Paparan Zon Ceria -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA</h3>
+                  
+                  <!-- Target Pose Display -->
+                  <div class="pose-target-box">
+                      <div class="pose-target-title">TUGASAN POSE <span id="poseStepNum">1</span> / 5:</div>
+                      <div class="pose-target-name" id="targetPoseName">THUMBS UP POSE</div>
+                      <div class="pose-progress-tracker">
+                          <div class="dot-step active" id="dot-0"></div>
+                          <div class="dot-step" id="dot-1"></div>
+                          <div class="dot-step" id="dot-2"></div>
+                          <div class="dot-step" id="dot-3"></div>
+                          <div class="dot-step" id="dot-4"></div>
+                      </div>
+                  </div>
+
                   <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
                     <canvas id="canvas" style="border: 3px solid #e5a93c; border-radius: 16px; background: #000; width: 420px; height: 420px; max-width: 100%;"></canvas>
                     <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.1rem; background: #171d30; padding: 15px; border-radius: 12px; width: 100%; max-width: 420px; color: #fff; border: 1px solid rgba(229, 169, 60, 0.3);"></div>
@@ -570,7 +636,7 @@
                 <div id="m2-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #94a3b8;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px; color: #f43f5e;"></i>
                     <h3>Modul Terkunci</h3>
-                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 70% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
                 </div>
                 <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
             </div>
@@ -580,7 +646,7 @@
                 <div id="m3-locked" style="background: rgba(0,0,0,0.5); border-radius: 12px; padding: 80px; text-align: center; color: #f59e0b;">
                     <i class="fa-solid fa-lock" style="font-size: 3rem; margin-bottom: 15px;"></i>
                     <h3>Modul Terkunci</h3>
-                    <p style="font-size: 0.9rem; margin-top: 5px;">Capai sekurang-kurangnya 70% emosi Happy atau Neutral pada Modul 1 untuk membuka modul ini!</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
                 </div>
                 <iframe id="m3-iframe" src="https://petualangan-dunia-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
             </div>
@@ -592,7 +658,7 @@
     <div id="zonCeriaModal" style="display: none;" class="modal-overlay">
       <div class="modal-card">
         <h3>Mood Anda Belum Mencapai 70%!</h3>
-        <p>Mari ceriakan diri anda sebentar di Zon Ceria sebelum meneruskan.</p>
+        <p>Mari ceriakan diri anda sebentar di Zon Ceria dan selesaikan 5 gaya pose untuk buka modul!</p>
         <button onclick="bukaZonCeria()" class="btn-modal">
           Ke Zon Ceria
         </button>
@@ -643,9 +709,20 @@
         let timerZonCeria = null;
         let currentScorePercent = 0;
 
+        // --- ZON CERIA POSE SYSTEM ---
+        const POSE_LIST = [
+            { name: "THUMBS UP POSE", key: "thumbs" },
+            { name: "LOVE POSE", key: "love" },
+            { name: "OKAY POSE", key: "okay" },
+            { name: "PEACE POSE", key: "peace" },
+            { name: "STAR JUMP POSE", key: "star" }
+        ];
+        let currentPoseIndex = 0;
+        let isPoseTransitioning = false;
+
         function switchTab(tabIndex) {
             if (!isUnlocked && tabIndex !== 1) {
-                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila tunjukkan emosi Happy atau Neutral melebihi 70% di Modul 1 terlebih dahulu.");
+                updateBotSpeech("Modul " + tabIndex + " masih terkunci! Sila selesaikan cabaran di Modul 1 dahulu.");
                 return;
             }
 
@@ -675,6 +752,13 @@
             if (timerZonCeria) clearTimeout(timerZonCeria);
             hentiKameraEmosi();
 
+            // Hentikan lagu MP3
+            const audio = document.getElementById("audioGoyangDumang");
+            if(audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+
             document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
             document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
 
@@ -687,7 +771,7 @@
             document.getElementById('m3-locked').style.display = 'none';
             document.getElementById('m3-iframe').style.display = 'block';
 
-            updateBotSpeech("Tahniah! Emosi anda dikesan gembira/neutral melebihi 70%. Modul 2 dan Modul 3 telah DIBUKA!");
+            updateBotSpeech("Tahniah! Kelima-lima pose Zon Ceria berjaya dilakukan! Modul 2 dan Modul 3 telah DIBUKA sepenuhnya!");
         }
 
         function speakText(text) {
@@ -866,7 +950,33 @@
         function bukaZonCeria() {
             document.getElementById("zonCeriaModal").style.display = "none";
             document.getElementById("zonCeriaSection").style.display = "block";
+            
+            // Set semula pose tracker
+            currentPoseIndex = 0;
+            updatePoseUI();
+            
             initZonCeriaPose();
+        }
+
+        function updatePoseUI() {
+            if(currentPoseIndex < POSE_LIST.length) {
+                const target = POSE_LIST[currentPoseIndex];
+                document.getElementById("poseStepNum").innerText = currentPoseIndex + 1;
+                document.getElementById("targetPoseName").innerText = target.name;
+
+                for(let i = 0; i < 5; i++) {
+                    const dot = document.getElementById(`dot-${i}`);
+                    if(i < currentPoseIndex) {
+                        dot.className = "dot-step completed";
+                    } else if(i === currentPoseIndex) {
+                        dot.className = "dot-step active";
+                    } else {
+                        dot.className = "dot-step";
+                    }
+                }
+
+                updateBotSpeech(`Tugasan Zon Ceria: Sila buat ${target.name} sehingga mencapai sekurang-kurangnya 70%!`);
+            }
         }
 
         const POSE_URL = "https://teachablemachine.withgoogle.com/models/8_OFVuL_i/";
@@ -910,12 +1020,45 @@
             const { pose, posenetOutput } = await poseModel.estimatePose(poseWebcam.canvas);
             const prediction = await poseModel.predict(posenetOutput);
 
+            let currentTargetKey = POSE_LIST[currentPoseIndex]?.key;
+            let currentTargetScore = 0;
+
             for (let i = 0; i < poseMaxPredictions; i++) {
-                const classPrediction = prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(0) + "%";
+                const className = prediction[i].className;
+                const probPercent = (prediction[i].probability * 100).toFixed(0);
+                const classPrediction = className + ": " + probPercent + "%";
+                
                 if (poseLabelContainer.childNodes[i]) {
                     poseLabelContainer.childNodes[i].innerHTML = classPrediction;
                 }
+
+                // Semak peratusan untuk pose yang diminta sekarang
+                if (currentTargetKey && className.toLowerCase().includes(currentTargetKey)) {
+                    currentTargetScore = parseInt(probPercent);
+                }
             }
+
+            // Jika peratusan mencapai 70% atau lebih
+            if (currentTargetScore >= 70 && !isPoseTransitioning && !isUnlocked) {
+                isPoseTransitioning = true;
+                
+                // Tandakan dot siap
+                document.getElementById(`dot-${currentPoseIndex}`).className = "dot-step completed";
+
+                if (currentPoseIndex < POSE_LIST.length - 1) {
+                    currentPoseIndex++;
+                    updateBotSpeech(`Hebat! ${POSE_LIST[currentPoseIndex-1].name} berjaya! Sekarang, buat ${POSE_LIST[currentPoseIndex].name}!`);
+                    
+                    setTimeout(() => {
+                        updatePoseUI();
+                        isPoseTransitioning = false;
+                    }, 2000);
+                } else {
+                    // Kelima-lima pose telah berjaya!
+                    unlockAllModules();
+                }
+            }
+
             drawPoseZonCeria(pose);
         }
 
