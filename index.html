@@ -1,327 +1,1565 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EduSense - Portal Pembelajaran Pecahan</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDUSENSE - Portal Pembelajaran Ceria</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- TensorFlow & Teachable Machine Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
-  <!-- Google Fonts & FontAwesome -->
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-cream: #faf8f2;
+            --card-dark: #2d3528;
+            --card-accent: #e07a5f;
+            --accent-gold: #f4a261;
+            --accent-green: #2a9d8f;
+            --accent-pink: #f472b6;
+            --text-dark: #2c3527;
+            --text-light: #fefae0;
+            --text-muted: #788570;
+            --border-warm: #e5dec9;
+        }
 
-  <!-- TensorFlow.js & Teachable Machine -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+        * {
+            box-sizing: border-box;
+        }
 
-  <style>
-    :root {
-      --bg-color: #f7f5ee;
-      --hero-bg: #222e23;
-      --card-bg: #ffffff;
-      --tab-inactive: #eee8d5;
-      --accent-red: #e0684b;
-      --accent-green: #2a9d8f;
-      --accent-yellow: #f4a261;
-      --text-main: #2b2d42;
-      --text-muted: #6c757d;
-      --border-radius: 20px;
-    }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-cream);
+            color: var(--text-dark);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+        /* LATAR BELAKANG BERCORAK POLKA-DOT */
+        body {
+            background-image: 
+                radial-gradient(#e2d8bd 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            padding: 20px 25px 50px 25px;
+        }
 
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      padding: 20px;
-      min-height: 100vh;
-      background-image: radial-gradient(#d3cbb8 1px, transparent 1px);
-      background-size: 24px 24px;
-    }
+        /* 3. LATAR BELAKANG UTAMA: HANYA EMOJI MUKA SAHAJA */
+        .bg-emoji-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+        .floating-emoji {
+            position: absolute;
+            user-select: none;
+            opacity: 0.75;
+            animation: floatRandom 5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+        }
 
-    /* --- HERO BANNER --- */
-    .hero-card {
-      background-color: var(--hero-bg);
-      color: white;
-      border-radius: 28px;
-      padding: 30px 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-      position: relative;
-      overflow: hidden;
-    }
+        @keyframes floatRandom {
+            0% {
+                transform: translateY(0px) rotate(0deg) scale(1);
+            }
+            50% {
+                transform: translateY(-16px) rotate(8deg) scale(1.05);
+            }
+            100% {
+                transform: translateY(12px) rotate(-8deg) scale(0.95);
+            }
+        }
 
-    .hero-content {
-      max-width: 65%;
-    }
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            position: relative;
+            z-index: 1;
+        }
 
-    .hero-badge {
-      background-color: rgba(255,255,255,0.1);
-      color: #e2c044;
-      border: 1px solid rgba(226, 192, 68, 0.4);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 15px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+        /* HERO BANNER - DIKEMASKINI UNTUK SUSUNAN LOGO */
+        .hero-banner {
+            background: #2d3528;
+            border-radius: 28px;
+            padding: 40px 48px;
+            color: var(--text-light);
+            box-shadow: 0 12px 30px rgba(45, 53, 40, 0.12);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
 
-    .hero-title {
-      font-size: 2.3rem;
-      font-weight: 800;
-      margin-bottom: 10px;
-      line-height: 1.2;
-    }
+        .hero-content {
+            max-width: 850px;
+            z-index: 2;
+        }
 
-    .hero-desc {
-      color: #c2c9c2;
-      font-size: 0.95rem;
-    }
+        .hero-logo-box {
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
 
-    /* KOTAK LOGO DIBESARKAN */
-    .hero-logo-box {
-      background: white;
-      padding: 6px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 220px;
-      height: 110px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
+        .hero-logo-img {
+            max-height: 120px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 16px;
+            filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));
+        }
 
-    .hero-logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      border-radius: 14px;
-    }
+        .pill-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(244, 162, 97, 0.2);
+            color: var(--accent-gold);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            border: 1px solid rgba(244, 162, 97, 0.3);
+        }
 
-    /* --- TAB NAVIGASI UTAMA --- */
-    .main-nav {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 25px;
-    }
+        .hero-banner h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            line-height: 1.2;
+            color: #ffffff;
+        }
 
-    .nav-btn {
-      background-color: #f2ede4;
-      border: none;
-      padding: 16px 14px;
-      border-radius: 18px;
-      font-weight: 700;
-      font-size: 0.88rem;
-      color: #777;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: all 0.3s ease;
-    }
+        .hero-banner p {
+            color: #dbe4d8;
+            font-size: 1.05rem;
+            margin: 0;
+            line-height: 1.6;
+            font-weight: 500;
+        }
 
-    .nav-btn .btn-text {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+        /* TABS STYLING */
+        .module-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 22px;
+            border: 2px solid var(--border-warm);
+            box-shadow: 0 8px 25px rgba(45, 53, 40, 0.04);
+        }
 
-    .nav-btn.active {
-      background-color: var(--accent-red);
-      color: white;
-      box-shadow: 0 6px 15px rgba(224, 104, 75, 0.3);
-    }
+        .tab-btn {
+            background: #f6f3e8;
+            border: 2px solid transparent;
+            padding: 15px 20px;
+            border-radius: 16px;
+            color: var(--text-dark);
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+        }
 
-    .status-badge {
-      font-size: 0.72rem;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-weight: 700;
-    }
+        .tab-btn:hover {
+            background: #ebdcc2;
+        }
 
-    .badge-unlock {
-      background-color: rgba(255,255,255,0.3);
-      color: white;
-    }
+        .tab-btn.active {
+            background: var(--card-accent);
+            color: #ffffff;
+            border-color: #c85a3f;
+            box-shadow: 0 6px 16px rgba(224, 122, 95, 0.3);
+        }
 
-    .badge-lock {
-      background-color: #fbdada;
-      color: #e57373;
-    }
+        .badge-status {
+            font-size: 0.78rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+        }
 
-    /* --- SEKSYEN KANDUNGAN --- */
-    .content-panel {
-      background-color: var(--card-bg);
-      border-radius: 24px;
-      padding: 35px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-      border: 1px solid #eae5d9;
-    }
+        .badge-locked {
+            background: rgba(224, 122, 95, 0.15);
+            color: var(--card-accent);
+            border: 1px solid rgba(224, 122, 95, 0.3);
+        }
 
-    .panel-title {
-      font-size: 1.4rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #2b2d42;
-    }
+        .badge-unlocked {
+            background: rgba(42, 157, 143, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(42, 157, 143, 0.3);
+        }
 
-    .panel-subtitle {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-top: 6px;
-      margin-bottom: 25px;
-    }
+        .content-area {
+            width: 100%;
+        }
 
-    /* --- WEBCAM SECTION --- */
-    .webcam-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-    }
+        .module-content {
+            display: none;
+            border-radius: 28px;
+            overflow: hidden;
+            width: 100%;
+        }
 
-    .btn-camera {
-      background-color: #2a9d8f;
-      color: white;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 12px;
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
+        .module-content.active {
+            display: block;
+        }
 
-    .webcam-display {
-      width: 320px;
-      height: 240px;
-      background-color: #000;
-      border-radius: 16px;
-      border: 3px solid #2a9d8f;
-      overflow: hidden;
-    }
+        /* BAHAN 1 CARD */
+        #bahan1 {
+            background: #ffffff;
+            border: 2px solid var(--border-warm);
+            border-radius: 28px;
+            padding: 38px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.04);
+            min-height: 70vh;
+            position: relative;
+        }
 
-    /* --- BOT EDU-BOT --- */
-    .edubot-widget {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: white;
-      padding: 10px 20px;
-      border-radius: 50px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      border: 2px solid #2a9d8f;
-    }
+        #bahan1 h2, #dapurSection h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--card-dark);
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
 
-    .edubot-avatar {
-      width: 38px;
-      height: 38px;
-      background: #2a9d8f;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.1rem;
-    }
+        #bahan1 .desc, #dapurSection .desc {
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            font-size: 1rem;
+            font-weight: 500;
+        }
 
-    .edubot-text strong {
-      display: block;
-      font-size: 0.85rem;
-      color: #2b2d42;
-    }
+        .btn-camera {
+            background: var(--card-accent);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 800;
+            border-radius: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 6px 18px rgba(224, 122, 95, 0.3);
+            transition: all 0.25s ease;
+        }
 
-    .edubot-text span {
-      font-size: 0.78rem;
-      color: #6c757d;
-    }
-  </style>
+        .btn-camera:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(224, 122, 95, 0.4);
+        }
+
+        .camera-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-top: 28px;
+        }
+
+        .view-box {
+            background: #faf7f0;
+            border: 2.5px dashed #d6cca8;
+            border-radius: 24px;
+            min-height: 360px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 22px;
+        }
+
+        .view-box .box-title {
+            position: absolute;
+            top: 15px;
+            left: 18px;
+            background: var(--card-dark);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .placeholder-text {
+            color: #a0aab0;
+            font-size: 0.98rem;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 100vh;
+            border: none;
+            border-radius: 28px;
+            background: transparent;
+            display: block;
+            overflow: hidden;
+        }
+
+        /* REKA BENTUK DAPUR PECAHAN */
+        .dapur-card {
+            background: #ffffff;
+            border: 2px solid var(--border-warm);
+            border-radius: 28px;
+            padding: 38px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.04);
+            margin-bottom: 25px;
+        }
+
+        .video-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .video-btn {
+            background: #f6f3e8;
+            border: 2px solid var(--border-warm);
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s ease;
+            text-align: left;
+        }
+
+        .video-btn:hover {
+            background: #ebdcc2;
+        }
+
+        .video-btn.active {
+            background: var(--accent-green);
+            color: #ffffff;
+            border-color: #1e7065;
+            box-shadow: 0 6px 16px rgba(42, 157, 143, 0.3);
+        }
+
+        .youtube-player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* Aspect Ratio 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 24px;
+            background: #000;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            border: 3px solid var(--card-dark);
+        }
+
+        .youtube-player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* EMOTION BARS */
+        .emotion-bar-container {
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .emotion-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .emotion-label {
+            width: 90px;
+            font-size: 0.88rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .label-happy { color: #e07a5f; }
+        .label-neutral { color: #2a9d8f; }
+        .label-sad { color: #e76f51; }
+        .label-sleepy { color: #457b9d; }
+
+        .progress-bg {
+            flex: 1;
+            height: 28px;
+            background: #ebe6d5;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 12px;
+            transition: width 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+
+        .fill-happy { background: #e07a5f; }
+        .fill-neutral { background: #2a9d8f; }
+        .fill-sad { background: #e76f51; }
+        .fill-sleepy { background: #457b9d; }
+
+        /* MODAL POPUP */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(45, 53, 40, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border: 3px solid var(--accent-gold);
+            border-radius: 28px;
+            padding: 35px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-card h3 {
+            color: var(--card-dark);
+            font-family: 'Playfair Display', serif;
+            font-size: 1.9rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .modal-card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        .btn-modal {
+            background: var(--card-accent);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+            box-shadow: 0 6px 18px rgba(224, 122, 95, 0.3);
+        }
+
+        .btn-modal:hover {
+            transform: scale(1.03);
+        }
+
+        /* ZON CERIA POSE SECTION */
+        .zon-ceria-card {
+            margin-top: 35px;
+            padding: 40px 30px;
+            background: linear-gradient(180deg, #2a3426 0%, #1d241a 100%);
+            color: #fff;
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.25);
+            border: 3px solid #3d4a37;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* LAPISAN EMOJI ZON CERIA */
+        .zon-ceria-emoji-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .zon-ceria-emoji-floating {
+            position: absolute;
+            user-select: none;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+            animation: pulseFloat 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseFloat {
+            0% {
+                transform: translateY(0px) scale(1) rotate(-6deg);
+            }
+            100% {
+                transform: translateY(-12px) scale(1.1) rotate(6deg);
+            }
+        }
+
+        .zon-ceria-card h3 {
+            color: var(--accent-gold);
+            font-family: 'Playfair Display', serif;
+            font-size: 2.4rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .pose-target-box {
+            background: rgba(255, 255, 255, 0.07);
+            border: 2px dashed rgba(244, 162, 97, 0.6);
+            border-radius: 22px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: inline-block;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .pose-target-title {
+            font-size: 0.88rem;
+            color: #dbe4d8;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .pose-target-name {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            font-family: 'Fredoka', sans-serif;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+
+        .pose-progress-tracker {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 15px;
+        }
+
+        .dot-step {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.3s;
+        }
+
+        .dot-step.active {
+            background: var(--accent-gold);
+            box-shadow: 0 0 15px var(--accent-gold);
+            transform: scale(1.3);
+        }
+
+        .dot-step.completed {
+            background: var(--accent-green);
+        }
+
+        .zon-ceria-layout {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* BAHAGIAN ILUSTRASI KIRI & KANAN */
+        .side-illustration-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .side-illustration {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .side-illustration:hover {
+            transform: translateY(-5px) scale(1.03);
+        }
+
+        .illustration-text {
+            margin-top: 10px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.15rem;
+            color: #ffe6a7;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .extra-decoration {
+            font-size: 2.2rem;
+            animation: pulseMini 2s infinite alternate;
+        }
+
+        @keyframes pulseMini {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); }
+        }
+
+        .camera-pose-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #canvas {
+            border: 4px solid var(--accent-gold);
+            border-radius: 24px;
+            background: #111;
+            width: 380px;
+            height: 380px;
+            max-width: 100%;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+        }
+
+        /* FLOATING ROBOT WIDGET */
+        .floating-robot-widget {
+            position: fixed;
+            bottom: 22px;
+            right: 28px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            max-width: 300px;
+            pointer-events: none;
+        }
+
+        .floating-robot-widget * {
+            pointer-events: auto;
+        }
+
+        .speech-bubble {
+            background: #ffffff;
+            border: 2px solid var(--border-warm);
+            border-radius: 22px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .bubble-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1.5px solid #f0eae0;
+            padding-bottom: 6px;
+        }
+
+        .bot-name {
+            font-weight: 800;
+            color: var(--card-dark);
+            font-size: 0.9rem;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-icon {
+            background: #f4f1de;
+            color: var(--card-dark);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-icon:hover {
+            background: var(--card-accent);
+            color: #fff;
+        }
+
+        .speech-text {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            line-height: 1.45;
+            font-weight: 700;
+        }
+
+        .robot-avatar {
+            width: 95px;
+            height: 95px;
+            cursor: pointer;
+            filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.18));
+            transition: transform 0.2s ease;
+        }
+
+        .robot-avatar:hover {
+            transform: scale(1.08);
+        }
+
+        .robot-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .speech-bubble.minimized {
+            display: none;
+        }
+
+        @media (max-width: 950px) {
+            .zon-ceria-layout { flex-direction: column; }
+            .side-illustration-group { display: none; }
+            .video-selector-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .hero-banner { 
+                padding: 28px; 
+                flex-direction: column;
+                text-align: center; 
+                justify-content: center; 
+            }
+            .hero-banner h1 { font-size: 2.1rem; }
+            .hero-logo-img { max-height: 90px; }
+            .module-tabs { grid-template-columns: 1fr; }
+            .camera-grid { grid-template-columns: 1fr; }
+            .floating-robot-widget { max-width: 240px; right: 12px; bottom: 12px; }
+            .robot-avatar { width: 75px; height: 75px; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
+    <!-- LAPISAN EMOJI MUKA FLOATING UTAMA -->
+    <div class="bg-emoji-layer" id="emojiLayer"></div>
 
-  <!-- HERO BANNER -->
-  <div class="hero-card">
-    <div class="hero-content">
-      <div class="hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> PORTAL PEMBELAJARAN EDUSENSE</div>
-      <h1 class="hero-title">Selamat Datang ke Dunia Pecahan!</h1>
-      <p class="hero-desc">Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
+    <!-- AUDIO MP3 LOKAL -->
+    <audio id="audioGoyangDumang" src="goyang-dumang.mp3" preload="auto" loop></audio>
+
+    <div class="container">
+        <!-- HERO BANNER (DENGAN LOGO DI SISI) -->
+        <header class="hero-banner">
+            <div class="hero-content">
+                <div class="pill-badge">✨ PORTAL PEMBELAJARAN EDUSENSE</div>
+                <h1>Selamat Datang ke Dunia Pecahan!</h1>
+                <p>Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
+            </div>
+            <!-- BAHAGIAN LOGO DITAMBAH DI SINI -->
+            <div class="hero-logo-box">
+                <img src="logo.jpeg" alt="EduSense Logo" class="hero-logo-img">
+            </div>
+        </header>
+
+        <!-- MODUL TABS -->
+        <div class="module-tabs">
+            <button class="tab-btn active" data-tab="1" onclick="switchTab(1)">
+                <span><i class="fa-solid fa-camera-retro" style="margin-right: 8px;"></i> 1. SEMAK MOOD SAYA</span>
+            </button>
+
+            <button class="tab-btn" data-tab="2" onclick="switchTab(2)">
+                <span><i class="fa-solid fa-utensils" style="margin-right: 8px;"></i> 2. DAPUR PECAHAN</span>
+                <span id="badge-tab-2" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
+            </button>
+
+            <button class="tab-btn" data-tab="3" onclick="switchTab(3)">
+                <span><i class="fa-solid fa-gamepad" style="margin-right: 8px;"></i> 3. DUNIA PECAHAN</span>
+                <span id="badge-tab-3" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
+            </button>
+        </div>
+
+        <div class="content-area">
+            
+            <!-- BAHAN 1 -->
+            <div id="bahan1" class="module-content active">
+                <h2><i class="fa-solid fa-face-smile" style="color: var(--card-accent);"></i> Semak Mood Saya</h2>
+                <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Modul 2 & 3!</p>
+
+                <button class="btn-camera" id="btnCamera" onclick="toggleCamera()">
+                    <i class="fa-solid fa-play"></i> <span id="btnCamText">Mula Pengimbas Kamera</span>
+                </button>
+
+                <div class="camera-grid">
+                    <div class="view-box">
+                        <span class="box-title">PAPARAN KAMERA</span>
+                        <div id="webcam-container"></div>
+                        <div id="camPlaceholder" class="placeholder-text">
+                            <i class="fa-solid fa-video-slash" style="font-size: 2.8rem; margin-bottom: 12px; opacity: 0.35;"></i><br>
+                            Kamera belum dihidupkan
+                        </div>
+                    </div>
+
+                    <div class="view-box">
+                        <span class="box-title">ANALISIS EMOSI</span>
+                        <div id="resultBox" class="placeholder-text">
+                            <i class="fa-solid fa-brain" style="font-size: 2.8rem; margin-bottom: 12px; opacity: 0.35;"></i><br>
+                            Sila mulakan kamera untuk mengesan emosi.
+                        </div>
+                        
+                        <div id="label-container" class="emotion-bar-container" style="display: none;">
+                            <div class="emotion-row">
+                                <span class="emotion-label label-happy">HAPPY</span>
+                                <div class="progress-bg"><div class="progress-fill fill-happy" id="bar-happy">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-neutral">NEUTRAL</span>
+                                <div class="progress-bg"><div class="progress-fill fill-neutral" id="bar-neutral">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-sad">SAD</span>
+                                <div class="progress-bg"><div class="progress-fill fill-sad" id="bar-sad">0%</div></div>
+                            </div>
+                            <div class="emotion-row">
+                                <span class="emotion-label label-sleepy">SLEEPY</span>
+                                <div class="progress-bg"><div class="progress-fill fill-sleepy" id="bar-sleepy">0%</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONTAINER ZON CERIA -->
+                <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
+                  
+                  <div class="zon-ceria-emoji-layer" id="zonCeriaEmojiLayer"></div>
+
+                  <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA <i class="fa-solid fa-star" style="color: #ffd166; font-size: 1.8rem;"></i></h3>
+                  
+                  <div class="pose-target-box">
+                      <div class="pose-target-title">TUGASAN POSE <span id="poseStepNum">1</span> / 5 (Sasaran: 80%):</div>
+                      <div class="pose-target-name" id="targetPoseName">THUMBS UP POSE</div>
+                      <div class="pose-progress-tracker">
+                          <div class="dot-step active" id="dot-0"></div>
+                          <div class="dot-step" id="dot-1"></div>
+                          <div class="dot-step" id="dot-2"></div>
+                          <div class="dot-step" id="dot-3"></div>
+                          <div class="dot-step" id="dot-4"></div>
+                      </div>
+                  </div>
+
+                  <div class="zon-ceria-layout">
+                    
+                    <div class="side-illustration-group">
+                        <div class="side-illustration">
+                            <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
+                                <path d="M50 45 C50 20, 110 20, 110 45" fill="#f4a261"/>
+                                <rect x="55" y="22" width="50" height="15" rx="7" fill="#e07a5f"/>
+                                <circle cx="70" cy="50" r="4" fill="#2d3528"/>
+                                <circle cx="90" cy="50" r="4" fill="#2d3528"/>
+                                <path d="M72 62 Q80 70 88 62" stroke="#e07a5f" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                <path d="M60 85 L100 85 L110 140 L50 140 Z" fill="#2a9d8f"/>
+                                <circle cx="35" cy="25" r="18" fill="#e07a5f"/>
+                                <path d="M35 43 L55 85" stroke="#ffffff" stroke-width="2" stroke-dasharray="3 3"/>
+                            </svg>
+                            <div class="illustration-text">Jom Bergerak! 🎈</div>
+                        </div>
+                        <div class="extra-decoration">🌟 🏆</div>
+                    </div>
+
+                    <div class="camera-pose-wrapper">
+                        <canvas id="canvas"></canvas>
+                        <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.05rem; background: rgba(255,255,255,0.08); padding: 12px 18px; border-radius: 16px; width: 100%; max-width: 380px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
+                    </div>
+
+                    <div class="side-illustration-group">
+                        <div class="side-illustration">
+                            <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="80" cy="50" r="30" fill="#fcd5ce"/>
+                                <path d="M45 40 Q80 15 115 40 C125 70, 35 70, 45 40 Z" fill="#9c6644"/>
+                                <circle cx="70" cy="50" r="4" fill="#2d3528"/>
+                                <circle cx="90" cy="50" r="4" fill="#2d3528"/>
+                                <path d="M72 62 Q80 70 88 62" stroke="#e07a5f" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                <path d="M55 85 L105 85 L115 140 L45 140 Z" fill="#f472b6"/>
+                                <circle cx="125" cy="25" r="18" fill="#457b9d"/>
+                                <path d="M125 43 L105 85" stroke="#ffffff" stroke-width="2" stroke-dasharray="3 3"/>
+                            </svg>
+                            <div class="illustration-text">Sorakkan Ceria! 🎉</div>
+                        </div>
+                        <div class="extra-decoration">🎨 🧁</div>
+                    </div>
+
+                  </div>
+                </div>
+
+            </div>
+
+            <!-- BAHAN 2: VIDEO YOUTUBE DI ATAS + DAPUR PECAHAN ASAL (IFRAME) DI BAWAH -->
+            <div id="bahan2" class="module-content">
+                <div id="m2-locked" style="background: #ffffff; border-radius: 28px; padding: 80px; text-align: center; color: var(--text-muted); border: 2px solid var(--border-warm);">
+                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Modul Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
+                </div>
+
+                <div id="dapurSection" style="display: none;">
+                    
+                    <!-- PEMAIN VIDEO YOUTUBE -->
+                    <div class="dapur-card">
+                        <h2><i class="fa-solid fa-circle-play" style="color: #ff0000;"></i> Video Pembelajaran Pecahan</h2>
+                        <p class="desc">Tonton video penerangan konsep pecahan di bawah sebelum mencuba aktiviti interaktif!</p>
+
+                        <!-- PEMILIH VIDEO YOUTUBE -->
+                        <div class="video-selector-grid">
+                            <button class="video-btn active" id="btn-yt-1" onclick="tukarVideoYT('xvfHeiVJkj4', 1)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>1. ASAS PECAHAN</span>
+                            </button>
+                            <button class="video-btn" id="btn-yt-2" onclick="tukarVideoYT('2Ije-NiWzB0', 2)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>2. PECAHAN WAJAR</span>
+                            </button>
+                            <button class="video-btn" id="btn-yt-3" onclick="tukarVideoYT('4PhWvfaQ5U0', 3)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>3. TAMBAH DAN TOLAK PECAHAN</span>
+                            </button>
+                        </div>
+
+                        <!-- PEMAIN YOUTUBE IFRAME -->
+                        <div class="youtube-player-wrapper">
+                            <iframe id="ytPlayer" src="https://www.youtube.com/embed/xvfHeiVJkj4" title="YouTube Video Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
+                    </div>
+
+                    <!-- DAPUR PECAHAN ASAL (IFRAME VERCEL) -->
+                    <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1800px; border: none; border-radius: 28px;"></iframe>
+
+                </div>
+            </div>
+
+            <!-- BAHAN 3 -->
+            <div id="bahan3" class="module-content">
+                <div id="m3-locked" style="background: #ffffff; border-radius: 28px; padding: 80px; text-align: center; color: var(--text-muted); border: 2px solid var(--border-warm);">
+                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--accent-gold);"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Modul Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
+                </div>
+                <iframe id="m3-iframe" src="https://petualangan-dunia-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
+            </div>
+
+        </div>
     </div>
-    <div class="hero-logo-box">
-      <img src="logo.jpeg" alt="EduSense Logo">
+
+    <!-- Modal Ke Zon Ceria -->
+    <div id="zonCeriaModal" style="display: none;" class="modal-overlay">
+      <div class="modal-card">
+        <h3>Mood Anda Belum Mencapai 80%!</h3>
+        <p>Mari ceriakan diri anda sebentar di Zon Ceria dan selesaikan 5 gaya pose untuk buka modul!</p>
+        <button onclick="bukaZonCeria()" class="btn-modal">
+          Ke Zon Ceria
+        </button>
+      </div>
     </div>
-  </div>
 
-  <!-- MAIN TAB NAVIGATION -->
-  <div class="main-nav">
-    <button class="nav-btn active">
-      <span class="btn-text"><i class="fa-solid fa-camera"></i> 1. SEMAK MOOD SAYA</span>
-      <span class="status-badge badge-unlock">Terbuka</span>
-    </button>
+    <!-- FLOATING ROBOT WIDGET -->
+    <div class="floating-robot-widget">
+        <div class="speech-bubble" id="speechBubble">
+            <div class="bubble-header">
+                <span class="bot-name">🤖 EduBot</span>
+                <div class="btn-action-group">
+                    <button class="btn-icon" onclick="repeatSpeech()" title="Ulang Suara"><i class="fa-solid fa-volume-high"></i></button>
+                    <button class="btn-icon" onclick="toggleBubble()" title="Kecilkan"><i class="fa-solid fa-minus" id="toggleIcon"></i></button>
+                </div>
+            </div>
+            <div class="speech-text" id="botSpeechText">
+                Hai semua! Saya EduBot! Tekan Mula Kamera untuk mula!
+            </div>
+        </div>
 
-    <button class="nav-btn">
-      <span class="btn-text"><i class="fa-solid fa-video"></i> 2. VIDEO PEMBELAJARAN</span>
-      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
-    </button>
-
-    <button class="nav-btn">
-      <span class="btn-text"><i class="fa-solid fa-utensils"></i> 3. DAPUR PECAHAN</span>
-      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
-    </button>
-
-    <button class="nav-btn">
-      <span class="btn-text"><i class="fa-solid fa-gamepad"></i> 4. DUNIA PECAHAN</span>
-      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
-    </button>
-  </div>
-
-  <!-- KANDUNGAN UTAMA (BAHAN 1) -->
-  <div class="content-panel">
-    <h2 class="panel-title"><i class="fa-solid fa-face-smile" style="color: #e0684b;"></i> Pengesanan Emosi Pembelajaran</h2>
-    <p class="panel-subtitle">Sistem akan mengesan tahap kesediaan anda sebelum memulakan pembelajaran.</p>
-
-    <div class="webcam-section">
-      <button class="btn-camera"><i class="fa-solid fa-power-off"></i> Mula Imbas Kamera</button>
-      <div class="webcam-display"></div>
+        <div class="robot-avatar" onclick="toggleBubble()" title="Klik EduBot">
+            <svg class="robot-svg" viewBox="0 0 200 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="94" y="10" width="12" height="25" rx="6" fill="#8d99ae"/>
+                <circle cx="100" cy="10" r="10" fill="#e07a5f"/>
+                <rect x="25" y="60" width="15" height="30" rx="6" fill="#8d99ae"/>
+                <rect x="160" y="60" width="15" height="30" rx="6" fill="#8d99ae"/>
+                <rect x="35" y="30" width="130" height="90" rx="40" fill="#ffffff" stroke="#d8ceb5" stroke-width="4"/>
+                <rect x="50" y="45" width="100" height="60" rx="25" fill="#2d3528"/>
+                <circle cx="75" cy="72" r="10" fill="#f4a261"/>
+                <circle cx="125" cy="72" r="10" fill="#f4a261"/>
+                <ellipse cx="100" cy="88" rx="6" ry="4" fill="#f4a261"/>
+                <path d="M50 135 C50 120, 150 120, 150 135 L160 190 C160 205, 40 205, 40 190 Z" fill="#ffffff" stroke="#d8ceb5" stroke-width="4"/>
+                <rect x="75" y="145" width="50" height="30" rx="10" fill="#f4f1de"/>
+                <text x="100" y="165" font-family="'Fredoka', sans-serif" font-size="12" font-weight="bold" fill="#e07a5f" text-anchor="middle">EDU</text>
+            </svg>
+        </div>
     </div>
-  </div>
 
-</div>
+    <script>
+        function generateBackgroundEmojis() {
+            const container = document.getElementById('emojiLayer');
+            if (!container) return;
+            container.innerHTML = "";
 
-<!-- EDU-BOT WIDGET -->
-<div class="edubot-widget">
-  <div class="edubot-avatar"><i class="fa-solid fa-robot"></i></div>
-  <div class="edubot-text">
-    <strong>EduBot</strong>
-    <span>Selamat datang! Sila semak mood anda dahulu.</span>
-  </div>
-</div>
+            const faceEmojis = ['😀', '😃', '😄', '😆', '🤩', '😎', '🥳', '🥰', '😜', '🤪', '😊', '😁', '🥳', '😃'];
+            const totalEmojis = 28;
 
+            for (let i = 0; i < totalEmojis; i++) {
+                const span = document.createElement('span');
+                span.className = 'floating-emoji';
+                span.innerText = faceEmojis[Math.floor(Math.random() * faceEmojis.length)];
+
+                const topPos = Math.random() * 92;
+                const leftPos = Math.random() * 95;
+                const fontSize = 1.8 + Math.random() * 1.6;
+                const duration = 3.5 + Math.random() * 4.5;
+                const delay = Math.random() * 2;
+
+                span.style.top = `${topPos}vh`;
+                span.style.left = `${leftPos}vw`;
+                span.style.fontSize = `${fontSize}rem`;
+                span.style.animationDuration = `${duration}s`;
+                span.style.animationDelay = `${delay}s`;
+
+                container.appendChild(span);
+            }
+        }
+
+        function generateZonCeriaThemeEmojis() {
+            const container = document.getElementById('zonCeriaEmojiLayer');
+            if(!container) return;
+            container.innerHTML = "";
+
+            const themeEmojis = ['🎉', '🎊', '🪩', '✨', '🌟', '🪅', '👍', '🫶', '👌', '✌️', '⭐'];
+
+            const safePositions = [
+                { top: 8,  left: 4 },
+                { top: 28, left: 14 },
+                { top: 52, left: 3 },
+                { top: 78, left: 12 },
+                { top: 10, left: 88 },
+                { top: 32, left: 93 },
+                { top: 58, left: 84 },
+                { top: 82, left: 91 }
+            ];
+
+            safePositions.forEach((pos, index) => {
+                const span = document.createElement('span');
+                span.className = 'zon-ceria-emoji-floating';
+                span.innerText = themeEmojis[index % themeEmojis.length];
+
+                const fontSize = 1.8 + (index % 3) * 0.4;
+                const duration = 3 + (index % 4) * 0.8;
+                const delay = (index % 3) * 0.6;
+
+                span.style.top = `${pos.top}%`;
+                span.style.left = `${pos.left}%`;
+                span.style.fontSize = `${fontSize}rem`;
+                span.style.animationDuration = `${duration}s`;
+                span.style.animationDelay = `${delay}s`;
+
+                container.appendChild(span);
+            });
+        }
+
+        const URL = "https://teachablemachine.withgoogle.com/models/Zcg9co-dz/";
+
+        let model, webcam, maxPredictions;
+        let isCameraOn = false;
+        let isUnlocked = false;
+        let currentDialog = "Hai semua! Saya EduBot! Tekan Mula Kamera untuk mula!";
+
+        let timerZonCeria = null;
+        let currentScorePercent = 0;
+
+        const POSE_LIST = [
+            { name: "THUMBS UP POSE", key: "thumbs", prompt: "Buat Thumbs Up Pose!" },
+            { name: "LOVE POSE", key: "love", prompt: "Love Pose pula!" },
+            { name: "OKAY POSE", key: "okay", prompt: "Okay Pose pula!" },
+            { name: "PEACE POSE", key: "peace", prompt: "Peace Pose pula macam mana!" },
+            { name: "STAR JUMP POSE", key: "star", prompt: "Last, Star Jump Pose !" }
+        ];
+        let currentPoseIndex = 0;
+        let isPoseTransitioning = false;
+
+        function switchTab(tabIndex) {
+            if (!isUnlocked && tabIndex !== 1) {
+                updateBotSpeech("Modul terkunci! Selesaikan Modul 1 dahulu.");
+                return;
+            }
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.module-content').forEach(content => content.classList.remove('active'));
+
+            const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabIndex}"]`);
+            const content = document.getElementById(`bahan${tabIndex}`);
+            if (tabBtn) tabBtn.classList.add('active');
+            if (content) content.classList.add('active');
+
+            if (tabIndex === 2) {
+                updateBotSpeech("Selamat datang ke Dapur Pecahan!");
+                resizeIframe(document.getElementById('m2-iframe'));
+            } else if (tabIndex === 3) {
+                updateBotSpeech("Selamat datang ke Dunia Pecahan!");
+                resizeIframe(document.getElementById('m3-iframe'));
+            } else if (tabIndex === 1) {
+                updateBotSpeech("Semak mood kamu di sini!");
+            }
+        }
+
+        /* FUNGSI TUKAR VIDEO YOUTUBE DAPUR PECAHAN */
+        function tukarVideoYT(videoId, index) {
+            const player = document.getElementById('ytPlayer');
+            if (player) {
+                player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            }
+
+            document.querySelectorAll('.video-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-yt-${index}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            updateBotSpeech(`Memainkan Video Pembelajaran Dapur Pecahan ${index}!`);
+        }
+
+        function unlockAllModules() {
+            if (isUnlocked) return;
+            isUnlocked = true;
+
+            if (timerZonCeria) clearTimeout(timerZonCeria);
+            hentiKameraEmosi();
+
+            const audio = document.getElementById("audioGoyangDumang");
+            if(audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+
+            document.getElementById('badge-tab-2').className = "badge-status badge-unlocked";
+            document.getElementById('badge-tab-2').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+
+            document.getElementById('badge-tab-3').className = "badge-status badge-unlocked";
+            document.getElementById('badge-tab-3').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+
+            // Buka Kunci Modul 2
+            document.getElementById('m2-locked').style.display = 'none';
+            document.getElementById('dapurSection').style.display = 'block';
+
+            // Buka Kunci Modul 3
+            document.getElementById('m3-locked').style.display = 'none';
+            document.getElementById('m3-iframe').style.display = 'block';
+
+            updateBotSpeech("Tahniah! Modul dibuka!");
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'ms-MY';
+                utterance.pitch = 1.3;
+                utterance.rate = 1.1; 
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function updateBotSpeech(text) {
+            currentDialog = text;
+            const el = document.getElementById('botSpeechText');
+            if (el) el.innerText = text;
+            speakText(text);
+            
+            const bubble = document.getElementById('speechBubble');
+            if (bubble.classList.contains('minimized')) {
+                toggleBubble();
+            }
+        }
+
+        function repeatSpeech() {
+            speakText(currentDialog);
+        }
+
+        function toggleBubble() {
+            const bubble = document.getElementById('speechBubble');
+            const icon = document.getElementById('toggleIcon');
+            bubble.classList.toggle('minimized');
+            
+            if(bubble.classList.contains('minimized')) {
+                icon.className = "fa-solid fa-chevron-up";
+            } else {
+                icon.className = "fa-solid fa-minus";
+            }
+        }
+
+        async function toggleCamera() {
+            if (!isCameraOn) {
+                await mulaKameraEmosi();
+            } else {
+                await hentiKameraEmosi();
+                updateBotSpeech("Kamera ditutup!");
+            }
+        }
+
+        async function mulaKameraEmosi() {
+            const btnText = document.getElementById('btnCamText');
+            const placeholder = document.getElementById('camPlaceholder');
+            const resultBox = document.getElementById('resultBox');
+            const labelContainer = document.getElementById('label-container');
+            const webcamContainer = document.getElementById("webcam-container");
+
+            btnText.innerText = "Memula Kamera...";
+
+            try {
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
+
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                webcam = new tmImage.Webcam(260, 260, true);
+                await webcam.setup();
+                await webcam.play();
+                window.requestAnimationFrame(loop);
+
+                webcamContainer.innerHTML = "";
+                webcamContainer.appendChild(webcam.canvas);
+                placeholder.style.display = "none";
+                resultBox.style.display = "none";
+                labelContainer.style.display = "flex";
+
+                btnText.innerText = "Hentikan Kamera";
+                isCameraOn = true;
+
+                mulaSemakTimerEmosi();
+
+            } catch (err) {
+                alert("Gagal memuatkan kamera. Sila beri kebenaran.");
+                btnText.innerText = "Mula Pengimbas Kamera";
+            }
+        }
+
+        async function hentiKameraEmosi() {
+            const btnText = document.getElementById('btnCamText');
+            const placeholder = document.getElementById('camPlaceholder');
+            const resultBox = document.getElementById('resultBox');
+            const labelContainer = document.getElementById('label-container');
+            const webcamContainer = document.getElementById("webcam-container");
+
+            if (webcam && webcam.stop) {
+                await webcam.stop();
+            }
+            if (timerZonCeria) {
+                clearTimeout(timerZonCeria);
+            }
+
+            webcamContainer.innerHTML = "";
+            placeholder.style.display = "block";
+            resultBox.style.display = "block";
+            labelContainer.style.display = "none";
+            if(btnText) btnText.innerText = "Mula Pengimbas Kamera";
+            isCameraOn = false;
+        }
+
+        async function loop() {
+            if (isCameraOn && webcam) {
+                webcam.update();
+                await predict();
+                window.requestAnimationFrame(loop);
+            }
+        }
+
+        async function predict() {
+            if (!model) return;
+            const prediction = await model.predict(webcam.canvas);
+
+            let happyVal = 0;
+            let neutralVal = 0;
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const className = prediction[i].className.toLowerCase();
+                const prob = Math.round(prediction[i].probability * 100);
+
+                let barId = "";
+                if (className.includes("happy")) {
+                    barId = "bar-happy";
+                    happyVal = prob;
+                } else if (className.includes("neut")) {
+                    barId = "bar-neutral";
+                    neutralVal = prob;
+                } else if (className.includes("sad")) {
+                    barId = "bar-sad";
+                } else if (className.includes("sleep")) {
+                    barId = "bar-sleepy";
+                }
+
+                if (barId) {
+                    const barEl = document.getElementById(barId);
+                    if (barEl) {
+                        barEl.style.width = prob + "%";
+                        barEl.innerText = prob + "%";
+                    }
+                }
+            }
+
+            currentScorePercent = Math.max(happyVal, neutralVal);
+
+            if (currentScorePercent >= 80 && !isUnlocked) {
+                unlockAllModules();
+            }
+        }
+
+        function mulaSemakTimerEmosi() {
+            if (timerZonCeria) clearTimeout(timerZonCeria);
+
+            timerZonCeria = setTimeout(() => {
+                if (currentScorePercent < 80 && !isUnlocked) {
+                    hentiKameraEmosi();
+                    
+                    const audio = document.getElementById("audioGoyangDumang");
+                    if(audio) {
+                        audio.play().catch(e => console.log("Audio play blocked"));
+                    }
+
+                    document.getElementById("zonCeriaModal").style.display = "flex";
+                }
+            }, 12000);
+        }
+
+        function bukaZonCeria() {
+            document.getElementById("zonCeriaModal").style.display = "none";
+            document.getElementById("zonCeriaSection").style.display = "block";
+            
+            generateZonCeriaThemeEmojis();
+            currentPoseIndex = 0;
+            updatePoseUI();
+            initZonCeriaPose();
+        }
+
+        function updatePoseUI() {
+            if(currentPoseIndex < POSE_LIST.length) {
+                const target = POSE_LIST[currentPoseIndex];
+                document.getElementById("poseStepNum").innerText = currentPoseIndex + 1;
+                document.getElementById("targetPoseName").innerText = target.name;
+
+                for(let i = 0; i < 5; i++) {
+                    const dot = document.getElementById(`dot-${i}`);
+                    if(i < currentPoseIndex) {
+                        dot.className = "dot-step completed";
+                    } else if(i === currentPoseIndex) {
+                        dot.className = "dot-step active";
+                    } else {
+                        dot.className = "dot-step";
+                    }
+                }
+
+                updateBotSpeech(target.prompt);
+            }
+        }
+
+        const POSE_URL = "https://teachablemachine.withgoogle.com/models/8_OFVuL_i/";
+        let poseModel, poseWebcam, poseCtx, poseLabelContainer, poseMaxPredictions;
+
+        async function initZonCeriaPose() {
+            const modelURL = POSE_URL + "model.json";
+            const metadataURL = POSE_URL + "metadata.json";
+
+            poseModel = await tmPose.load(modelURL, metadataURL);
+            poseMaxPredictions = poseModel.getTotalClasses();
+
+            const size = 350; 
+            const flip = true; 
+            poseWebcam = new tmPose.Webcam(size, size, flip); 
+            await poseWebcam.setup(); 
+            await poseWebcam.play();
+            window.requestAnimationFrame(loopZonCeria);
+
+            const canvas = document.getElementById("canvas");
+            canvas.width = size; 
+            canvas.height = size;
+            poseCtx = canvas.getContext("2d");
+            
+            poseLabelContainer = document.getElementById("label-container-pose");
+            poseLabelContainer.innerHTML = ""; 
+            for (let i = 0; i < poseMaxPredictions; i++) { 
+                poseLabelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loopZonCeria() {
+            if (poseWebcam && poseWebcam.canvas) {
+                poseWebcam.update(); 
+                await predictZonCeria();
+                window.requestAnimationFrame(loopZonCeria);
+            }
+        }
+
+        async function predictZonCeria() {
+            const { pose, posenetOutput } = await poseModel.estimatePose(poseWebcam.canvas);
+            const prediction = await poseModel.predict(posenetOutput);
+
+            let currentTargetKey = POSE_LIST[currentPoseIndex]?.key;
+            let currentTargetScore = 0;
+
+            for (let i = 0; i < poseMaxPredictions; i++) {
+                const className = prediction[i].className;
+                const probPercent = (prediction[i].probability * 100).toFixed(0);
+                const classPrediction = className + ": " + probPercent + "%";
+                
+                if (poseLabelContainer.childNodes[i]) {
+                    poseLabelContainer.childNodes[i].innerHTML = classPrediction;
+                }
+
+                if (currentTargetKey && className.toLowerCase().includes(currentTargetKey)) {
+                    currentTargetScore = parseInt(probPercent);
+                }
+            }
+
+            if (currentTargetScore >= 80 && !isPoseTransitioning && !isUnlocked) {
+                isPoseTransitioning = true;
+                
+                document.getElementById(`dot-${currentPoseIndex}`).className = "dot-step completed";
+
+                if (currentPoseIndex < POSE_LIST.length - 1) {
+                    currentPoseIndex++;
+                    updatePoseUI();
+
+                    setTimeout(() => {
+                        isPoseTransitioning = false;
+                    }, 1500);
+                } else {
+                    unlockAllModules();
+                }
+            }
+
+            drawPoseZonCeria(pose);
+        }
+
+        function drawPoseZonCeria(pose) {
+            if (poseWebcam.canvas && poseCtx) {
+                poseCtx.drawImage(poseWebcam.canvas, 0, 0);
+                if (pose) {
+                    const minPartConfidence = 0.5;
+                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, poseCtx);
+                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, poseCtx);
+                }
+            }
+        }
+
+        function resizeIframe(obj) {
+            try {
+                if (obj && obj.contentWindow && obj.contentWindow.document.body) {
+                    const doc = obj.contentWindow.document;
+                    const height = Math.max(
+                        doc.body.scrollHeight, 
+                        doc.documentElement.scrollHeight,
+                        doc.body.offsetHeight,
+                        doc.documentElement.offsetHeight
+                    );
+                    if (height > 0) {
+                        obj.style.height = (height + 30) + 'px';
+                    }
+                }
+            } catch(e) {
+                console.log("Iframe resize status: Cross-origin restriction or loading.");
+            }
+        }
+
+        document.getElementById('m3-iframe').addEventListener('load', function() {
+            resizeIframe(this);
+        });
+
+        setInterval(() => {
+            if (isUnlocked) {
+                const activeM2 = document.getElementById('m2-iframe');
+                const activeM3 = document.getElementById('m3-iframe');
+                if (activeM2 && activeM2.style.display !== 'none') resizeIframe(activeM2);
+                if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
+            }
+        }, 1000);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            generateBackgroundEmojis();
+            setTimeout(() => { speakText(currentDialog); }, 800);
+        });
+    </script>
 </body>
 </html>
