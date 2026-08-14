@@ -96,7 +96,7 @@
             z-index: 1;
         }
 
-        /* HERO BANNER */
+        /* HERO BANNER - DIKEMASKINI UNTUK SUSUNAN LOGO */
         .hero-banner {
             background: #2d3528;
             border-radius: 28px;
@@ -107,12 +107,29 @@
             overflow: hidden;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: space-between;
+            gap: 20px;
         }
 
         .hero-content {
             max-width: 850px;
             z-index: 2;
+        }
+
+        .hero-logo-box {
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .hero-logo-img {
+            max-height: 120px;
+            width: auto;
+            object-fit: contain;
+            border-radius: 16px;
+            filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.3));
         }
 
         .pill-badge {
@@ -789,8 +806,14 @@
 
         @media (max-width: 768px) {
             body { padding: 12px; }
-            .hero-banner { padding: 28px; text-align: center; justify-content: center; }
+            .hero-banner { 
+                padding: 28px; 
+                flex-direction: column;
+                text-align: center; 
+                justify-content: center; 
+            }
             .hero-banner h1 { font-size: 2.1rem; }
+            .hero-logo-img { max-height: 90px; }
             .module-tabs { grid-template-columns: 1fr; }
             .camera-grid { grid-template-columns: 1fr; }
             .floating-robot-widget { max-width: 240px; right: 12px; bottom: 12px; }
@@ -807,12 +830,16 @@
     <audio id="audioGoyangDumang" src="goyang-dumang.mp3" preload="auto" loop></audio>
 
     <div class="container">
-        <!-- HERO BANNER -->
+        <!-- HERO BANNER (DENGAN LOGO DI SISI) -->
         <header class="hero-banner">
             <div class="hero-content">
                 <div class="pill-badge">✨ PORTAL PEMBELAJARAN EDUSENSE</div>
                 <h1>Selamat Datang ke Dunia Pecahan!</h1>
                 <p>Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
+            </div>
+            <!-- BAHAGIAN LOGO DITAMBAH DI SINI -->
+            <div class="hero-logo-box">
+                <img src="logo.jpeg" alt="EduSense Logo" class="hero-logo-img">
             </div>
         </header>
 
