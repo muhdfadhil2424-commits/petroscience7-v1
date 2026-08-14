@@ -2,11 +2,11 @@ import { StudentProfile, GameSession, TeacherAuth, UserProgress, AttemptRecord }
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
 import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
 
-const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v6';
-const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v6';
-const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v6';
-const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v6';
-const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v6';
+const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v10';
+const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v10';
+const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v10';
+const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v10';
+const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v10';
 
 // Helper to calculate Tahap Penguasaan (TP1 - TP6) based on stars & completed challenges
 export function calculateStudentTP(stars: number, completed: number): string {
@@ -278,158 +278,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
       attemptHistory: [],
     },
   },
-
-  // 5 Asah
-  {
-    id: 'MURID-008',
-    nama: 'Farish Imran',
-    kelas: '5 Asah',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 5).toISOString(),
-    progress: {
-      completedChallenges: 9,
-      earnedStars: 26,
-      unlockedWorlds: ['arena', 'dapur', 'pixel'],
-      worldStars: { arena: 9, dapur: 9, pixel: 8 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3', 'pixel-1', 'pixel-2', 'pixel-3'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 3, 'dapur-1': 3, 'dapur-2': 3, 'dapur-3': 3, 'pixel-1': 3, 'pixel-2': 3, 'pixel-3': 2 },
-      badges: ['Juara Arena', 'Chef Handal', 'Piksel Maestro', 'Penguasa Pecahan'],
-      certificateEarned: true,
-      certificateDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-      totalHintsUsed: 2,
-      totalPlayTimeMinutes: 22,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 0, masaMinit: 7 },
-        dapur_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 8 },
-        dunia_pixel: { completedChallenges: 3, earnedStars: 8, scorePercentage: 92, percubaan: 3, hintUsed: 1, masaMinit: 7 },
-      },
-      attemptHistory: [],
-    },
-  },
-  {
-    id: 'MURID-009',
-    nama: 'Zara Sofea',
-    kelas: '5 Asah',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
-    progress: {
-      completedChallenges: 6,
-      earnedStars: 17,
-      unlockedWorlds: ['arena', 'dapur'],
-      worldStars: { arena: 9, dapur: 8, pixel: 0 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 3, 'dapur-1': 3, 'dapur-2': 3, 'dapur-3': 2 },
-      badges: ['Juara Arena', 'Chef Handal'],
-      totalHintsUsed: 3,
-      totalPlayTimeMinutes: 25,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 9 },
-        dapur_pecahan: { completedChallenges: 3, earnedStars: 8, scorePercentage: 85, percubaan: 3, hintUsed: 1, masaMinit: 10 },
-        dunia_pixel: { completedChallenges: 0, earnedStars: 0, scorePercentage: 0, percubaan: 0, hintUsed: 1, masaMinit: 6 },
-      },
-      attemptHistory: [],
-    },
-  },
-
-  // 5 Berkelah
-  {
-    id: 'MURID-010',
-    nama: 'Khairol Anuar',
-    kelas: '5 Berkelah',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
-    progress: {
-      completedChallenges: 5,
-      earnedStars: 13,
-      unlockedWorlds: ['arena', 'dapur'],
-      worldStars: { arena: 8, dapur: 5, pixel: 0 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 2, 'dapur-1': 3, 'dapur-2': 2 },
-      badges: ['Juara Arena'],
-      totalHintsUsed: 5,
-      totalPlayTimeMinutes: 20,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 8, scorePercentage: 85, percubaan: 3, hintUsed: 2, masaMinit: 9 },
-        dapur_pecahan: { completedChallenges: 2, earnedStars: 5, scorePercentage: 65, percubaan: 3, hintUsed: 2, masaMinit: 11 },
-        dunia_pixel: { completedChallenges: 0, earnedStars: 0, scorePercentage: 0, percubaan: 0, hintUsed: 1, masaMinit: 0 },
-      },
-      attemptHistory: [],
-    },
-  },
-
-  // 6 Asah
-  {
-    id: 'MURID-011',
-    nama: 'Syahirah Humaira',
-    kelas: '6 Asah',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 6).toISOString(),
-    progress: {
-      completedChallenges: 9,
-      earnedStars: 27,
-      unlockedWorlds: ['arena', 'dapur', 'pixel'],
-      worldStars: { arena: 9, dapur: 9, pixel: 9 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3', 'pixel-1', 'pixel-2', 'pixel-3'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 3, 'dapur-1': 3, 'dapur-2': 3, 'dapur-3': 3, 'pixel-1': 3, 'pixel-2': 3, 'pixel-3': 3 },
-      badges: ['Juara Arena', 'Chef Handal', 'Piksel Maestro', 'Penguasa Pecahan'],
-      certificateEarned: true,
-      certificateDate: new Date(Date.now() - 86400000 * 3).toISOString(),
-      totalHintsUsed: 1,
-      totalPlayTimeMinutes: 20,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 0, masaMinit: 6 },
-        dapur_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 0, masaMinit: 7 },
-        dunia_pixel: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 7 },
-      },
-      attemptHistory: [],
-    },
-  },
-
-  // 6 Berkelah
-  {
-    id: 'MURID-012',
-    nama: 'Haziq Iskandar',
-    kelas: '6 Berkelah',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
-    progress: {
-      completedChallenges: 7,
-      earnedStars: 20,
-      unlockedWorlds: ['arena', 'dapur', 'pixel'],
-      worldStars: { arena: 9, dapur: 8, pixel: 3 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3', 'pixel-1'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 3, 'dapur-1': 3, 'dapur-2': 3, 'dapur-3': 2, 'pixel-1': 3 },
-      badges: ['Juara Arena', 'Chef Handal'],
-      totalHintsUsed: 4,
-      totalPlayTimeMinutes: 24,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 8 },
-        dapur_pecahan: { completedChallenges: 3, earnedStars: 8, scorePercentage: 88, percubaan: 4, hintUsed: 1, masaMinit: 9 },
-        dunia_pixel: { completedChallenges: 1, earnedStars: 3, scorePercentage: 60, percubaan: 2, hintUsed: 2, masaMinit: 7 },
-      },
-      attemptHistory: [],
-    },
-  },
-
-  // 6 Chamang
-  {
-    id: 'MURID-013',
-    nama: 'Daniel Danish',
-    kelas: '6 Chamang',
-    tarikhDaftar: new Date(Date.now() - 86400000 * 4).toISOString(),
-    progress: {
-      completedChallenges: 8,
-      earnedStars: 24,
-      unlockedWorlds: ['arena', 'dapur', 'pixel'],
-      worldStars: { arena: 9, dapur: 9, pixel: 6 },
-      completedChallengeIds: ['arena-1', 'arena-2', 'arena-3', 'dapur-1', 'dapur-2', 'dapur-3', 'pixel-1', 'pixel-2'],
-      challengeStars: { 'arena-1': 3, 'arena-2': 3, 'arena-3': 3, 'dapur-1': 3, 'dapur-2': 3, 'dapur-3': 3, 'pixel-1': 3, 'pixel-2': 3 },
-      badges: ['Juara Arena', 'Chef Handal', 'Piksel Maestro'],
-      totalHintsUsed: 3,
-      totalPlayTimeMinutes: 23,
-      gameDetails: {
-        arena_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 7 },
-        dapur_pecahan: { completedChallenges: 3, earnedStars: 9, scorePercentage: 100, percubaan: 3, hintUsed: 1, masaMinit: 8 },
-        dunia_pixel: { completedChallenges: 2, earnedStars: 6, scorePercentage: 85, percubaan: 3, hintUsed: 1, masaMinit: 8 },
-      },
-      attemptHistory: [],
-    },
-  },
 ];
 
 const DEMO_SESSIONS: GameSession[] = [
@@ -460,15 +308,24 @@ const DEMO_SESSIONS: GameSession[] = [
 // Helper to seed prototype demo data if local storage is fresh or outdated
 export function initializeStorageWithSeed(): void {
   try {
+    // Clear old versions from previous iterations
+    for (let i = 1; i <= 9; i++) {
+      localStorage.removeItem(`wira_pecahan_students_v${i}`);
+      localStorage.removeItem(`wira_pecahan_sessions_v${i}`);
+    }
+
     const existing = localStorage.getItem(STUDENTS_STORAGE_KEY);
     if (!existing) {
       localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
     } else {
-      // Check if existing data lacks 3 Asah (must have 40 students)
       const parsed: StudentProfile[] = JSON.parse(existing);
       const class3Asah = parsed.filter((s) => s.kelas === '3 Asah');
-      if (class3Asah.length < 40) {
+      const is3AsahComplete = class3Asah.length === 40 && class3Asah.every((s) => (s.progress?.completedChallenges || 0) === 9);
+      // Ensure no 5 Asah, 5 Berkelah, 6 Asah, 6 Berkelah, 6 Chamang records exist in seed
+      const hasOldSeniorClasses = parsed.some((s) => ['5 Asah', '5 Berkelah', '6 Asah', '6 Berkelah', '6 Chamang'].includes(s.kelas));
+      
+      if (!is3AsahComplete || hasOldSeniorClasses) {
         localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
         localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
       }

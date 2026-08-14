@@ -99,8 +99,18 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     const completed = s.progress?.completedChallenges || 0;
     const tp = calculateStudentTP(stars, completed);
     const status = calculateStudentStatus(tp, completed);
+    const isCemerlang = stars >= 26 || (completed >= 9 && stars >= 26);
+    const isBaik = (stars >= 24 && stars <= 25) || (completed >= 9 && stars <= 25);
+    const hasCert = s.progress?.certificateEarned || completed >= 9;
 
-    const matchesStatus = selectedStatus === 'semua' || status === selectedStatus;
+    let matchesStatus = true;
+    if (selectedStatus === 'Cemerlang') matchesStatus = isCemerlang;
+    else if (selectedStatus === 'Baik') matchesStatus = isBaik;
+    else if (selectedStatus === 'sijil' || selectedStatus === 'Sijil Diperoleh') matchesStatus = hasCert;
+    else if (selectedStatus === 'Menguasai') matchesStatus = status === 'Menguasai';
+    else if (selectedStatus === 'Sedang Berkembang') matchesStatus = status === 'Sedang Berkembang';
+    else if (selectedStatus === 'Perlukan Bimbingan') matchesStatus = status === 'Perlukan Bimbingan';
+
     const matchesTP = selectedTP === 'semua' || tp === selectedTP;
 
     let matchesProgress = true;
@@ -132,7 +142,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const totalClassPlayed = classStudents.filter((s) => (s.progress?.completedChallenges || 0) > 0).length;
 
   const totalClassStarsEarned = classStudents.reduce((sum, s) => sum + (s.progress?.earnedStars || 0), 0);
-  const avgClassStars = totalClassStudents > 0 ? (totalClassStarsEarned / totalClassStudents).toFixed(1) : '0';
+  const avgClassStars = totalClassStudents > 0 ? (totalClassStarsEarned / totalClassStudents).toFixed(1) : '-';
 
   const avgClassProgressPct =
     totalClassStudents > 0
@@ -641,25 +651,28 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               </div>
 
               {totalClassStudents === 0 ? (
-                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200">
-                  <AlertCircle className="w-10 h-10 text-[#D98262] mx-auto mb-2" />
-                  <p className="font-black text-base text-[#3c4233]">Belum ada data murid untuk kelas ini.</p>
-                  <p className="text-xs text-gray-500">Sila pilih kelas lain daripada menu Pemilihan Kelas di atas.</p>
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
+                  <div className="text-4xl mx-auto mb-1">📚</div>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Card 1: Status Kemajuan Murid Pie Chart */}
-                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
-                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
-                      <span>🥧 Status Kemajuan Murid</span>
-                    </h3>
-                    <PieChartStatus
-                      menguasaiCount={menguasaiCount}
-                      berkembangCount={berkembangCount}
-                      bimbinganCount={bimbinganCount}
-                      totalStudents={totalClassStudents}
-                    />
-                  </div>
+                    {/* Card 1: Status Kemajuan Murid Pie Chart */}
+                    <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                      <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
+                        <span>🥧 Status Pencapaian Murid {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
+                      </h3>
+                      <PieChartStatus
+                        menguasaiCount={menguasaiCount}
+                        berkembangCount={berkembangCount}
+                        bimbinganCount={bimbinganCount}
+                        cemerlangCount={cemerlangCount}
+                        baikCount={baikCount}
+                        totalStudents={totalClassStudents}
+                      />
+                    </div>
 
                   {/* Card 2: Prestasi Kemahiran Pecahan Bar Chart */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
@@ -709,16 +722,30 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Status filter */}
                     <div className="flex items-center gap-1 bg-[#FFF8E8] px-2.5 py-1 rounded-xl border border-stone-300">
-                      <span className="text-gray-500 text-[11px]">Status:</span>
+                      <span className="text-gray-500 text-[11px]">Kategori:</span>
                       <select
                         value={selectedStatus}
                         onChange={(e) => setSelectedStatus(e.target.value)}
                         className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
                       >
-                        <option value="semua">Semua Status</option>
-                        <option value="Menguasai">Menguasai</option>
-                        <option value="Sedang Berkembang">Sedang Berkembang</option>
-                        <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
+                        {selectedClass === '3 Asah' ? (
+                          <>
+                            <option value="semua">Semua Murid (40)</option>
+                            <option value="Cemerlang">🏆 Cemerlang ({cemerlangCount})</option>
+                            <option value="Baik">🌟 Baik ({baikCount})</option>
+                            <option value="sijil">📜 Sijil Diperoleh ({certEarnedCount})</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="semua">Semua Status</option>
+                            <option value="Cemerlang">🏆 Cemerlang</option>
+                            <option value="Baik">🌟 Baik</option>
+                            <option value="sijil">📜 Sijil Diperoleh</option>
+                            <option value="Menguasai">Menguasai</option>
+                            <option value="Sedang Berkembang">Sedang Berkembang</option>
+                            <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
+                          </>
+                        )}
                       </select>
                     </div>
 
@@ -759,7 +786,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               </div>
 
               {/* Roster Table Container - Scrollable with sticky header */}
-              {filteredStudents.length === 0 ? (
+              {totalClassStudents === 0 ? (
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
+                  <div className="text-4xl mx-auto mb-1">📚</div>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                </div>
+              ) : filteredStudents.length === 0 ? (
                 <div className="p-10 text-center bg-white rounded-2xl border border-stone-200/80 space-y-2">
                   <AlertCircle className="w-8 h-8 text-[#D98262] mx-auto" />
                   <p className="font-bold text-sm text-[#3c4233]">Tiada rekod murid dijumpai.</p>
@@ -774,6 +808,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         <th className="py-3 px-3">Kelas</th>
                         <th className="py-3 px-3 text-center">Cabaran</th>
                         <th className="py-3 px-3 text-center">Bintang</th>
+                        <th className="py-3 px-3 text-center">Skor</th>
                         <th className="py-3 px-3 text-center">Tahap</th>
                         <th className="py-3 px-3 text-center">Sijil</th>
                         <th className="py-3 px-4 text-right">Tindakan</th>
@@ -787,14 +822,29 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         const status = calculateStudentStatus(tp, completed);
                         const hasCertificate = s.progress?.certificateEarned ?? completed >= 9;
 
-                        let statusBadgeClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
-                        let statusDisplay = '✓ Diperoleh';
-                        if (status === 'Sedang Berkembang') {
-                          statusBadgeClass = 'bg-amber-100 text-amber-900 border-amber-300';
-                          statusDisplay = '🌱 Sedang Berkembang';
-                        } else if (status === 'Perlukan Bimbingan') {
-                          statusBadgeClass = 'bg-[#D98262]/20 text-[#D98262] border-[#D98262]/40';
-                          statusDisplay = '🤝 Perlukan Bimbingan';
+                        const avgGameScore = s.progress?.gameDetails
+                          ? Math.round(
+                              ((s.progress.gameDetails.arena_pecahan?.scorePercentage || 0) +
+                               (s.progress.gameDetails.dapur_pecahan?.scorePercentage || 0) +
+                               (s.progress.gameDetails.dunia_pixel?.scorePercentage || 0)) / 3
+                            )
+                          : Math.round((stars / 27) * 100);
+                        const scorePct = avgGameScore > 0 ? avgGameScore : Math.round((stars / 27) * 100);
+
+                        let tahapDisplay = '🌟 Baik';
+                        let tahapClass = 'bg-amber-100 text-amber-900 border-amber-300';
+                        if (stars >= 26 || (completed >= 9 && stars >= 26)) {
+                          tahapDisplay = '🏆 Cemerlang';
+                          tahapClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+                        } else if (stars >= 24) {
+                          tahapDisplay = '🌟 Baik';
+                          tahapClass = 'bg-amber-100 text-amber-900 border-amber-300';
+                        } else if (tp === 'TP3') {
+                          tahapDisplay = '📘 Memuaskan';
+                          tahapClass = 'bg-blue-100 text-blue-900 border-blue-300';
+                        } else {
+                          tahapDisplay = '🌱 Bimbingan';
+                          tahapClass = 'bg-red-100 text-red-900 border-red-300';
                         }
 
                         return (
@@ -812,9 +862,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                             <td className="py-3 px-3 text-center font-bold text-amber-800 font-mono">
                               ⭐ {stars}/27
                             </td>
+                            <td className="py-3 px-3 text-center font-bold font-mono">
+                              <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 text-[11px] border border-stone-200">
+                                {scorePct}%
+                              </span>
+                            </td>
                             <td className="py-3 px-3 text-center">
-                              <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 font-black font-mono border border-blue-200">
-                                {tp}
+                              <span className={`px-2.5 py-1 rounded-full font-black text-[11px] font-mono border ${tahapClass}`}>
+                                {tahapDisplay} ({tp})
                               </span>
                             </td>
                             <td className="py-3 px-3 text-center">
@@ -827,7 +882,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                                   className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-[11px] hover:bg-amber-200 cursor-pointer inline-flex items-center gap-1 shadow-2xs"
                                   title="Lihat Sijil Pencapaian"
                                 >
-                                  <span>✓ Diperoleh</span>
+                                  <span>🏆 Diperoleh</span>
                                 </button>
                               ) : (
                                 <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-500 border border-stone-200 font-semibold text-[11px] inline-flex items-center gap-1">
@@ -894,23 +949,26 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               </div>
 
               {totalClassStudents === 0 ? (
-                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200">
-                  <AlertCircle className="w-10 h-10 text-[#D98262] mx-auto mb-2" />
-                  <p className="font-black text-base text-[#3c4233]">📊 Belum ada data yang mencukupi untuk menghasilkan carta.</p>
-                  <p className="text-xs text-gray-500">Sila pilih kelas yang mempunyai murid terdaftar.</p>
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
+                  <div className="text-4xl mx-auto mb-1">📊</div>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Tiada data untuk dipaparkan.</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Chart 1: Carta Pai Status Penguasaan Murid */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>🥧 Status Penguasaan Class {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
+                      <span>🥧 Status Pencapaian Murid {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
                       <span className="text-[10px] text-gray-400 font-mono">Carta Pai</span>
                     </h3>
                     <PieChartStatus
                       menguasaiCount={menguasaiCount}
                       berkembangCount={berkembangCount}
                       bimbinganCount={bimbinganCount}
+                      cemerlangCount={cemerlangCount}
+                      baikCount={baikCount}
                       totalStudents={totalClassStudents}
                     />
                   </div>
@@ -1010,47 +1068,58 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           {/* TAB 4: 🤖 ANALISIS AI PEMBELAJARAN */}
           {activeTab === 'ai_analysis' && (
             <div className="space-y-4">
-              {/* Select Student Selector */}
-              <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-2 font-bold text-xs">
-                  <Sparkles className="w-4 h-4 text-[#F4C95D]" />
-                  <span className="text-[#3c4233] font-black">Pilih Murid untuk Analisis AI:</span>
-                  <select
-                    value={selectedAIStudentId || activeAIStudent?.id || ''}
-                    onChange={(e) => {
-                      playSfx('click', soundEnabled);
-                      setSelectedAIStudentId(e.target.value);
-                    }}
-                    className="bg-[#FFF8E8] text-[#3c4233] font-black px-3 py-1.5 rounded-xl border border-[#3c4233]/20 text-xs focus:outline-none cursor-pointer"
-                  >
-                    {students.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nama} ({s.kelas}) - {s.id}
-                      </option>
-                    ))}
-                  </select>
+              {totalClassStudents === 0 && selectedClass !== 'semua' ? (
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
+                  <div className="text-4xl mx-auto mb-1">✨</div>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini bagi analisis AI.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
                 </div>
-
-                {activeAIStudent && (
-                  <button
-                    onClick={() => {
-                      playSfx('click', soundEnabled);
-                      setSelectedStudentForReport(activeAIStudent);
-                    }}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span>Cetak Laporan Pembelajaran</span>
-                  </button>
-                )}
-              </div>
-
-              {activeAIStudent ? (
-                <AILearningAnalysisView student={activeAIStudent} soundEnabled={soundEnabled} />
               ) : (
-                <div className="p-10 text-center bg-white rounded-2xl">
-                  <p className="text-gray-500 font-bold text-sm">Sila pilih murid untuk menjana analisis AI.</p>
-                </div>
+                <>
+                  {/* Select Student Selector */}
+                  <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <Sparkles className="w-4 h-4 text-[#F4C95D]" />
+                      <span className="text-[#3c4233] font-black">Pilih Murid untuk Analisis AI:</span>
+                      <select
+                        value={selectedAIStudentId || activeAIStudent?.id || ''}
+                        onChange={(e) => {
+                          playSfx('click', soundEnabled);
+                          setSelectedAIStudentId(e.target.value);
+                        }}
+                        className="bg-[#FFF8E8] text-[#3c4233] font-black px-3 py-1.5 rounded-xl border border-[#3c4233]/20 text-xs focus:outline-none cursor-pointer"
+                      >
+                        {(selectedClass === 'semua' ? students : classStudents).map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.nama} ({s.kelas}) - {s.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {activeAIStudent && (
+                      <button
+                        onClick={() => {
+                          playSfx('click', soundEnabled);
+                          setSelectedStudentForReport(activeAIStudent);
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-[#F4C95D] hover:bg-[#e5b73e] text-[#3c4233] font-black text-xs flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>Cetak Laporan Pembelajaran</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {activeAIStudent ? (
+                    <AILearningAnalysisView student={activeAIStudent} soundEnabled={soundEnabled} />
+                  ) : (
+                    <div className="p-10 text-center bg-white rounded-2xl">
+                      <p className="text-gray-500 font-bold text-sm">Sila pilih murid untuk menjana analisis AI.</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1069,46 +1138,61 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {filteredStudents.map((s) => {
-                  const stars = s.progress?.earnedStars || 0;
-                  const completed = s.progress?.completedChallenges || 0;
-                  const tp = calculateStudentTP(stars, completed);
-                  const status = calculateStudentStatus(tp, completed);
+              {totalClassStudents === 0 ? (
+                <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
+                  <div className="text-4xl mx-auto mb-1">📋</div>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                </div>
+              ) : filteredStudents.length === 0 ? (
+                <div className="p-10 text-center bg-white rounded-2xl border border-stone-200/80 space-y-2">
+                  <AlertCircle className="w-8 h-8 text-[#D98262] mx-auto" />
+                  <p className="font-bold text-sm text-[#3c4233]">Tiada laporan murid dijumpai.</p>
+                  <p className="text-xs text-stone-500">Sila laraskan pilihan carian atau penapis.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {filteredStudents.map((s) => {
+                    const stars = s.progress?.earnedStars || 0;
+                    const completed = s.progress?.completedChallenges || 0;
+                    const tp = calculateStudentTP(stars, completed);
+                    const status = calculateStudentStatus(tp, completed);
 
-                  return (
-                    <div
-                      key={s.id}
-                      className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-gray-400 font-mono font-bold">{s.id}</span>
-                          <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 text-[10px] font-black border border-blue-200">
-                            {tp}
-                          </span>
+                    return (
+                      <div
+                        key={s.id}
+                        className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400 font-mono font-bold">{s.id}</span>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 text-[10px] font-black border border-blue-200">
+                              {tp}
+                            </span>
+                          </div>
+                          <p className="font-black text-sm text-[#3c4233]">{s.nama}</p>
+                          <p className="text-xs text-gray-500 font-bold">Kelas: {s.kelas}</p>
                         </div>
-                        <p className="font-black text-sm text-[#3c4233]">{s.nama}</p>
-                        <p className="text-xs text-gray-500 font-bold">Kelas: {s.kelas}</p>
-                      </div>
 
-                      <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
-                        <span className="font-mono text-amber-800 font-bold">⭐ {stars}/27</span>
-                        <button
-                          onClick={() => {
-                            playSfx('click', soundEnabled);
-                            setSelectedStudentForReport(s);
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-[#3c4233] text-[#F4C95D] font-black text-xs hover:bg-[#2d3226] cursor-pointer flex items-center gap-1"
-                        >
-                          <Printer className="w-3.5 h-3.5" />
-                          <span>Jana Laporan</span>
-                        </button>
+                        <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
+                          <span className="font-mono text-amber-800 font-bold">⭐ {stars}/27</span>
+                          <button
+                            onClick={() => {
+                              playSfx('click', soundEnabled);
+                              setSelectedStudentForReport(s);
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-[#3c4233] text-[#F4C95D] font-black text-xs hover:bg-[#2d3226] cursor-pointer flex items-center gap-1"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                            <span>Jana Laporan</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>

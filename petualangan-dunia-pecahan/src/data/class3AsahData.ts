@@ -84,21 +84,21 @@ const RAW_3ASAH: RawStudent3A[] = [
   // 33. Aqil Rayyan — 27/27
   { id: '3A033', nama: 'Aqil Rayyan', arenaComp: 3, arenaStars: 9, arenaScore: 100, dapurComp: 3, dapurStars: 9, dapurScore: 99, pixelComp: 3, pixelStars: 9, pixelScore: 100, hints: 0, playTime: 18 },
 
-  // === 7 MURID BAHARU (STATUS: SEDANG BERKEMBANG) ===
-  // 34. Danish Aiman — 7/9, 20/27, 78%
-  { id: '3A034', nama: 'Danish Aiman', arenaComp: 3, arenaStars: 8, arenaScore: 82, dapurComp: 2, dapurStars: 6, dapurScore: 78, pixelComp: 2, pixelStars: 6, pixelScore: 74, hints: 3, playTime: 25 },
-  // 35. Hana Sofea — 6/9, 17/27, 70%
-  { id: '3A035', nama: 'Hana Sofea', arenaComp: 2, arenaStars: 6, arenaScore: 72, dapurComp: 2, dapurStars: 6, dapurScore: 70, pixelComp: 2, pixelStars: 5, pixelScore: 68, hints: 4, playTime: 28 },
-  // 36. Izzat Hakim — 8/9, 22/27, 84%
-  { id: '3A036', nama: 'Izzat Hakim', arenaComp: 3, arenaStars: 8, arenaScore: 88, dapurComp: 3, dapurStars: 8, dapurScore: 85, pixelComp: 2, pixelStars: 6, pixelScore: 79, hints: 2, playTime: 22 },
-  // 37. Nur Amirah — 5/9, 14/27, 61%
-  { id: '3A037', nama: 'Nur Amirah', arenaComp: 2, arenaStars: 6, arenaScore: 64, dapurComp: 1, dapurStars: 3, dapurScore: 58, pixelComp: 2, pixelStars: 5, pixelScore: 61, hints: 5, playTime: 30 },
-  // 38. Rayyan Danish — 7/9, 19/27, 75%
-  { id: '3A038', nama: 'Rayyan Danish', arenaComp: 3, arenaStars: 8, arenaScore: 80, dapurComp: 2, dapurStars: 6, dapurScore: 74, pixelComp: 2, pixelStars: 5, pixelScore: 71, hints: 3, playTime: 26 },
-  // 39. Syaqirah Amani — 6/9, 16/27, 68%
-  { id: '3A039', nama: 'Syaqirah Amani', arenaComp: 2, arenaStars: 6, arenaScore: 70, dapurComp: 2, dapurStars: 5, dapurScore: 67, pixelComp: 2, pixelStars: 5, pixelScore: 67, hints: 4, playTime: 29 },
-  // 40. Umar Hakimi — 8/9, 21/27, 81%
-  { id: '3A040', nama: 'Umar Hakimi', arenaComp: 3, arenaStars: 8, arenaScore: 85, dapurComp: 2, dapurStars: 6, dapurScore: 78, pixelComp: 3, pixelStars: 7, pixelScore: 80, hints: 2, playTime: 21 },
+  // === 7 MURID BAHARU (STATUS: SELESAI 9/9, 24-27 BINTANG) ===
+  // 34. Danish Aiman — 9/9, 24/27, 90%, Tahap: Baik, Sijil: Diperoleh
+  { id: '3A034', nama: 'Danish Aiman', arenaComp: 3, arenaStars: 8, arenaScore: 90, dapurComp: 3, dapurStars: 8, dapurScore: 90, pixelComp: 3, pixelStars: 8, pixelScore: 90, hints: 3, playTime: 24 },
+  // 35. Hana Sofea — 9/9, 25/27, 93%, Tahap: Baik, Sijil: Diperoleh
+  { id: '3A035', nama: 'Hana Sofea', arenaComp: 3, arenaStars: 8, arenaScore: 92, dapurComp: 3, dapurStars: 8, dapurScore: 94, pixelComp: 3, pixelStars: 9, pixelScore: 93, hints: 2, playTime: 23 },
+  // 36. Izzat Hakim — 9/9, 26/27, 96%, Tahap: Cemerlang, Sijil: Diperoleh
+  { id: '3A036', nama: 'Izzat Hakim', arenaComp: 3, arenaStars: 9, arenaScore: 96, dapurComp: 3, dapurStars: 9, dapurScore: 97, pixelComp: 3, pixelStars: 8, pixelScore: 95, hints: 1, playTime: 22 },
+  // 37. Nur Amirah — 9/9, 24/27, 89%, Tahap: Baik, Sijil: Diperoleh
+  { id: '3A037', nama: 'Nur Amirah', arenaComp: 3, arenaStars: 8, arenaScore: 88, dapurComp: 3, dapurStars: 8, dapurScore: 89, pixelComp: 3, pixelStars: 8, pixelScore: 90, hints: 4, playTime: 25 },
+  // 38. Rayyan Danish — 9/9, 25/27, 92%, Tahap: Baik, Sijil: Diperoleh
+  { id: '3A038', nama: 'Rayyan Danish', arenaComp: 3, arenaStars: 9, arenaScore: 93, dapurComp: 3, dapurStars: 8, dapurScore: 91, pixelComp: 3, pixelStars: 8, pixelScore: 92, hints: 3, playTime: 24 },
+  // 39. Syaqirah Amani — 9/9, 26/27, 95%, Tahap: Cemerlang, Sijil: Diperoleh
+  { id: '3A039', nama: 'Syaqirah Amani', arenaComp: 3, arenaStars: 9, arenaScore: 95, dapurComp: 3, dapurStars: 8, dapurScore: 94, pixelComp: 3, pixelStars: 9, pixelScore: 96, hints: 1, playTime: 21 },
+  // 40. Umar Hakimi — 9/9, 27/27, 100%, Tahap: Cemerlang, Sijil: Diperoleh
+  { id: '3A040', nama: 'Umar Hakimi', arenaComp: 3, arenaStars: 9, arenaScore: 100, dapurComp: 3, dapurStars: 9, dapurScore: 100, pixelComp: 3, pixelStars: 9, pixelScore: 100, hints: 0, playTime: 19 },
 ];
 
 export const CLASS_3_ASAH_STUDENTS: StudentProfile[] = RAW_3ASAH.map((r) => {

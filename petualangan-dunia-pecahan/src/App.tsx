@@ -127,11 +127,11 @@ export function migrateProgressData(raw: any): UserProgress {
 export default function App() {
   const [currentView, setCurrentView] = useState<'hub' | 'pizza_pecahan' | 'arena_pecahan' | 'dapur_pecahan' | 'dunia_pixel'>('hub');
 
-  // Student & Teacher State
+  // Student & Teacher State - default initial screen is Student Login (if no active student)
   const [currentStudent, setCurrentStudentState] = useState<StudentProfile | null>(() => getCurrentStudent());
   const [isStudentProfileOpen, setIsStudentProfileOpen] = useState<boolean>(() => !getCurrentStudent());
   const [isTeacherLoginOpen, setIsTeacherLoginOpen] = useState<boolean>(false);
-  const [isTeacherDashboardOpen, setIsTeacherDashboardOpen] = useState<boolean>(() => getTeacherAuth().isLoggedIn);
+  const [isTeacherDashboardOpen, setIsTeacherDashboardOpen] = useState<boolean>(false);
 
   // LocalStorage state initialization with robust progress migration
   const [progress, setProgress] = useState<UserProgress>(() => {
