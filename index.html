@@ -321,13 +321,14 @@
             overflow: hidden;
         }
 
-        /* REKA BENTUK DAPUR PECAHAN (VIDEO YOUTUBE) */
+        /* REKA BENTUK DAPUR PECAHAN */
         .dapur-card {
             background: #ffffff;
             border: 2px solid var(--border-warm);
             border-radius: 28px;
             padding: 38px;
             box-shadow: 0 12px 35px rgba(0,0,0,0.04);
+            margin-bottom: 25px;
         }
 
         .video-selector-grid {
@@ -947,7 +948,7 @@
 
             </div>
 
-            <!-- BAHAN 2: DAPUR PECAHAN (TERBINA SECARA DIRECT DENGAN VIDEO YOUTUBE) -->
+            <!-- BAHAN 2: VIDEO YOUTUBE DI ATAS + DAPUR PECAHAN ASAL (IFRAME) DI BAWAH -->
             <div id="bahan2" class="module-content">
                 <div id="m2-locked" style="background: #ffffff; border-radius: 28px; padding: 80px; text-align: center; color: var(--text-muted); border: 2px solid var(--border-warm);">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
@@ -955,30 +956,38 @@
                     <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
                 </div>
 
-                <div id="dapurSection" class="dapur-card" style="display: none;">
-                    <h2><i class="fa-solid fa-utensils" style="color: var(--accent-green);"></i> Dapur Pecahan</h2>
-                    <p class="desc">Tonton video pembelajaran konsep pecahan interaktif di Dapur Pecahan di bawah!</p>
+                <div id="dapurSection" style="display: none;">
+                    
+                    <!-- PEMAIN VIDEO YOUTUBE -->
+                    <div class="dapur-card">
+                        <h2><i class="fa-solid fa-circle-play" style="color: #ff0000;"></i> Video Pembelajaran Pecahan</h2>
+                        <p class="desc">Tonton video penerangan konsep pecahan di bawah sebelum mencuba aktiviti interaktif!</p>
 
-                    <!-- PEMILIH VIDEO YOUTUBE -->
-                    <div class="video-selector-grid">
-                        <button class="video-btn active" id="btn-yt-1" onclick="tukarVideoYT('fM3iV9_6AFA', 1)">
-                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
-                            <span>1. Konsep Asas Pecahan</span>
-                        </button>
-                        <button class="video-btn" id="btn-yt-2" onclick="tukarVideoYT('3p3B2w08SNE', 2)">
-                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
-                            <span>2. Pecahan Wajar & Tak Wajar</span>
-                        </button>
-                        <button class="video-btn" id="btn-yt-3" onclick="tukarVideoYT('m2-A3E5sA3A', 3)">
-                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
-                            <span>3. Penambahan Pecahan</span>
-                        </button>
+                        <!-- PEMILIH VIDEO YOUTUBE -->
+                        <div class="video-selector-grid">
+                            <button class="video-btn active" id="btn-yt-1" onclick="tukarVideoYT('v1821Y41sB4', 1)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>1. Asas Pecahan Matematik</span>
+                            </button>
+                            <button class="video-btn" id="btn-yt-2" onclick="tukarVideoYT('S1M4zC85XoA', 2)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>2. Mengenal Pecahan Wajar</span>
+                            </button>
+                            <button class="video-btn" id="btn-yt-3" onclick="tukarVideoYT('a2j1Jm2v-A8', 3)">
+                                <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                                <span>3. Pecahan & Gambar Rajah</span>
+                            </button>
+                        </div>
+
+                        <!-- PEMAIN YOUTUBE IFRAME -->
+                        <div class="youtube-player-wrapper">
+                            <iframe id="ytPlayer" src="https://www.youtube.com/embed/v1821Y41sB4" title="YouTube Video Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </div>
                     </div>
 
-                    <!-- PEMAIN YOUTUBE IFRAME -->
-                    <div class="youtube-player-wrapper">
-                        <iframe id="ytPlayer" src="https://www.youtube.com/embed/fM3iV9_6AFA" title="YouTube Video Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-                    </div>
+                    <!-- DAPUR PECAHAN ASAL (IFRAME VERCEL) -->
+                    <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1200px; border: none; border-radius: 28px;"></iframe>
+
                 </div>
             </div>
 
@@ -1142,6 +1151,7 @@
 
             if (tabIndex === 2) {
                 updateBotSpeech("Selamat datang ke Dapur Pecahan!");
+                resizeIframe(document.getElementById('m2-iframe'));
             } else if (tabIndex === 3) {
                 updateBotSpeech("Selamat datang ke Dunia Pecahan!");
                 resizeIframe(document.getElementById('m3-iframe'));
@@ -1512,7 +1522,9 @@
 
         setInterval(() => {
             if (isUnlocked) {
+                const activeM2 = document.getElementById('m2-iframe');
                 const activeM3 = document.getElementById('m3-iframe');
+                if (activeM2 && activeM2.style.display !== 'none') resizeIframe(activeM2);
                 if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
             }
         }, 1000);
