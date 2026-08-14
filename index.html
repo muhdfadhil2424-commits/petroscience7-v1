@@ -95,15 +95,15 @@
       font-size: 0.95rem;
     }
 
-    /* KOTAK LOGO DIBESARKAN & PADDING DIKECILKAN */
+    /* KOTAK LOGO DIBESARKAN */
     .hero-logo-box {
       background: white;
-      padding: 6px; /* Padding dikecilkan supaya logo besar hampir sentuh tepi */
+      padding: 6px;
       border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 220px; /* Saiz diperbesarkan */
+      width: 220px;
       height: 110px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
@@ -115,7 +115,7 @@
       border-radius: 14px;
     }
 
-    /* --- TAB NAVIGASI UTAMA (4 TAB) --- */
+    /* --- TAB NAVIGASI UTAMA --- */
     .main-nav {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -124,19 +124,18 @@
     }
 
     .nav-btn {
-      background-color: var(--tab-inactive);
+      background-color: #f2ede4;
       border: none;
-      padding: 16px 12px;
-      border-radius: 16px;
+      padding: 16px 14px;
+      border-radius: 18px;
       font-weight: 700;
       font-size: 0.88rem;
-      color: #555;
+      color: #777;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.03);
     }
 
     .nav-btn .btn-text {
@@ -151,163 +150,77 @@
       box-shadow: 0 6px 15px rgba(224, 104, 75, 0.3);
     }
 
-    .nav-btn.disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
     .status-badge {
-      font-size: 0.7rem;
-      padding: 4px 8px;
-      border-radius: 10px;
-      background: rgba(0,0,0,0.08);
-      font-weight: 600;
+      font-size: 0.72rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-weight: 700;
     }
 
-    .nav-btn.active .status-badge {
-      background: rgba(255,255,255,0.2);
+    .badge-unlock {
+      background-color: rgba(255,255,255,0.3);
       color: white;
     }
 
     .badge-lock {
-      background-color: #ffd1d1;
-      color: #c62828;
-    }
-
-    .badge-unlock {
-      background-color: #d4edda;
-      color: #155724;
+      background-color: #fbdada;
+      color: #e57373;
     }
 
     /* --- SEKSYEN KANDUNGAN --- */
     .content-panel {
       background-color: var(--card-bg);
-      border-radius: var(--border-radius);
-      padding: 30px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      border-radius: 24px;
+      padding: 35px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.03);
       border: 1px solid #eae5d9;
-      display: none;
-    }
-
-    .content-panel.active {
-      display: block;
-    }
-
-    .panel-header {
-      margin-bottom: 20px;
     }
 
     .panel-title {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       font-weight: 800;
       display: flex;
       align-items: center;
       gap: 10px;
+      color: #2b2d42;
     }
 
     .panel-subtitle {
       color: var(--text-muted);
       font-size: 0.9rem;
-      margin-top: 5px;
+      margin-top: 6px;
+      margin-bottom: 25px;
     }
 
-    /* --- BAHAN 1: MOOD DETECTOR --- */
-    .webcam-wrapper {
+    /* --- WEBCAM SECTION --- */
+    .webcam-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 20px;
+      gap: 15px;
     }
 
-    #webcam-container {
+    .btn-camera {
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .webcam-display {
       width: 320px;
       height: 240px;
+      background-color: #000;
       border-radius: 16px;
+      border: 3px solid #2a9d8f;
       overflow: hidden;
-      background: #000;
-      border: 4px solid var(--accent-green);
-    }
-
-    #webcam-container canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    .mood-box {
-      background: #f8f9fa;
-      padding: 15px 25px;
-      border-radius: 12px;
-      text-align: center;
-      border: 1px solid #eee;
-    }
-
-    /* --- BAHAN 2: VIDEO PEMBELAJARAN --- */
-    .sub-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .sub-tab-btn {
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: none;
-      background: #f0ede6;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      color: #555;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .sub-tab-btn.active {
-      background: var(--accent-green);
-      color: white;
-    }
-
-    .video-container {
-      position: relative;
-      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-      height: 0;
-      overflow: hidden;
-      border-radius: 16px;
-      background: #000;
-    }
-
-    .video-container iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    /* --- BAHAN 3 & 4: GAME & DAPUR --- */
-    .quiz-card, .game-frame {
-      background: #fdfbf7;
-      border: 2px dashed #ddd;
-      padding: 25px;
-      border-radius: 16px;
-      text-align: center;
-    }
-
-    .btn-action {
-      background-color: var(--accent-green);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 15px;
-      transition: 0.2s;
-    }
-
-    .btn-action:hover {
-      opacity: 0.9;
     }
 
     /* --- BOT EDU-BOT --- */
@@ -317,32 +230,35 @@
       right: 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       background: white;
-      padding: 10px 18px;
+      padding: 10px 20px;
       border-radius: 50px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      border: 2px solid var(--accent-green);
-      z-index: 999;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border: 2px solid #2a9d8f;
     }
 
     .edubot-avatar {
-      width: 40px;
-      height: 40px;
-      background: var(--accent-green);
+      width: 38px;
+      height: 38px;
+      background: #2a9d8f;
       color: white;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .main-nav { grid-template-columns: repeat(2, 1fr); }
-      .hero-card { flex-direction: column; text-align: center; gap: 20px; }
-      .hero-content { max-width: 100%; }
+    .edubot-text strong {
+      display: block;
+      font-size: 0.85rem;
+      color: #2b2d42;
+    }
+
+    .edubot-text span {
+      font-size: 0.78rem;
+      color: #6c757d;
     }
   </style>
 </head>
@@ -353,7 +269,7 @@
   <!-- HERO BANNER -->
   <div class="hero-card">
     <div class="hero-content">
-      <div class="hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Portal Pembelajaran EduSense</div>
+      <div class="hero-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> PORTAL PEMBELAJARAN EDUSENSE</div>
       <h1 class="hero-title">Selamat Datang ke Dunia Pecahan!</h1>
       <p class="hero-desc">Teroka permainan interaktif, uji emosi anda, dan kumpul bintang untuk menjadi Master Pecahan!</p>
     </div>
@@ -362,106 +278,37 @@
     </div>
   </div>
 
-  <!-- MAIN TAB NAVIGATION (4 BAHAN) -->
+  <!-- MAIN TAB NAVIGATION -->
   <div class="main-nav">
-    <button class="nav-btn active" id="btn-tab-1" onclick="switchTab(1)">
+    <button class="nav-btn active">
       <span class="btn-text"><i class="fa-solid fa-camera"></i> 1. SEMAK MOOD SAYA</span>
-      <span class="status-badge badge-unlock" id="badge-1">Terbuka</span>
+      <span class="status-badge badge-unlock">Terbuka</span>
     </button>
 
-    <button class="nav-btn disabled" id="btn-tab-2" onclick="switchTab(2)">
+    <button class="nav-btn">
       <span class="btn-text"><i class="fa-solid fa-video"></i> 2. VIDEO PEMBELAJARAN</span>
-      <span class="status-badge badge-lock" id="badge-2"><i class="fa-solid fa-lock"></i> Terkunci</span>
+      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
     </button>
 
-    <button class="nav-btn disabled" id="btn-tab-3" onclick="switchTab(3)">
+    <button class="nav-btn">
       <span class="btn-text"><i class="fa-solid fa-utensils"></i> 3. DAPUR PECAHAN</span>
-      <span class="status-badge badge-lock" id="badge-3"><i class="fa-solid fa-lock"></i> Terkunci</span>
+      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
     </button>
 
-    <button class="nav-btn disabled" id="btn-tab-4" onclick="switchTab(4)">
+    <button class="nav-btn">
       <span class="btn-text"><i class="fa-solid fa-gamepad"></i> 4. DUNIA PECAHAN</span>
-      <span class="status-badge badge-lock" id="badge-4"><i class="fa-solid fa-lock"></i> Terkunci</span>
+      <span class="status-badge badge-lock"><i class="fa-solid fa-lock"></i> Terkunci</span>
     </button>
   </div>
 
-  <!-- PANEL 1: SEMAK MOOD SAYA -->
-  <div class="content-panel active" id="panel-1">
-    <div class="panel-header">
-      <h2 class="panel-title"><i class="fa-solid fa-face-smile" style="color: #e0684b;"></i> Pengesanan Emosi Pembelajaran</h2>
-      <p class="panel-subtitle">Sistem akan mengesan tahap kesediaan anda sebelum memulakan pembelajaran.</p>
-    </div>
-    <div class="webcam-wrapper">
-      <button class="btn-action" onclick="initWebcam()"><i class="fa-solid fa-power-off"></i> Mula Imbas Kamera</button>
-      <div id="webcam-container"></div>
-      <div class="mood-box">
-        <div>Emosi Dikesan: <strong id="detected-emotion">Belum Bermula</strong></div>
-        <small id="unlock-msg-1" style="color: #666;">*Sila pastikan emosi anda gembira/fokus untuk membuka Bahan 2.</small>
-      </div>
-      <button class="btn-action" style="background-color: #2196F3;" onclick="simulateMoodSuccess()">[Demo] Buka Bahan 2 Manual</button>
-    </div>
-  </div>
+  <!-- KANDUNGAN UTAMA (BAHAN 1) -->
+  <div class="content-panel">
+    <h2 class="panel-title"><i class="fa-solid fa-face-smile" style="color: #e0684b;"></i> Pengesanan Emosi Pembelajaran</h2>
+    <p class="panel-subtitle">Sistem akan mengesan tahap kesediaan anda sebelum memulakan pembelajaran.</p>
 
-  <!-- PANEL 2: VIDEO PEMBELAJARAN (3 YOUTUBE VIDEO) -->
-  <div class="content-panel" id="panel-2">
-    <div class="panel-header">
-      <h2 class="panel-title"><i class="fa-brands fa-youtube" style="color: #ff0000;"></i> Video Pembelajaran Pecahan</h2>
-      <p class="panel-subtitle">Tonton ketiga-tiga video di bawah untuk membuka **Bahan 3 (Dapur Pecahan)**.</p>
-    </div>
-
-    <!-- Sub Tabs Video -->
-    <div class="sub-tabs">
-      <button class="sub-tab-btn active" id="vid-btn-1" onclick="switchVideo(1)">
-        <i class="fa-brands fa-youtube"></i> 1. Asas Pecahan <span id="vmark-1"></span>
-      </button>
-      <button class="sub-tab-btn" id="vid-btn-2" onclick="switchVideo(2)">
-        <i class="fa-brands fa-youtube"></i> 2. Pecahan Wajar <span id="vmark-2"></span>
-      </button>
-      <button class="sub-tab-btn" id="vid-btn-3" onclick="switchVideo(3)">
-        <i class="fa-brands fa-youtube"></i> 3. Tambah & Tolak Pecahan <span id="vmark-3"></span>
-      </button>
-    </div>
-
-    <!-- Video Players -->
-    <div id="vid-player-1" class="video-container">
-      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video 1" allowfullscreen></iframe>
-    </div>
-    <div id="vid-player-2" class="video-container" style="display:none;">
-      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video 2" allowfullscreen></iframe>
-    </div>
-    <div id="vid-player-3" class="video-container" style="display:none;">
-      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Video 3" allowfullscreen></iframe>
-    </div>
-  </div>
-
-  <!-- PANEL 3: DAPUR PECAHAN (4 SOALAN) -->
-  <div class="content-panel" id="panel-3">
-    <div class="panel-header">
-      <h2 class="panel-title"><i class="fa-solid fa-utensils" style="color: #f4a261;"></i> Dapur Pecahan</h2>
-      <p class="panel-subtitle">Selesaikan 4 soalan di bawah untuk membuka **Bahan 4 (Dunia Pecahan)**.</p>
-    </div>
-
-    <div class="quiz-card">
-      <h3 id="quiz-question">Soalan 1: Berapakah bahagian pizza yang disajikan jika 1 daripada 4 dipotong?</h3>
-      <div style="margin: 20px 0; display: flex; justify-content: center; gap: 10px;" id="quiz-options">
-        <button class="btn-action" onclick="answerQuiz(true)">1/4</button>
-        <button class="btn-action" style="background:#888;" onclick="answerQuiz(false)">1/2</button>
-        <button class="btn-action" style="background:#888;" onclick="answerQuiz(false)">3/4</button>
-      </div>
-      <p>Kemajuan Soalan: <strong id="quiz-progress">0/4</strong></p>
-    </div>
-  </div>
-
-  <!-- PANEL 4: DUNIA PECAHAN (GAME) -->
-  <div class="content-panel" id="panel-4">
-    <div class="panel-header">
-      <h2 class="panel-title"><i class="fa-solid fa-gamepad" style="color: #2a9d8f;"></i> Dunia Game Pecahan</h2>
-      <p class="panel-subtitle">Tahniah! Anda telah membuka semua tahap pembelajaran.</p>
-    </div>
-    <div class="game-frame">
-      <h3>🎮 Permainan Interaktif Pecahan</h3>
-      <p style="margin: 15px 0;">Selamat bermain dan tingkatkan kefahaman anda!</p>
-      <button class="btn-action" style="background: #e0684b;"><i class="fa-solid fa-play"></i> Mula Main Game</button>
+    <div class="webcam-section">
+      <button class="btn-camera"><i class="fa-solid fa-power-off"></i> Mula Imbas Kamera</button>
+      <div class="webcam-display"></div>
     </div>
   </div>
 
@@ -470,117 +317,11 @@
 <!-- EDU-BOT WIDGET -->
 <div class="edubot-widget">
   <div class="edubot-avatar"><i class="fa-solid fa-robot"></i></div>
-  <div>
+  <div class="edubot-text">
     <strong>EduBot</strong>
-    <p id="bot-msg" style="font-size: 0.8rem; color: #555;">Selamat datang! Sila semak mood anda dahulu.</p>
+    <span>Selamat datang! Sila semak mood anda dahulu.</span>
   </div>
 </div>
-
-<script>
-  // Logik Kunci Akses Bahan
-  let unlocked = {
-    1: true,
-    2: false,
-    3: false,
-    4: false
-  };
-
-  let videosWatched = { 1: false, 2: false, 3: false };
-  let quizAnswered = 0;
-
-  // Function Tukar Tab Utama
-  function switchTab(tabNum) {
-    if (!unlocked[tabNum]) {
-      alert('Bahan ini masih terkunci! Sila lengkapkan bahan sebelumnya terlebih dahulu.');
-      return;
-    }
-
-    for (let i = 1; i <= 4; i++) {
-      document.getElementById(`panel-${i}`).classList.remove('active');
-      document.getElementById(`btn-tab-${i}`).classList.remove('active');
-    }
-
-    document.getElementById(`panel-${tabNum}`).classList.add('active');
-    document.getElementById(`btn-tab-${tabNum}`).classList.add('active');
-
-    // Mesej EduBot
-    const botMsgs = {
-      1: "Jom semak emosi anda di kamera!",
-      2: "Sila tonton 3 video di bawah untuk faham konsep.",
-      3: "Jawab 4 soalan Dapur Pecahan ini!",
-      4: "Tahniah! Selamat bermain dalam Dunia Pecahan."
-    };
-    document.getElementById('bot-msg').innerText = botMsgs[tabNum];
-  }
-
-  // buka Kunci
-  function unlockTab(tabNum) {
-    unlocked[tabNum] = true;
-    const btn = document.getElementById(`btn-tab-${tabNum}`);
-    const badge = document.getElementById(`badge-${tabNum}`);
-    
-    btn.classList.remove('disabled');
-    badge.classList.remove('badge-lock');
-    badge.classList.add('badge-unlock');
-    badge.innerHTML = 'Terbuka';
-  }
-
-  // --- BAHAN 1 LOGIK (MOOD) ---
-  function simulateMoodSuccess() {
-    document.getElementById('detected-emotion').innerText = "Gembira / Fokus 😊";
-    document.getElementById('detected-emotion').style.color = "green";
-    alert("Emosi anda sesuai! Bahan 2 (Video Pembelajaran) kini DIBUKA.");
-    unlockTab(2);
-  }
-
-  // --- BAHAN 2 LOGIK (VIDEO) ---
-  function switchVideo(vidNum) {
-    videosWatched[vidNum] = true;
-    document.getElementById(`vmark-${vidNum}`).innerHTML = "✅";
-
-    for (let i = 1; i <= 3; i++) {
-      document.getElementById(`vid-player-${i}`).style.display = 'none';
-      document.getElementById(`vid-btn-${i}`).classList.remove('active');
-    }
-
-    document.getElementById(`vid-player-${vidNum}`).style.display = 'block';
-    document.getElementById(`vid-btn-${vidNum}`).classList.add('active');
-
-    // Semak jika ketiga-tiga video telah ditonton
-    if (videosWatched[1] && videosWatched[2] && videosWatched[3] && !unlocked[3]) {
-      setTimeout(() => {
-        alert("Tahniah! Anda telah menonton kesemua video. Bahan 3 (Dapur Pecahan) kini DIBUKA!");
-        unlockTab(3);
-      }, 500);
-    }
-  }
-
-  // --- BAHAN 3 LOGIK (QUIZ / 4 SOALAN) ---
-  function answerQuiz(isCorrect) {
-    if (isCorrect) {
-      quizAnswered++;
-      document.getElementById('quiz-progress').innerText = `${quizAnswered}/4`;
-
-      if (quizAnswered < 4) {
-        document.getElementById('quiz-question').innerText = `Soalan ${quizAnswered + 1}: Apakah nilai pecahan bagi gambar rajah seterusnya?`;
-        alert("Jawapan Betul!");
-      } else {
-        alert("Tahniah! Anda berjaya menjawab 4 soalan! Bahan 4 (Dunia Pecahan) kini DIBUKA!");
-        unlockTab(4);
-      }
-    } else {
-      alert("Jawapan kurang tepat, sila cuba lagi!");
-    }
-  }
-
-  // Mock Machine Learning Kamera
-  async function initWebcam() {
-    document.getElementById('detected-emotion').innerText = "Mengimbas...";
-    setTimeout(() => {
-      simulateMoodSuccess();
-    }, 2000);
-  }
-</script>
 
 </body>
 </html>
