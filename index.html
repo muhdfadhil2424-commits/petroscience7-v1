@@ -232,7 +232,7 @@
             position: relative;
         }
 
-        #bahan1 h2 {
+        #bahan1 h2, #dapurSection h2 {
             font-family: 'Playfair Display', serif;
             color: var(--card-dark);
             font-size: 2.2rem;
@@ -243,7 +243,7 @@
             margin-bottom: 8px;
         }
 
-        #bahan1 .desc {
+        #bahan1 .desc, #dapurSection .desc {
             color: var(--text-muted);
             margin-bottom: 28px;
             font-size: 1rem;
@@ -319,6 +319,68 @@
             background: transparent;
             display: block;
             overflow: hidden;
+        }
+
+        /* REKA BENTUK DAPUR PECAHAN (VIDEO YOUTUBE) */
+        .dapur-card {
+            background: #ffffff;
+            border: 2px solid var(--border-warm);
+            border-radius: 28px;
+            padding: 38px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.04);
+        }
+
+        .video-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .video-btn {
+            background: #f6f3e8;
+            border: 2px solid var(--border-warm);
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.25s ease;
+            text-align: left;
+        }
+
+        .video-btn:hover {
+            background: #ebdcc2;
+        }
+
+        .video-btn.active {
+            background: var(--accent-green);
+            color: #ffffff;
+            border-color: #1e7065;
+            box-shadow: 0 6px 16px rgba(42, 157, 143, 0.3);
+        }
+
+        .youtube-player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* Aspect Ratio 16:9 */
+            height: 0;
+            overflow: hidden;
+            border-radius: 24px;
+            background: #000;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+            border: 3px solid var(--card-dark);
+        }
+
+        .youtube-player-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
         }
 
         /* EMOTION BARS */
@@ -721,6 +783,7 @@
         @media (max-width: 950px) {
             .zon-ceria-layout { flex-direction: column; }
             .side-illustration-group { display: none; }
+            .video-selector-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {
@@ -736,7 +799,7 @@
 </head>
 <body>
 
-    <!-- LAPISAN EMOJI MUKA FLOATING UTAMA (GAMBAR 2) -->
+    <!-- LAPISAN EMOJI MUKA FLOATING UTAMA -->
     <div class="bg-emoji-layer" id="emojiLayer"></div>
 
     <!-- AUDIO MP3 LOKAL -->
@@ -818,10 +881,9 @@
                     </div>
                 </div>
 
-                <!-- CONTAINER ZON CERIA (GAMBAR 1) -->
+                <!-- CONTAINER ZON CERIA -->
                 <div id="zonCeriaSection" style="display: none;" class="zon-ceria-card">
                   
-                  <!-- LAPISAN EMOJI CONFETTI, DISCO & POSE (KIRI & KANAN SAHAJA) -->
                   <div class="zon-ceria-emoji-layer" id="zonCeriaEmojiLayer"></div>
 
                   <h3><i class="fa-solid fa-child-reaching"></i> ZON CERIA <i class="fa-solid fa-star" style="color: #ffd166; font-size: 1.8rem;"></i></h3>
@@ -840,7 +902,6 @@
 
                   <div class="zon-ceria-layout">
                     
-                    <!-- KUMPULAN HIASAN KIRI -->
                     <div class="side-illustration-group">
                         <div class="side-illustration">
                             <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -859,13 +920,11 @@
                         <div class="extra-decoration">🌟 🏆</div>
                     </div>
 
-                    <!-- KAMERA POSE -->
                     <div class="camera-pose-wrapper">
                         <canvas id="canvas"></canvas>
                         <div id="label-container-pose" style="text-align: center; font-family: monospace; font-size: 1.05rem; background: rgba(255,255,255,0.08); padding: 12px 18px; border-radius: 16px; width: 100%; max-width: 380px; color: #fff; border: 1.5px solid rgba(244, 162, 97, 0.3);"></div>
                     </div>
 
-                    <!-- KUMPULAN HIASAN KANAN -->
                     <div class="side-illustration-group">
                         <div class="side-illustration">
                             <svg viewBox="0 0 160 180" width="140" height="160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -888,14 +947,39 @@
 
             </div>
 
-            <!-- BAHAN 2 -->
+            <!-- BAHAN 2: DAPUR PECAHAN (TERBINA SECARA DIRECT DENGAN VIDEO YOUTUBE) -->
             <div id="bahan2" class="module-content">
                 <div id="m2-locked" style="background: #ffffff; border-radius: 28px; padding: 80px; text-align: center; color: var(--text-muted); border: 2px solid var(--border-warm);">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
                     <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Modul Terkunci</h3>
                     <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan cabaran di Modul 1 terlebih dahulu untuk membuka kunci modul ini!</p>
                 </div>
-                <iframe id="m2-iframe" src="https://dapur-pecahan.vercel.app" class="iframe-container" scrolling="no" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
+
+                <div id="dapurSection" class="dapur-card" style="display: none;">
+                    <h2><i class="fa-solid fa-utensils" style="color: var(--accent-green);"></i> Dapur Pecahan</h2>
+                    <p class="desc">Tonton video pembelajaran konsep pecahan interaktif di Dapur Pecahan di bawah!</p>
+
+                    <!-- PEMILIH VIDEO YOUTUBE -->
+                    <div class="video-selector-grid">
+                        <button class="video-btn active" id="btn-yt-1" onclick="tukarVideoYT('fM3iV9_6AFA', 1)">
+                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                            <span>1. Konsep Asas Pecahan</span>
+                        </button>
+                        <button class="video-btn" id="btn-yt-2" onclick="tukarVideoYT('3p3B2w08SNE', 2)">
+                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                            <span>2. Pecahan Wajar & Tak Wajar</span>
+                        </button>
+                        <button class="video-btn" id="btn-yt-3" onclick="tukarVideoYT('m2-A3E5sA3A', 3)">
+                            <i class="fa-brands fa-youtube" style="color: #ff0000; font-size: 1.4rem;"></i>
+                            <span>3. Penambahan Pecahan</span>
+                        </button>
+                    </div>
+
+                    <!-- PEMAIN YOUTUBE IFRAME -->
+                    <div class="youtube-player-wrapper">
+                        <iframe id="ytPlayer" src="https://www.youtube.com/embed/fM3iV9_6AFA" title="YouTube Video Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                    </div>
+                </div>
             </div>
 
             <!-- BAHAN 3 -->
@@ -956,7 +1040,6 @@
     </div>
 
     <script>
-        // 3. GENERATOR EMOJI LATAR BELAKANG UTAMA (GAMBAR 2): HANYA EMOJI MUKA SAHAJA
         function generateBackgroundEmojis() {
             const container = document.getElementById('emojiLayer');
             if (!container) return;
@@ -986,26 +1069,18 @@
             }
         }
 
-        // 1 & 2. GENERATOR EMOJI KHUSUS ZON CERIA (GAMBAR 1)
-        // HANYA EMOJI CONFETTI, DISCO & 5 POSE | TERLETAK DI TEPI KIRI & KANAN SAHAJA (JAUH DARI TEKS & GAMBAR WATAK)
         function generateZonCeriaThemeEmojis() {
             const container = document.getElementById('zonCeriaEmojiLayer');
             if(!container) return;
             container.innerHTML = "";
 
-            // Emoji Confetti, Disco, dan 5 Pose
             const themeEmojis = ['🎉', '🎊', '🪩', '✨', '🌟', '🪅', '👍', '🫶', '👌', '✌️', '⭐'];
 
-            // Kedudukan selamat: Hanya di zon tepi kiri (3% - 18%) dan tepi kanan (82% - 95%)
-            // Kedudukan menegak dipisahkan jauh supaya tidak bertindih (Grid terancang)
             const safePositions = [
-                // Sebelah Kiri (Sisi Luar & Atas/Bawah Gambar Lelaki)
                 { top: 8,  left: 4 },
                 { top: 28, left: 14 },
                 { top: 52, left: 3 },
                 { top: 78, left: 12 },
-                
-                // Sebelah Kanan (Sisi Luar & Atas/Bawah Gambar Perempuan)
                 { top: 10, left: 88 },
                 { top: 32, left: 93 },
                 { top: 58, left: 84 },
@@ -1017,7 +1092,7 @@
                 span.className = 'zon-ceria-emoji-floating';
                 span.innerText = themeEmojis[index % themeEmojis.length];
 
-                const fontSize = 1.8 + (index % 3) * 0.4; // Saiz sederhana 1.8rem - 2.6rem
+                const fontSize = 1.8 + (index % 3) * 0.4;
                 const duration = 3 + (index % 4) * 0.8;
                 const delay = (index % 3) * 0.6;
 
@@ -1067,13 +1142,26 @@
 
             if (tabIndex === 2) {
                 updateBotSpeech("Selamat datang ke Dapur Pecahan!");
-                resizeIframe(document.getElementById('m2-iframe'));
             } else if (tabIndex === 3) {
                 updateBotSpeech("Selamat datang ke Dunia Pecahan!");
                 resizeIframe(document.getElementById('m3-iframe'));
             } else if (tabIndex === 1) {
                 updateBotSpeech("Semak mood kamu di sini!");
             }
+        }
+
+        /* FUNGSI TUKAR VIDEO YOUTUBE DAPUR PECAHAN */
+        function tukarVideoYT(videoId, index) {
+            const player = document.getElementById('ytPlayer');
+            if (player) {
+                player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            }
+
+            document.querySelectorAll('.video-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`btn-yt-${index}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            updateBotSpeech(`Memainkan Video Pembelajaran Dapur Pecahan ${index}!`);
         }
 
         function unlockAllModules() {
@@ -1095,9 +1183,11 @@
             document.getElementById('badge-tab-3').className = "badge-status badge-unlocked";
             document.getElementById('badge-tab-3').innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
 
+            // Buka Kunci Modul 2
             document.getElementById('m2-locked').style.display = 'none';
-            document.getElementById('m2-iframe').style.display = 'block';
+            document.getElementById('dapurSection').style.display = 'block';
 
+            // Buka Kunci Modul 3
             document.getElementById('m3-locked').style.display = 'none';
             document.getElementById('m3-iframe').style.display = 'block';
 
@@ -1281,7 +1371,7 @@
             document.getElementById("zonCeriaModal").style.display = "none";
             document.getElementById("zonCeriaSection").style.display = "block";
             
-            generateZonCeriaThemeEmojis(); // Jana emoji berpola khusus Zon Ceria (Kiri & Kanan sahaja)
+            generateZonCeriaThemeEmojis();
             currentPoseIndex = 0;
             updatePoseUI();
             initZonCeriaPose();
@@ -1416,18 +1506,13 @@
             }
         }
 
-        document.getElementById('m2-iframe').addEventListener('load', function() {
-            resizeIframe(this);
-        });
         document.getElementById('m3-iframe').addEventListener('load', function() {
             resizeIframe(this);
         });
 
         setInterval(() => {
             if (isUnlocked) {
-                const activeM2 = document.getElementById('m2-iframe');
                 const activeM3 = document.getElementById('m3-iframe');
-                if (activeM2 && activeM2.style.display !== 'none') resizeIframe(activeM2);
                 if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
             }
         }, 1000);
