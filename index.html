@@ -53,7 +53,7 @@
             padding: 20px 25px 50px 25px;
         }
 
-        /* LATAR BELAKANG UTAMA: HANYA EMOJI MUKA SAHAJA */
+        /* LATAR BELAKANG UTAMA: FLOATING EMOJI */
         .bg-emoji-layer {
             position: fixed;
             top: 0;
@@ -74,15 +74,9 @@
         }
 
         @keyframes floatRandom {
-            0% {
-                transform: translateY(0px) rotate(0deg) scale(1);
-            }
-            50% {
-                transform: translateY(-16px) rotate(8deg) scale(1.05);
-            }
-            100% {
-                transform: translateY(12px) rotate(-8deg) scale(0.95);
-            }
+            0% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-16px) rotate(8deg) scale(1.05); }
+            100% { transform: translateY(12px) rotate(-8deg) scale(0.95); }
         }
 
         .container {
@@ -163,7 +157,7 @@
             font-weight: 500;
         }
 
-        /* TABS STYLING - DISEKASIKAN KEPADA 4 COLUMNS */
+        /* TABS STYLING - 4 COLUMNS */
         .module-tabs {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -192,9 +186,7 @@
             transition: all 0.25s ease;
         }
 
-        .tab-btn:hover {
-            background: #ebdcc2;
-        }
+        .tab-btn:hover { background: #ebdcc2; }
 
         .tab-btn.active {
             background: var(--card-accent);
@@ -237,9 +229,7 @@
             border-color: rgba(255, 255, 255, 0.4);
         }
 
-        .content-area {
-            width: 100%;
-        }
+        .content-area { width: 100%; }
 
         .module-content {
             display: none;
@@ -248,11 +238,8 @@
             width: 100%;
         }
 
-        .module-content.active {
-            display: block;
-        }
+        .module-content.active { display: block; }
 
-        /* CARD CONTAINERS UTAMA */
         .section-card {
             background: #ffffff;
             border: 2px solid var(--border-warm);
@@ -374,9 +361,7 @@
             text-align: left;
         }
 
-        .video-btn:hover {
-            background: #ebdcc2;
-        }
+        .video-btn:hover { background: #ebdcc2; }
 
         .video-btn.active {
             background: var(--accent-green);
@@ -387,7 +372,7 @@
 
         .youtube-player-wrapper {
             position: relative;
-            padding-bottom: 56.25%; /* Aspect Ratio 16:9 */
+            padding-bottom: 56.25%;
             height: 0;
             overflow: hidden;
             border-radius: 24px;
@@ -403,6 +388,38 @@
             width: 100%;
             height: 100%;
             border: 0;
+        }
+
+        /* BUTANG KEMAJUAN DALAM VIDEO */
+        .btn-complete-video {
+            margin-top: 30px;
+            width: 100%;
+            background: linear-gradient(135deg, #2a9d8f, #238579);
+            color: white;
+            border: none;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 8px 25px rgba(42, 157, 143, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .btn-complete-video:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(42, 157, 143, 0.45);
+        }
+
+        .btn-complete-video.done {
+            background: #788570;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
         }
 
         /* EMOTION BARS */
@@ -519,9 +536,7 @@
             box-shadow: 0 6px 18px rgba(224, 122, 95, 0.3);
         }
 
-        .btn-modal:hover {
-            transform: scale(1.03);
-        }
+        .btn-modal:hover { transform: scale(1.03); }
 
         /* ZON CERIA POSE SECTION */
         .zon-ceria-card {
@@ -555,12 +570,8 @@
         }
 
         @keyframes pulseFloat {
-            0% {
-                transform: translateY(0px) scale(1) rotate(-6deg);
-            }
-            100% {
-                transform: translateY(-12px) scale(1.1) rotate(6deg);
-            }
+            0% { transform: translateY(0px) scale(1) rotate(-6deg); }
+            100% { transform: translateY(-12px) scale(1.1) rotate(6deg); }
         }
 
         .zon-ceria-card h3 {
@@ -629,9 +640,7 @@
             transform: scale(1.3);
         }
 
-        .dot-step.completed {
-            background: var(--accent-green);
-        }
+        .dot-step.completed { background: var(--accent-green); }
 
         .zon-ceria-layout {
             display: flex;
@@ -664,9 +673,7 @@
             transition: transform 0.3s ease;
         }
 
-        .side-illustration:hover {
-            transform: translateY(-5px) scale(1.03);
-        }
+        .side-illustration:hover { transform: translateY(-5px) scale(1.03); }
 
         .illustration-text {
             margin-top: 10px;
@@ -718,9 +725,7 @@
             pointer-events: none;
         }
 
-        .floating-robot-widget * {
-            pointer-events: auto;
-        }
+        .floating-robot-widget * { pointer-events: auto; }
 
         .speech-bubble {
             background: #ffffff;
@@ -787,18 +792,14 @@
             transition: transform 0.2s ease;
         }
 
-        .robot-avatar:hover {
-            transform: scale(1.08);
-        }
+        .robot-avatar:hover { transform: scale(1.08); }
 
         .robot-svg {
             width: 100%;
             height: 100%;
         }
 
-        .speech-bubble.minimized {
-            display: none;
-        }
+        .speech-bubble.minimized { display: none; }
 
         .locked-card {
             background: #ffffff;
@@ -835,7 +836,7 @@
 </head>
 <body>
 
-    <!-- LAPISAN EMOJI MUKA FLOATING UTAMA -->
+    <!-- LAPISAN EMOJI FLOATING UTAMA -->
     <div class="bg-emoji-layer" id="emojiLayer"></div>
 
     <!-- AUDIO MP3 LOKAL -->
@@ -882,7 +883,7 @@
             <div id="bahan1" class="module-content active">
                 <div class="section-card">
                     <h2><i class="fa-solid fa-face-smile" style="color: var(--card-accent);"></i> Semak Mood Saya</h2>
-                    <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Slot 2, 3 & 4!</p>
+                    <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Slot 2 (Video Pembelajaran)!</p>
 
                     <button class="btn-camera" id="btnCamera" onclick="toggleCamera()">
                         <i class="fa-solid fa-play"></i> <span id="btnCamText">Mula Pengimbas Kamera</span>
@@ -988,7 +989,7 @@
                 </div>
             </div>
 
-            <!-- SLOT 2: VIDEO PEMBELAJARAN (DIASINGKAN) -->
+            <!-- SLOT 2: VIDEO PEMBELAJARAN -->
             <div id="bahan2" class="module-content">
                 <div id="m2-locked" class="locked-card">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
@@ -1018,15 +1019,21 @@
                     <div class="youtube-player-wrapper">
                         <iframe id="ytPlayer" src="https://www.youtube.com/embed/xvfHeiVJkj4" title="YouTube Video Player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
                     </div>
+
+                    <!-- BUTANG PENGESAHAN UNTUK MEMBUKA SLOT 3 & 4 -->
+                    <button id="btnFinishVideo" class="btn-complete-video" onclick="unlockKitchenAndGame()">
+                        <i class="fa-solid fa-circle-check" style="font-size: 1.3rem;"></i>
+                        <span>Saya Dah Selesai Tonton Video! (Buka Dapur & Game Pecahan)</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- SLOT 3: DAPUR PECAHAN (AKTIVITI INTERAKTIF) -->
+            <!-- SLOT 3: DAPUR PECAHAN -->
             <div id="bahan3" class="module-content">
                 <div id="m3-locked" class="locked-card">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
                     <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dapur Pecahan Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan semakan emosi di Slot 1 terlebih dahulu untuk membuka Dapur Pecahan!</p>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 2 dan tekan butang pengesahan tontonan untuk membuka Dapur Pecahan!</p>
                 </div>
 
                 <div id="m3-content" style="display: none;">
@@ -1039,7 +1046,7 @@
                 <div id="m4-locked" class="locked-card">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--accent-gold);"></i>
                     <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dunia Pecahan Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan semakan emosi di Slot 1 terlebih dahulu untuk bermain game Dunia Pecahan!</p>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 2 dan tekan butang pengesahan tontonan untuk membuka Dunia Pecahan!</p>
                 </div>
 
                 <div id="m4-content" style="display: none;">
@@ -1165,7 +1172,11 @@
 
         let model, webcam, maxPredictions;
         let isCameraOn = false;
-        let isUnlocked = false;
+        
+        /* STATUS TERKUNCI/TERBUKA BERPERINGKAT */
+        let isVideoUnlocked = false;
+        let isKitchenAndGameUnlocked = false;
+
         let currentDialog = "Hai semua! Saya EduBot! Tekan Mula Kamera untuk mula!";
 
         let timerZonCeria = null;
@@ -1182,8 +1193,13 @@
         let isPoseTransitioning = false;
 
         function switchTab(tabIndex) {
-            if (!isUnlocked && tabIndex !== 1) {
-                updateBotSpeech("Slot terkunci! Selesaikan semakan emosi di Slot 1 dahulu.");
+            // Semakan Kunci Bertahap
+            if (tabIndex === 2 && !isVideoUnlocked) {
+                updateBotSpeech("Slot Video terkunci! Selesaikan semakan emosi di Slot 1 dahulu.");
+                return;
+            }
+            if ((tabIndex === 3 || tabIndex === 4) && !isKitchenAndGameUnlocked) {
+                updateBotSpeech("Slot ini terkunci! Tonton video di Slot 2 terlebih dahulu.");
                 return;
             }
 
@@ -1221,9 +1237,10 @@
             updateBotSpeech(`Memainkan Video Pembelajaran ${index}!`);
         }
 
-        function unlockAllModules() {
-            if (isUnlocked) return;
-            isUnlocked = true;
+        /* TAHAP 1: BUKA SLOT VIDEO SELEPAS EMOSI */
+        function unlockVideoModule() {
+            if (isVideoUnlocked) return;
+            isVideoUnlocked = true;
 
             if (timerZonCeria) clearTimeout(timerZonCeria);
             hentiKameraEmosi();
@@ -1234,8 +1251,30 @@
                 audio.currentTime = 0;
             }
 
-            // Kemaskini Lencana / Badge
-            for (let i = 2; i <= 4; i++) {
+            // Kemaskini Lencana / Badge Slot 2
+            const badge2 = document.getElementById('badge-tab-2');
+            if (badge2) {
+                badge2.className = "badge-status badge-unlocked";
+                badge2.innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+            }
+
+            // Buka Kunci Slot 2 (Video)
+            document.getElementById('m2-locked').style.display = 'none';
+            document.getElementById('m2-content').style.display = 'block';
+
+            updateBotSpeech("Tahniah! Slot Video Pembelajaran telah dibuka!");
+            
+            // Pergi ke Slot 2 secara automatik
+            setTimeout(() => { switchTab(2); }, 1200);
+        }
+
+        /* TAHAP 2: BUKA SLOT DAPUR & GAME SELEPAS TONTON VIDEO */
+        function unlockKitchenAndGame() {
+            if (isKitchenAndGameUnlocked) return;
+            isKitchenAndGameUnlocked = true;
+
+            // Kemaskini Lencana / Badge Slot 3 & 4
+            for (let i = 3; i <= 4; i++) {
                 const badge = document.getElementById(`badge-tab-${i}`);
                 if (badge) {
                     badge.className = "badge-status badge-unlocked";
@@ -1243,19 +1282,22 @@
                 }
             }
 
-            // Buka Kunci Slot 2 (Video)
-            document.getElementById('m2-locked').style.display = 'none';
-            document.getElementById('m2-content').style.display = 'block';
-
-            // Buka Kunci Slot 3 (Dapur Pecahan)
+            // Buka Kunci Slot 3 & 4
             document.getElementById('m3-locked').style.display = 'none';
             document.getElementById('m3-content').style.display = 'block';
 
-            // Buka Kunci Slot 4 (Dunia Pecahan)
             document.getElementById('m4-locked').style.display = 'none';
             document.getElementById('m4-content').style.display = 'block';
 
-            updateBotSpeech("Tahniah! Semua slot telah dibuka!");
+            // Kemaskini Butang Pengesahan Video
+            const btnFinish = document.getElementById('btnFinishVideo');
+            if (btnFinish) {
+                btnFinish.className = "btn-complete-video done";
+                btnFinish.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Dapur & Game Telah Terbuka!</span>';
+                btnFinish.onclick = null;
+            }
+
+            updateBotSpeech("Syabas! Dapur Pecahan dan Dunia Pecahan kini telah terbuka!");
         }
 
         function speakText(text) {
@@ -1281,9 +1323,7 @@
             }
         }
 
-        function repeatSpeech() {
-            speakText(currentDialog);
-        }
+        function repeatSpeech() { speakText(currentDialog); }
 
         function toggleBubble() {
             const bubble = document.getElementById('speechBubble');
@@ -1351,12 +1391,8 @@
             const labelContainer = document.getElementById('label-container');
             const webcamContainer = document.getElementById("webcam-container");
 
-            if (webcam && webcam.stop) {
-                await webcam.stop();
-            }
-            if (timerZonCeria) {
-                clearTimeout(timerZonCeria);
-            }
+            if (webcam && webcam.stop) { await webcam.stop(); }
+            if (timerZonCeria) { clearTimeout(timerZonCeria); }
 
             webcamContainer.innerHTML = "";
             placeholder.style.display = "block";
@@ -1409,8 +1445,8 @@
 
             currentScorePercent = Math.max(happyVal, neutralVal);
 
-            if (currentScorePercent >= 80 && !isUnlocked) {
-                unlockAllModules();
+            if (currentScorePercent >= 80 && !isVideoUnlocked) {
+                unlockVideoModule();
             }
         }
 
@@ -1418,7 +1454,7 @@
             if (timerZonCeria) clearTimeout(timerZonCeria);
 
             timerZonCeria = setTimeout(() => {
-                if (currentScorePercent < 80 && !isUnlocked) {
+                if (currentScorePercent < 80 && !isVideoUnlocked) {
                     hentiKameraEmosi();
                     
                     const audio = document.getElementById("audioGoyangDumang");
@@ -1520,7 +1556,7 @@
                 }
             }
 
-            if (currentTargetScore >= 80 && !isPoseTransitioning && !isUnlocked) {
+            if (currentTargetScore >= 80 && !isPoseTransitioning && !isVideoUnlocked) {
                 isPoseTransitioning = true;
                 
                 document.getElementById(`dot-${currentPoseIndex}`).className = "dot-step completed";
@@ -1533,7 +1569,7 @@
                         isPoseTransitioning = false;
                     }, 1500);
                 } else {
-                    unlockAllModules();
+                    unlockVideoModule();
                 }
             }
 
@@ -1570,15 +1606,11 @@
             }
         }
 
-        document.getElementById('m3-iframe').addEventListener('load', function() {
-            resizeIframe(this);
-        });
-        document.getElementById('m4-iframe').addEventListener('load', function() {
-            resizeIframe(this);
-        });
+        document.getElementById('m3-iframe').addEventListener('load', function() { resizeIframe(this); });
+        document.getElementById('m4-iframe').addEventListener('load', function() { resizeIframe(this); });
 
         setInterval(() => {
-            if (isUnlocked) {
+            if (isKitchenAndGameUnlocked) {
                 const activeM3 = document.getElementById('m3-iframe');
                 const activeM4 = document.getElementById('m4-iframe');
                 if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
