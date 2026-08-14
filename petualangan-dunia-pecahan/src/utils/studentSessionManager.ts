@@ -1,12 +1,13 @@
 import { StudentProfile, GameSession, TeacherAuth, UserProgress, AttemptRecord } from '../types';
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
 import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
+import { IPG_STUDENTS_DATA } from '../data/ipgStudentsData';
 
-const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v10';
-const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v10';
-const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v10';
-const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v10';
-const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v10';
+const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v13';
+const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v13';
+const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v13';
+const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v13';
+const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v13';
 
 // Helper to calculate Tahap Penguasaan (TP1 - TP6) based on stars & completed challenges
 export function calculateStudentTP(stars: number, completed: number): string {
@@ -67,6 +68,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-001',
     nama: 'Aiman Hakim',
     kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
     progress: {
       completedChallenges: 9,
@@ -125,6 +127,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-002',
     nama: 'Siti Aisyah',
     kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
     progress: {
       completedChallenges: 8,
@@ -165,6 +168,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-003',
     nama: 'Danish Amir',
     kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 1).toISOString(),
     progress: {
       completedChallenges: 4,
@@ -188,6 +192,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-004',
     nama: 'Nur Sarah Balqis',
     kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
     progress: {
       completedChallenges: 5,
@@ -211,6 +216,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-005',
     nama: 'Muhammad Rayyan',
     kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 1).toISOString(),
     progress: {
       completedChallenges: 2,
@@ -236,6 +242,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-006',
     nama: 'Adam Harith',
     kelas: '4 Berkelah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 4).toISOString(),
     progress: {
       completedChallenges: 7,
@@ -259,6 +266,7 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-007',
     nama: 'Nur Arissa',
     kelas: '4 Berkelah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
     progress: {
       completedChallenges: 3,
@@ -278,6 +286,9 @@ const DEMO_STUDENTS: StudentProfile[] = [
       attemptHistory: [],
     },
   },
+
+  // IPG Students Seed Dataset
+  ...IPG_STUDENTS_DATA,
 ];
 
 const DEMO_SESSIONS: GameSession[] = [
@@ -285,7 +296,8 @@ const DEMO_SESSIONS: GameSession[] = [
     sessionId: 'SESI-101',
     studentId: 'MURID-001',
     nama: 'Aiman Hakim',
-    kelas: '4 Bestari',
+    kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikh: new Date(Date.now() - 86400000 * 2).toLocaleDateString('ms-MY'),
     masaMula: '09:15 AM',
     masaTamat: '09:45 AM',
@@ -295,13 +307,38 @@ const DEMO_SESSIONS: GameSession[] = [
   {
     sessionId: 'SESI-102',
     studentId: 'MURID-002',
-    nama: 'Nur Sarah Balqis',
-    kelas: '4 Bestari',
+    nama: 'Siti Aisyah',
+    kelas: '4 Asah',
+    studentCategory: 'SK',
     tarikh: new Date(Date.now() - 86400000 * 1).toLocaleDateString('ms-MY'),
     masaMula: '10:30 AM',
     masaTamat: '11:00 AM',
     worldId: 'arena_pecahan',
     starsGained: 6,
+  },
+  {
+    sessionId: 'SESI-IPG-01',
+    studentId: 'IPG-001',
+    nama: 'Amir Hakim',
+    kelas: 'MATH',
+    studentCategory: 'IPG',
+    tarikh: new Date(Date.now() - 86400000 * 2).toLocaleDateString('ms-MY'),
+    masaMula: '02:15 PM',
+    masaTamat: '02:45 PM',
+    worldId: 'dunia_pixel',
+    starsGained: 9,
+  },
+  {
+    sessionId: 'SESI-IPG-02',
+    studentId: 'IPG-002',
+    nama: 'Nur Aisyah',
+    kelas: 'BM',
+    studentCategory: 'IPG',
+    tarikh: new Date(Date.now() - 86400000 * 1).toLocaleDateString('ms-MY'),
+    masaMula: '03:30 PM',
+    masaTamat: '04:00 PM',
+    worldId: 'dapur_pecahan',
+    starsGained: 9,
   },
 ];
 
@@ -309,7 +346,7 @@ const DEMO_SESSIONS: GameSession[] = [
 export function initializeStorageWithSeed(): void {
   try {
     // Clear old versions from previous iterations
-    for (let i = 1; i <= 9; i++) {
+    for (let i = 1; i <= 11; i++) {
       localStorage.removeItem(`wira_pecahan_students_v${i}`);
       localStorage.removeItem(`wira_pecahan_sessions_v${i}`);
     }
@@ -322,10 +359,10 @@ export function initializeStorageWithSeed(): void {
       const parsed: StudentProfile[] = JSON.parse(existing);
       const class3Asah = parsed.filter((s) => s.kelas === '3 Asah');
       const is3AsahComplete = class3Asah.length === 40 && class3Asah.every((s) => (s.progress?.completedChallenges || 0) === 9);
-      // Ensure no 5 Asah, 5 Berkelah, 6 Asah, 6 Berkelah, 6 Chamang records exist in seed
-      const hasOldSeniorClasses = parsed.some((s) => ['5 Asah', '5 Berkelah', '6 Asah', '6 Berkelah', '6 Chamang'].includes(s.kelas));
+      const ipgList = parsed.filter((s) => s.studentCategory === 'IPG' || s.id.startsWith('IPG-'));
+      const hasAmirHakim = ipgList.some((s) => s.id === 'IPG-001' && s.nama === 'Amir Hakim' && s.program === 'PPISMP');
       
-      if (!is3AsahComplete || hasOldSeniorClasses) {
+      if (!is3AsahComplete || ipgList.length !== 8 || !hasAmirHakim) {
         localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
         localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
       }
@@ -340,16 +377,44 @@ export function getAllStudents(): StudentProfile[] {
   initializeStorageWithSeed();
   try {
     const saved = localStorage.getItem(STUDENTS_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEMO_STUDENTS;
+    if (!saved) return DEMO_STUDENTS;
+    const list: StudentProfile[] = JSON.parse(saved);
+    // Ensure backwards compatibility for studentCategory
+    return list.map((s) => ({
+      ...s,
+      studentCategory: s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK'),
+    }));
   } catch {
     return DEMO_STUDENTS;
   }
 }
 
-// Generate unique automatic student ID (MURID-001, MURID-002, ...)
-export function generateNextStudentId(): string {
+// Get students isolated by category
+export function getStudentsByCategory(category: 'SK' | 'IPG'): StudentProfile[] {
+  const all = getAllStudents();
+  return all.filter((s) => {
+    const cat = s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK');
+    return cat === category;
+  });
+}
+
+// Generate unique automatic student ID (MURID-001 for SK, IPG-001 for IPG)
+export function generateNextStudentId(category: 'SK' | 'IPG' = 'SK'): string {
   const students = getAllStudents();
   let maxNum = 0;
+  
+  if (category === 'IPG') {
+    students.forEach((s) => {
+      const match = s.id.match(/^IPG-(\d+)$/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNum) maxNum = num;
+      }
+    });
+    const nextNum = maxNum + 1;
+    return `IPG-${String(nextNum).padStart(3, '0')}`;
+  }
+
   students.forEach((s) => {
     const match = s.id.match(/^MURID-(\d+)$/i);
     if (match) {
@@ -362,15 +427,22 @@ export function generateNextStudentId(): string {
 }
 
 // Create or Register student profile
-export function registerStudent(nama: string, kelas: string): StudentProfile {
+export function registerStudent(
+  nama: string,
+  kelas: string,
+  category: 'SK' | 'IPG' = 'SK',
+  ipgDetails?: { program?: string; semester?: string; opsyen?: string; kumpulan?: string }
+): StudentProfile {
   const students = getAllStudents();
   const trimmedNama = nama.trim();
-  const trimmedKelas = kelas.trim();
+  const trimmedKelas = (category === 'IPG' && (ipgDetails?.opsyen || ipgDetails?.kumpulan) ? (ipgDetails.opsyen || ipgDetails.kumpulan)! : kelas).trim();
 
-  // Check if a student with exact same name and class already exists
-  const existing = students.find(
-    (s) => s.nama.toLowerCase() === trimmedNama.toLowerCase() && s.kelas.toLowerCase() === trimmedKelas.toLowerCase()
-  );
+  // Check if a student with exact same name and class and category already exists
+  const existing = students.find((s) => {
+    const sCat = s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK');
+    if (sCat !== category) return false;
+    return s.nama.toLowerCase() === trimmedNama.toLowerCase() && s.kelas.toLowerCase() === trimmedKelas.toLowerCase();
+  });
 
   if (existing) {
     setCurrentStudent(existing);
@@ -378,9 +450,14 @@ export function registerStudent(nama: string, kelas: string): StudentProfile {
   }
 
   const newStudent: StudentProfile = {
-    id: generateNextStudentId(),
+    id: generateNextStudentId(category),
     nama: trimmedNama,
     kelas: trimmedKelas,
+    studentCategory: category,
+    program: category === 'IPG' ? ipgDetails?.program : undefined,
+    semester: category === 'IPG' ? ipgDetails?.semester : undefined,
+    opsyen: category === 'IPG' ? (ipgDetails?.opsyen || trimmedKelas) : undefined,
+    kumpulan: category === 'IPG' ? (ipgDetails?.kumpulan || ipgDetails?.opsyen || trimmedKelas) : undefined,
     tarikhDaftar: new Date().toISOString(),
     progress: DEFAULT_USER_PROGRESS,
   };
@@ -395,7 +472,10 @@ export function registerStudent(nama: string, kelas: string): StudentProfile {
 export function getCurrentStudent(): StudentProfile | null {
   try {
     const saved = localStorage.getItem(CURRENT_STUDENT_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    const st: StudentProfile = JSON.parse(saved);
+    st.studentCategory = st.studentCategory || (st.id.startsWith('IPG-') ? 'IPG' : 'SK');
+    return st;
   } catch {
     return null;
   }
@@ -403,6 +483,7 @@ export function getCurrentStudent(): StudentProfile | null {
 
 export function setCurrentStudent(student: StudentProfile | null): void {
   if (student) {
+    student.studentCategory = student.studentCategory || (student.id.startsWith('IPG-') ? 'IPG' : 'SK');
     localStorage.setItem(CURRENT_STUDENT_STORAGE_KEY, JSON.stringify(student));
   } else {
     localStorage.removeItem(CURRENT_STUDENT_STORAGE_KEY);
@@ -440,11 +521,13 @@ export function saveStudentProgress(studentId: string, progress: UserProgress): 
 // GAME SESSION MANAGEMENT
 export function startNewGameSession(student: StudentProfile): GameSession {
   const now = new Date();
+  const category = student.studentCategory || (student.id.startsWith('IPG-') ? 'IPG' : 'SK');
   const newSession: GameSession = {
-    sessionId: `SESI-${Date.now().toString().slice(-6)}`,
+    sessionId: `SESI-${category === 'IPG' ? 'IPG-' : ''}${Date.now().toString().slice(-6)}`,
     studentId: student.id,
     nama: student.nama,
     kelas: student.kelas,
+    studentCategory: category,
     tarikh: now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' }),
     masaMula: now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }),
     masaTamat: null,
@@ -466,10 +549,23 @@ export function getAllSessions(): GameSession[] {
   initializeStorageWithSeed();
   try {
     const saved = localStorage.getItem(SESSIONS_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEMO_SESSIONS;
+    if (!saved) return DEMO_SESSIONS;
+    const list: GameSession[] = JSON.parse(saved);
+    return list.map((s) => ({
+      ...s,
+      studentCategory: s.studentCategory || (s.studentId.startsWith('IPG-') ? 'IPG' : 'SK'),
+    }));
   } catch {
     return DEMO_SESSIONS;
   }
+}
+
+export function getSessionsByCategory(category: 'SK' | 'IPG'): GameSession[] {
+  const all = getAllSessions();
+  return all.filter((s) => {
+    const cat = s.studentCategory || (s.studentId.startsWith('IPG-') ? 'IPG' : 'SK');
+    return cat === category;
+  });
 }
 
 export function getCurrentSession(): GameSession | null {
@@ -526,3 +622,4 @@ export function resetAllData(): void {
   localStorage.removeItem(TEACHER_AUTH_STORAGE_KEY);
   initializeStorageWithSeed();
 }
+

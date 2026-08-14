@@ -124,6 +124,7 @@ export const CLASS_3_ASAH_STUDENTS: StudentProfile[] = RAW_3ASAH.map((r) => {
     id: `MURID-${r.id}`,
     nama: r.nama,
     kelas: '3 Asah',
+    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * (1 + (parseInt(r.id.slice(2), 10) % 10))).toISOString(),
     progress: {
       completedChallenges,

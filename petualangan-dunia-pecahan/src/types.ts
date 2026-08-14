@@ -61,18 +61,24 @@ export interface UserProgress {
 }
 
 export interface StudentProfile {
-  id: string; // e.g. "MURID-001"
+  id: string; // e.g. "MURID-001" or "IPG-001"
   nama: string; // e.g. "Aiman Hakim"
-  kelas: string; // e.g. "4 Bestari"
+  kelas: string; // e.g. "4 Bestari" or "MATH"
+  studentCategory?: 'SK' | 'IPG'; // Default 'SK'
+  program?: 'PPISMP' | 'PISMP' | string; // For IPG: 'PPISMP' | 'PISMP'
+  semester?: string; // For IPG e.g. "Semester 2"
+  opsyen?: 'BM' | 'BI' | 'MATH' | 'PAI' | 'PAKK' | 'SEJ' | 'PJ' | string; // For IPG: 7 options
+  kumpulan?: string; // For IPG e.g. "PISMP 2" or opsyen
   tarikhDaftar: string; // ISO Date String
   progress?: UserProgress; // Student's saved progress
 }
 
 export interface GameSession {
   sessionId: string; // e.g. "SESI-17854..."
-  studentId: string; // e.g. "MURID-001"
+  studentId: string; // e.g. "MURID-001" or "IPG-001"
   nama: string;
   kelas: string;
+  studentCategory?: 'SK' | 'IPG';
   tarikh: string; // e.g. "2026-08-09"
   masaMula: string; // e.g. "08:30:15 AM"
   masaTamat?: string | null;

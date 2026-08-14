@@ -30,6 +30,7 @@ import {
   UserCheck,
   Lock,
   Sprout,
+  GraduationCap,
 } from 'lucide-react';
 import { StudentProfile, AttemptRecord } from '../types';
 import {
@@ -41,6 +42,7 @@ import {
   calculateStudentStatus,
   ALL_CLASSES,
 } from '../utils/studentSessionManager';
+import { IPG_PROGRAMS, IPG_SEMESTERS, IPG_OPSYEN, IPG_KUMPULAN } from '../data/ipgStudentsData';
 import { analyzeStudentLearning, AILearningAnalysisResult } from '../utils/aiLearningAnalytics';
 import { playSfx } from '../utils/audio';
 import { StudentReportModal } from './StudentReportModal';
@@ -69,7 +71,11 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   onClose,
   onLogout,
 }) => {
+  const [activeCategory, setActiveCategory] = useState<'SK' | 'IPG'>('SK');
   const [selectedClass, setSelectedClass] = useState<string>('semua');
+  const [selectedIpgProgram, setSelectedIpgProgram] = useState<string>('semua');
+  const [selectedIpgSemester, setSelectedIpgSemester] = useState<string>('semua');
+  const [selectedIpgOpsyen, setSelectedIpgOpsyen] = useState<string>('semua');
   const [selectedStatus, setSelectedStatus] = useState<string>('semua');
   const [selectedTP, setSelectedTP] = useState<string>('semua');
   const [selectedProgressFilter, setSelectedProgressFilter] = useState<string>('semua');
@@ -83,15 +89,38 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
 
   if (!isOpen) return null;
 
-  const students = getAllStudents();
-  const sessions = getAllSessions();
+  const allStudents = getAllStudents();
+  const allSessions = getAllSessions();
 
-  // Combine standard classes with any additional existing classes
-  const existingClasses = Array.from(new Set(students.map((s) => s.kelas))).filter(Boolean);
-  const allClassOptions = Array.from(new Set([...ALL_CLASSES, ...existingClasses]));
+  // Strict isolation by Category
+  const categoryStudents = allStudents.filter((s) => {
+    const cat = s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK');
+    return cat === activeCategory;
+  });
 
-  // Students scoped to selected class
-  const classStudents = selectedClass === 'semua' ? students : students.filter((s) => s.kelas === selectedClass);
+  const categorySessions = allSessions.filter((s) => {
+    const cat = s.studentCategory || (s.studentId.startsWith('IPG-') ? 'IPG' : 'SK');
+    return cat === activeCategory;
+  });
+
+  // Class/Group Options depending on active category
+  const allClassOptions =
+    activeCategory === 'SK'
+      ? Array.from(new Set([...ALL_CLASSES, ...categoryStudents.map((s) => s.kelas)])).filter(Boolean)
+      : Array.from(new Set([...IPG_KUMPULAN, ...categoryStudents.map((s) => s.kumpulan || s.kelas)])).filter(Boolean);
+
+  // Students scoped to selected filters
+  const classStudents = categoryStudents.filter((s) => {
+    if (activeCategory === 'SK') {
+      return selectedClass === 'semua' || s.kelas === selectedClass;
+    } else {
+      const matchClass = selectedClass === 'semua' || s.kelas === selectedClass || s.kumpulan === selectedClass || s.opsyen === selectedClass;
+      const matchProg = selectedIpgProgram === 'semua' || s.program === selectedIpgProgram;
+      const matchSem = selectedIpgSemester === 'semua' || s.semester === selectedIpgSemester;
+      const matchOps = selectedIpgOpsyen === 'semua' || s.opsyen === selectedIpgOpsyen || s.kumpulan === selectedIpgOpsyen || s.kelas === selectedIpgOpsyen;
+      return matchClass && matchProg && matchSem && matchOps;
+    }
+  });
 
   // Filtering Logic for Roster
   const filteredStudents = classStudents.filter((s) => {
@@ -118,24 +147,30 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     else if (selectedProgressFilter === 'proses') matchesProgress = completed > 0 && completed < 9;
     else if (selectedProgressFilter === 'belum') matchesProgress = completed === 0;
 
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      s.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.kelas.toLowerCase().includes(searchQuery.toLowerCase());
+      s.nama.toLowerCase().includes(query) ||
+      s.id.toLowerCase().includes(query) ||
+      s.kelas.toLowerCase().includes(query) ||
+      (s.program && s.program.toLowerCase().includes(query)) ||
+      (s.semester && s.semester.toLowerCase().includes(query)) ||
+      (s.opsyen && s.opsyen.toLowerCase().includes(query)) ||
+      (s.kumpulan && s.kumpulan.toLowerCase().includes(query));
 
     return matchesStatus && matchesTP && matchesProgress && matchesSearch;
   });
 
-  const filteredSessions = sessions.filter((s) => {
+  const filteredSessions = categorySessions.filter((s) => {
     const matchesClass = selectedClass === 'semua' || s.kelas === selectedClass;
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      s.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.studentId.toLowerCase().includes(searchQuery.toLowerCase());
+      s.nama.toLowerCase().includes(query) ||
+      s.studentId.toLowerCase().includes(query);
     return matchesClass && matchesSearch;
   });
 
   // Selected Student for AI Analysis Tab
-  const activeAIStudent = students.find((s) => s.id === selectedAIStudentId) || classStudents[0] || students[0];
+  const activeAIStudent = categoryStudents.find((s) => s.id === selectedAIStudentId) || classStudents[0] || categoryStudents[0];
 
   // Class Overview Metrics
   const totalClassStudents = classStudents.length;
@@ -153,6 +188,18 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           ) / totalClassStudents
         )
       : 0;
+
+  // IPG-specific aggregated statistics
+  const totalClassAttemptsTotal = classStudents.reduce((sum, s) => sum + (s.progress?.attemptHistory?.length || 29), 0);
+  const totalClassAttemptsCorrect = classStudents.reduce((sum, s) => {
+    if (s.progress?.attemptHistory && s.progress.attemptHistory.length > 0) {
+      return sum + s.progress.attemptHistory.filter((a) => a.isCorrect).length;
+    }
+    return sum + (s.progress?.earnedStars || 29);
+  }, 0);
+  const avgClassAccuracyPct =
+    totalClassAttemptsTotal > 0 ? Math.round((totalClassAttemptsCorrect / totalClassAttemptsTotal) * 100) : 100;
+  const completedAllCount = classStudents.filter((s) => (s.progress?.completedChallenges || 0) >= 9).length;
 
   // Average TP
   const tpLevels = classStudents.map((s) => {
@@ -190,9 +237,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     return calculateStudentStatus(tp, completed) === 'Perlukan Bimbingan';
   }).length;
 
-  const completedAllCount = classStudents.filter((s) => (s.progress?.completedChallenges || 0) >= 9).length;
   const certEarnedCount = classStudents.filter((s) => s.progress?.certificateEarned || (s.progress?.completedChallenges || 0) >= 9).length;
-  const certNotEarnedCount = totalClassStudents - certEarnedCount;
 
   // Category Breakdown
   const cemerlangCount = classStudents.filter((s) => {
@@ -258,7 +303,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     { gameName: 'Dunia Pixel', avgScorePct: avgPixelScore, icon: '👾' },
   ];
 
-  const avgClassStarsNum = parseFloat(avgClassStars);
+  const avgClassStarsNum = parseFloat(avgClassStars) || 0;
 
   // Skill Bar Chart Data
   const skillList = [
@@ -287,7 +332,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     return {
       id: s.id,
       name: s.nama,
-      kelas: s.kelas,
+      kelas: s.kumpulan || s.kelas,
       scorePct,
       tp,
       status,
@@ -321,9 +366,9 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     { label: 'Sesi 4', scorePct: avgClassProgressPct },
   ];
 
-  // Comparison across all 7 classes
+  // Comparison across all classes / groups
   const classesSummaryData = allClassOptions.map((clsName) => {
-    const clsStudents = students.filter((s) => s.kelas === clsName);
+    const clsStudents = categoryStudents.filter((s) => s.kelas === clsName || s.kumpulan === clsName);
     const count = clsStudents.length;
     if (count === 0) {
       return { className: clsName, studentCount: 0, avgScorePct: 0, avgTP: 'TP1' };
@@ -351,34 +396,55 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     }
   };
 
-  // CSV Export
+  // CSV Export (Category isolated)
   const handleExportCSV = () => {
     playSfx('chime', soundEnabled);
-    let csvContent = 'data:text/csv;charset=utf-8,ID,Nama,Kelas,Kemajuan,Bintang,Penguasaan,Status,Tarikh Daftar\n';
+    let csvContent = '';
+    let fileName = '';
 
-    filteredStudents.forEach((s) => {
-      const stars = s.progress?.earnedStars || 0;
-      const completed = s.progress?.completedChallenges || 0;
-      const tp = calculateStudentTP(stars, completed);
-      const status = calculateStudentStatus(tp, completed);
-      csvContent += `"${s.id}","${s.nama}","${s.kelas}","${completed}/9","${stars}/27","${tp}","${status}","${s.tarikhDaftar}"\n`;
-    });
+    if (activeCategory === 'SK') {
+      csvContent = 'data:text/csv;charset=utf-8,ID,Nama,Kelas,Kemajuan,Bintang,Penguasaan,Status,Tarikh Daftar\n';
+      filteredStudents.forEach((s) => {
+        const stars = s.progress?.earnedStars || 0;
+        const completed = s.progress?.completedChallenges || 0;
+        const tp = calculateStudentTP(stars, completed);
+        const status = calculateStudentStatus(tp, completed);
+        csvContent += `"${s.id}","${s.nama}","${s.kelas}","${completed}/9","${stars}/27","${tp}","${status}","${s.tarikhDaftar}"\n`;
+      });
+      fileName = `Laporan_Dashboard_Guru_Murid_SK_${new Date().toISOString().slice(0, 10)}.csv`;
+    } else {
+      csvContent = 'data:text/csv;charset=utf-8,ID Pelajar,Nama,Program,Semester,Kumpulan/Opsyen,Kemajuan,Bintang,Tahap Penguasaan,Status,Tarikh Daftar\n';
+      filteredStudents.forEach((s) => {
+        const stars = s.progress?.earnedStars || 0;
+        const completed = s.progress?.completedChallenges || 0;
+        const tp = calculateStudentTP(stars, completed);
+        const status = calculateStudentStatus(tp, completed);
+        const program = s.program || 'PISMP Matematik';
+        const semester = s.semester || 'Semester 1';
+        const kumpulan = s.kumpulan || s.kelas;
+        csvContent += `"${s.id}","${s.nama}","${program}","${semester}","${kumpulan}","${completed}/9","${stars}/27","${tp}","${status}","${s.tarikhDaftar}"\n`;
+      });
+      fileName = `Laporan_Dashboard_Guru_Pelajar_IPG_${new Date().toISOString().slice(0, 10)}.csv`;
+    }
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Laporan_Dashboard_Guru_Wira_Pecahan_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    showToast('Laporan CSV berjaya dimuat turun! 📊');
+    showToast(`Laporan CSV ${activeCategory === 'SK' ? 'Murid SK' : 'Pelajar IPG'} berjaya dimuat turun! 📊`);
   };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+
+  const skStudentCount = allStudents.filter((s) => (s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK')) === 'SK').length;
+  const ipgStudentCount = allStudents.filter((s) => (s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK')) === 'IPG').length;
 
   return (
     <div className="fixed inset-0 z-[1050] flex items-center justify-center p-2 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto font-rounded">
@@ -395,21 +461,21 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               <BarChart2 className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="font-serif-title text-xl sm:text-2xl font-black text-[#3c4233] tracking-tight">
-                  📊 Dashboard Guru
+                  📊 Dashboard Guru & Pensyarah
                 </h1>
                 <span className="bg-[#3c4233] text-[#F4C95D] text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  PEMBELAJARAN DSKP 2.1
+                  {activeCategory === 'SK' ? 'PEMBELAJARAN DSKP 2.1' : 'MODUL PEDAGOGI IPG'}
                 </span>
               </div>
               <p className="text-xs text-stone-600 font-medium mt-0.5">
-                "Pantau perkembangan pembelajaran murid dengan mudah."
+                "Pantau perkembangan pembelajaran murid dan pelajar guru dengan mudah."
               </p>
             </div>
           </div>
 
-          {/* Action Buttons - Single Row Vertical Alignment */}
+          {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <button
               onClick={handleExportCSV}
@@ -446,34 +512,165 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           </div>
         </div>
 
-        {/* 🏫 PEMILIHAN KELAS BAR */}
-        <div className="my-3.5 bg-white p-3.5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2.5 text-xs font-bold">
-            <span className="text-base">🏫</span>
-            <span className="text-[#3c4233] font-black text-sm">Pilih Kelas:</span>
-            <select
-              value={selectedClass}
-              onChange={(e) => {
-                playSfx('click', soundEnabled);
-                setSelectedClass(e.target.value);
-              }}
-              className="bg-[#FFF8E8] text-[#3c4233] font-black px-3.5 py-1.5 rounded-xl border border-[#3c4233]/20 focus:outline-none focus:ring-2 focus:ring-[#3c4233] cursor-pointer text-xs shadow-2xs"
-            >
-              <option value="semua">Semua Kelas ({students.length} murid)</option>
-              {allClassOptions.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls} ({students.filter((s) => s.kelas === cls).length} murid)
-                </option>
-              ))}
-            </select>
+        {/* 🔀 CATEGORY TOGGLE BAR (MURID SK vs PELAJAR IPG) */}
+        <div className="my-3 bg-white p-3 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col md:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <span className="text-xs font-black text-stone-500 uppercase tracking-wider hidden sm:inline">Kategori:</span>
+            <div className="flex items-center gap-2 bg-[#FFF8E8] p-1 rounded-2xl border border-stone-300 w-full sm:w-auto justify-center sm:justify-start">
+              {/* Button 1: MURID SK */}
+              <button
+                type="button"
+                onClick={() => {
+                  playSfx('click', soundEnabled);
+                  setActiveCategory('SK');
+                  setSelectedClass('semua');
+                  setSelectedStatus('semua');
+                  setSelectedTP('semua');
+                  setSelectedProgressFilter('semua');
+                  setSearchQuery('');
+                  showToast('Memaparkan dataset 🧒 Murid SK');
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+                  activeCategory === 'SK'
+                    ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm ring-2 ring-[#3c4233]/20'
+                    : 'text-stone-700 hover:bg-stone-200/60'
+                }`}
+              >
+                <span>🧒 MURID SK</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${activeCategory === 'SK' ? 'bg-[#F4C95D] text-[#3c4233]' : 'bg-stone-200 text-stone-700'}`}>
+                  {skStudentCount}
+                </span>
+              </button>
+
+              {/* Button 2: PELAJAR IPG */}
+              <button
+                type="button"
+                onClick={() => {
+                  playSfx('click', soundEnabled);
+                  setActiveCategory('IPG');
+                  setSelectedClass('semua');
+                  setSelectedIpgProgram('semua');
+                  setSelectedIpgSemester('semua');
+                  setSelectedIpgOpsyen('semua');
+                  setSelectedStatus('semua');
+                  setSelectedTP('semua');
+                  setSelectedProgressFilter('semua');
+                  setSearchQuery('');
+                  showToast('Memaparkan dataset 🎓 Pelajar IPG');
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-2 ${
+                  activeCategory === 'IPG'
+                    ? 'bg-[#2E6F40] text-white shadow-sm ring-2 ring-[#2E6F40]/20'
+                    : 'text-stone-700 hover:bg-stone-200/60'
+                }`}
+              >
+                <span>🎓 PELAJAR IPG</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${activeCategory === 'IPG' ? 'bg-white text-[#2E6F40]' : 'bg-stone-200 text-stone-700'}`}>
+                  {ipgStudentCount}
+                </span>
+              </button>
+            </div>
           </div>
 
-          {/* Selected Class Badge Banner */}
-          <div className="flex items-center gap-2 text-xs font-bold">
-            <span className="text-stone-500 font-semibold">Analisis semasa:</span>
-            <span className="px-3.5 py-1.5 rounded-xl bg-[#3c4233] text-[#F4C95D] font-black shadow-2xs">
-              {selectedClass === 'semua' ? 'Semua Kelas' : `Kelas ${selectedClass}`}
-            </span>
+          {/* Class / Unit Selector Bar */}
+          <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end flex-wrap">
+            {activeCategory === 'SK' ? (
+              <div className="flex items-center gap-2 text-xs font-bold">
+                <span>🏫</span>
+                <span className="text-[#3c4233] font-black">Pilih Kelas:</span>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => {
+                    playSfx('click', soundEnabled);
+                    setSelectedClass(e.target.value);
+                  }}
+                  className="bg-[#FFF8E8] text-[#3c4233] font-black px-3.5 py-1.5 rounded-xl border border-[#3c4233]/20 focus:outline-none focus:ring-2 focus:ring-[#3c4233] cursor-pointer text-xs shadow-2xs"
+                >
+                  <option value="semua">Semua Kelas ({categoryStudents.length} murid)</option>
+                  {allClassOptions.map((cls) => {
+                    const count = categoryStudents.filter((s) => s.kelas === cls || s.kumpulan === cls).length;
+                    return (
+                      <option key={cls} value={cls}>
+                        {cls} ({count} murid)
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap text-xs font-bold">
+                {/* Program Selector */}
+                <div className="flex items-center gap-1">
+                  <span>🎓</span>
+                  <select
+                    value={selectedIpgProgram}
+                    onChange={(e) => {
+                      playSfx('click', soundEnabled);
+                      setSelectedIpgProgram(e.target.value);
+                    }}
+                    className="bg-[#FFF8E8] text-[#3c4233] font-black px-2.5 py-1.5 rounded-xl border border-[#3c4233]/20 focus:outline-none cursor-pointer text-xs shadow-2xs"
+                  >
+                    <option value="semua">Semua Program</option>
+                    {IPG_PROGRAMS.map((prog) => (
+                      <option key={prog} value={prog}>
+                        {prog}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Semester Selector */}
+                <div className="flex items-center gap-1">
+                  <span>📅</span>
+                  <select
+                    value={selectedIpgSemester}
+                    onChange={(e) => {
+                      playSfx('click', soundEnabled);
+                      setSelectedIpgSemester(e.target.value);
+                    }}
+                    className="bg-[#FFF8E8] text-[#3c4233] font-black px-2.5 py-1.5 rounded-xl border border-[#3c4233]/20 focus:outline-none cursor-pointer text-xs shadow-2xs"
+                  >
+                    <option value="semua">Semua Semester</option>
+                    {IPG_SEMESTERS.map((sem) => (
+                      <option key={sem} value={sem}>
+                        {sem}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Opsyen Selector */}
+                <div className="flex items-center gap-1">
+                  <span>🏷️</span>
+                  <select
+                    value={selectedIpgOpsyen}
+                    onChange={(e) => {
+                      playSfx('click', soundEnabled);
+                      setSelectedIpgOpsyen(e.target.value);
+                    }}
+                    className="bg-[#FFF8E8] text-[#3c4233] font-black px-2.5 py-1.5 rounded-xl border border-[#3c4233]/20 focus:outline-none cursor-pointer text-xs shadow-2xs"
+                  >
+                    <option value="semua">Semua Opsyen</option>
+                    {IPG_OPSYEN.map((ops) => (
+                      <option key={ops} value={ops}>
+                        {ops}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Current Active Scope Badge */}
+            <div className="hidden lg:flex items-center gap-1.5 text-xs font-bold">
+              <span className="px-3 py-1 rounded-xl bg-[#3c4233] text-[#F4C95D] font-black shadow-2xs">
+                {activeCategory === 'SK'
+                  ? selectedClass === 'semua'
+                    ? 'Semua Kelas SK'
+                    : `Kelas ${selectedClass}`
+                  : `IPG (${classStudents.length} Pelajar)`}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -499,14 +696,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               playSfx('click', soundEnabled);
               setActiveTab('summary');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'summary'
-                ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                : 'text-[#3c4233] hover:bg-stone-300/80'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-xs'
+                : 'text-stone-600 hover:bg-stone-300/60'
             }`}
           >
-            <Home className="w-4 h-4" />
-            <span>⌂ Ringkasan</span>
+            <Home className="w-3.5 h-3.5" />
+            <span>Ringkasan {activeCategory === 'SK' ? 'Kelas' : 'IPG'}</span>
           </button>
 
           <button
@@ -514,14 +711,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               playSfx('click', soundEnabled);
               setActiveTab('roster');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'roster'
-                ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                : 'text-[#3c4233] hover:bg-stone-300/80'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-xs'
+                : 'text-stone-600 hover:bg-stone-300/60'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>👥 Murid ({filteredStudents.length})</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>Senarai {activeCategory === 'SK' ? 'Murid' : 'Pelajar IPG'}</span>
           </button>
 
           <button
@@ -529,14 +726,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               playSfx('click', soundEnabled);
               setActiveTab('progress_charts');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'progress_charts'
-                ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                : 'text-[#3c4233] hover:bg-stone-300/80'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-xs'
+                : 'text-stone-600 hover:bg-stone-300/60'
             }`}
           >
-            <PieIcon className="w-4 h-4" />
-            <span>◔ Kemajuan Murid</span>
+            <BarChart2 className="w-3.5 h-3.5" />
+            <span>Kemajuan & Carta</span>
           </button>
 
           <button
@@ -544,14 +741,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               playSfx('click', soundEnabled);
               setActiveTab('ai_analysis');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'ai_analysis'
-                ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                : 'text-[#3c4233] hover:bg-stone-300/80'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-xs'
+                : 'text-stone-600 hover:bg-stone-300/60'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-[#F4C95D]" />
-            <span>✨ Analisis AI</span>
+            <Sparkles className="w-3.5 h-3.5 text-[#F4C95D]" />
+            <span>Analisis AI Pedagogi</span>
           </button>
 
           <button
@@ -559,74 +756,166 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               playSfx('click', soundEnabled);
               setActiveTab('reports');
             }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
               activeTab === 'reports'
-                ? 'bg-[#3c4233] text-[#F4C95D] shadow-sm'
-                : 'text-[#3c4233] hover:bg-stone-300/80'
+                ? 'bg-[#3c4233] text-[#F4C95D] shadow-xs'
+                : 'text-stone-600 hover:bg-stone-300/60'
             }`}
           >
-            <Printer className="w-4 h-4" />
-            <span>▣ Laporan</span>
+            <FileText className="w-3.5 h-3.5" />
+            <span>Laporan & Sijil</span>
           </button>
         </div>
 
-        {/* 📊 5 KAD STATISTIK (SATU BARIS DI DESKTOP) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-4 shrink-0">
-          {/* Kad 1: JUMLAH MURID */}
-          <div className="p-3.5 rounded-2xl bg-white border border-stone-200/90 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-              <Users className="w-5 h-5" />
+        {/* KEY STAT CARDS BAR (ADAPTIVE FOR SK vs IPG) */}
+        {activeCategory === 'SK' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 mb-3.5 shrink-0">
+            {/* Kad 1: JUMLAH MURID */}
+            <div className="p-3.5 rounded-2xl bg-white border border-stone-200/90 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#3c4233]/10 text-[#3c4233] flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">JUMLAH MURID</p>
+                <p className="text-xl font-black text-[#3c4233] leading-tight">
+                  {totalClassStudents} <span className="text-xs font-semibold text-stone-400">orang</span>
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">JUMLAH MURID</p>
-              <p className="text-xl font-black text-[#3c4233] leading-tight">{totalClassStudents} <span className="text-xs font-semibold text-stone-500">orang</span></p>
-            </div>
-          </div>
 
-          {/* Kad 2: SELESAI */}
-          <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5 text-emerald-700" />
+            {/* Kad 2: MENGUASAI */}
+            <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5 text-emerald-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">MENGUASAI</p>
+                <p className="text-xl font-black text-emerald-950 leading-tight">
+                  {menguasaiCount} <span className="text-xs font-semibold text-emerald-700">orang</span>
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider">SELESAI</p>
-              <p className="text-xl font-black text-emerald-900 leading-tight">{completedAllCount} <span className="text-xs font-semibold text-emerald-700">orang</span></p>
-            </div>
-          </div>
 
-          {/* Kad 3: SEDANG BERKEMBANG */}
-          <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-              <Sprout className="w-5 h-5 text-amber-700" />
+            {/* Kad 3: SEDANG BERKEMBANG */}
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
+                <Sprout className="w-5 h-5 text-amber-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">SEDANG BERKEMBANG</p>
+                <p className="text-xl font-black text-amber-900 leading-tight">
+                  {berkembangCount} <span className="text-xs font-semibold text-amber-700">orang</span>
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-amber-800 font-bold uppercase tracking-wider">SEDANG BERKEMBANG</p>
-              <p className="text-xl font-black text-amber-900 leading-tight">{berkembangCount} <span className="text-xs font-semibold text-amber-700">orang</span></p>
-            </div>
-          </div>
 
-          {/* Kad 4: SIJIL */}
-          <div className="p-3.5 rounded-2xl bg-amber-100/60 border border-[#F4C95D] shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#F4C95D]/30 text-amber-900 flex items-center justify-center shrink-0">
-              <Award className="w-5 h-5 text-amber-800" />
+            {/* Kad 4: SIJIL */}
+            <div className="p-3.5 rounded-2xl bg-amber-100/60 border border-[#F4C95D] shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F4C95D]/30 text-amber-900 flex items-center justify-center shrink-0">
+                <Award className="w-5 h-5 text-amber-800" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-amber-900 font-bold uppercase tracking-wider">SIJIL MASTER</p>
+                <p className="text-xl font-black text-amber-950 leading-tight">
+                  {certEarnedCount} <span className="text-xs font-semibold text-amber-800">orang</span>
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-amber-900 font-bold uppercase tracking-wider">SIJIL</p>
-              <p className="text-xl font-black text-amber-950 leading-tight">{certEarnedCount} <span className="text-xs font-semibold text-amber-800">orang</span></p>
-            </div>
-          </div>
 
-          {/* Kad 5: PURATA BINTANG */}
-          <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 shadow-2xs flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
-              <Star className="w-5 h-5 fill-[#F4C95D] text-amber-600" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] text-blue-800 font-bold uppercase tracking-wider">PURATA BINTANG</p>
-              <p className="text-xl font-black text-blue-950 leading-tight">{avgClassStars} <span className="text-xs text-blue-700 font-bold">/ 27</span></p>
+            {/* Kad 5: PURATA BINTANG */}
+            <div className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                <Star className="w-5 h-5 fill-[#F4C95D] text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-blue-800 font-bold uppercase tracking-wider">PURATA BINTANG</p>
+                <p className="text-xl font-black text-blue-950 leading-tight">
+                  {avgClassStars} <span className="text-xs text-blue-700 font-bold">/ 27</span>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 mb-3.5 shrink-0">
+            {/* IPG Kad 1: JUMLAH PELAJAR */}
+            <div className="p-3 rounded-2xl bg-white border border-stone-200/90 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#2E6F40]/10 text-[#2E6F40] flex items-center justify-center shrink-0 font-bold">
+                🎓
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-stone-500 font-extrabold uppercase tracking-wider">JUMLAH PELAJAR</p>
+                <p className="text-lg font-black text-[#2E6F40] leading-tight">
+                  {totalClassStudents} <span className="text-[10px] font-semibold text-stone-400">orang</span>
+                </p>
+              </div>
+            </div>
+
+            {/* IPG Kad 2: PURATA KETEPATAN */}
+            <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                <Target className="w-4 h-4 text-emerald-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-emerald-800 font-extrabold uppercase tracking-wider">PURATA KETEPATAN</p>
+                <p className="text-lg font-black text-emerald-950 leading-tight">
+                  {avgClassAccuracyPct}%
+                </p>
+              </div>
+            </div>
+
+            {/* IPG Kad 3: PURATA PROGRESS */}
+            <div className="p-3 rounded-2xl bg-blue-50/80 border border-blue-200 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-4 h-4 text-blue-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-blue-800 font-extrabold uppercase tracking-wider">PURATA PROGRESS</p>
+                <p className="text-lg font-black text-blue-950 leading-tight">
+                  {avgClassProgressPct}%
+                </p>
+              </div>
+            </div>
+
+            {/* IPG Kad 4: STATUS COMPLETED */}
+            <div className="p-3 rounded-2xl bg-purple-50/80 border border-purple-200 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4 text-purple-700" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-purple-800 font-extrabold uppercase tracking-wider">PELAJAR COMPLETED</p>
+                <p className="text-lg font-black text-purple-950 leading-tight">
+                  {completedAllCount} <span className="text-[10px] font-semibold text-purple-700">/ {totalClassStudents}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* IPG Kad 5: JUMLAH STARS */}
+            <div className="p-3 rounded-2xl bg-amber-50/80 border border-amber-200 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-amber-800 font-extrabold uppercase tracking-wider">JUMLAH STARS</p>
+                <p className="text-lg font-black text-amber-900 leading-tight">
+                  {totalClassStarsEarned} <span className="text-[10px] font-bold text-amber-700">/ {totalClassStudents * 29} ⭐</span>
+                </p>
+              </div>
+            </div>
+
+            {/* IPG Kad 6: JAWAPAN BETUL */}
+            <div className="p-3 rounded-2xl bg-teal-50/80 border border-teal-200 shadow-2xs flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-teal-100 text-teal-900 flex items-center justify-center shrink-0 font-bold">
+                ✅
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] text-teal-800 font-extrabold uppercase tracking-wider">JAWAPAN BETUL</p>
+                <p className="text-lg font-black text-teal-950 leading-tight">
+                  {totalClassAttemptsCorrect} <span className="text-[10px] font-bold text-teal-700">/ {totalClassAttemptsTotal}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* TAB CONTENTS CONTAINER */}
         <div className="flex-1 overflow-y-auto pr-1 space-y-4">
@@ -635,7 +924,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-stone-300 pb-2">
                 <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
-                  Ringkasan Kelas {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}
+                  Ringkasan {activeCategory === 'SK' ? 'Kelas' : 'Unit'} {selectedClass === 'semua' ? (activeCategory === 'SK' ? 'Semua Kelas' : 'Semua Unit') : selectedClass}
                 </h2>
                 <button
                   onClick={toggleNeedsSupportFilter}
@@ -646,35 +935,37 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                   }`}
                 >
                   <AlertCircle className="w-3.5 h-3.5" />
-                  <span>Lihat {classNeedsSupportCount} Murid Perlukan Bimbingan</span>
+                  <span>Lihat {classNeedsSupportCount} {activeCategory === 'SK' ? 'Murid' : 'Pelajar'} Perlukan Bimbingan</span>
                 </button>
               </div>
 
               {totalClassStudents === 0 ? (
                 <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
                   <div className="text-4xl mx-auto mb-1">📚</div>
-                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
-                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
-                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Rekod</h3>
+                  <p className="text-sm font-bold text-stone-700">
+                    Belum terdapat data bagi {activeCategory === 'SK' ? 'kelas' : 'kumpulan'} ini.
+                  </p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas aktiviti permainan direkodkan.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {/* Card 1: Status Kemajuan Murid Pie Chart */}
-                    <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
-                      <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
-                        <span>🥧 Status Pencapaian Murid {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
-                      </h3>
-                      <PieChartStatus
-                        menguasaiCount={menguasaiCount}
-                        berkembangCount={berkembangCount}
-                        bimbinganCount={bimbinganCount}
-                        cemerlangCount={cemerlangCount}
-                        baikCount={baikCount}
-                        totalStudents={totalClassStudents}
-                      />
-                    </div>
+                  {/* Card 1: Status Kemajuan Pie Chart */}
+                  <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
+                    <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
+                      <span>🥧 Status Pencapaian {activeCategory === 'SK' ? 'Murid' : 'Pelajar IPG'}</span>
+                    </h3>
+                    <PieChartStatus
+                      menguasaiCount={menguasaiCount}
+                      berkembangCount={berkembangCount}
+                      bimbinganCount={bimbinganCount}
+                      cemerlangCount={cemerlangCount}
+                      baikCount={baikCount}
+                      totalStudents={totalClassStudents}
+                    />
+                  </div>
 
-                  {/* Card 2: Prestasi Kemahiran Pecahan Bar Chart */}
+                  {/* Card 2: Prestasi Kemahiran Bar Chart */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
                       <span>📊 Prestasi Kemahiran Pecahan</span>
@@ -682,17 +973,17 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     <SkillBarChart skills={skillList} />
                   </div>
 
-                  {/* Card 3: Ringkasan Semua Kelas Comparison */}
+                  {/* Card 3: Ringkasan Semua Kelas / Kumpulan Comparison */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3 lg:col-span-2">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-2">
-                      <span>🏫 Ringkasan Semua Kelas (Perbandingan Cross-Class)</span>
+                      <span>{activeCategory === 'SK' ? '🏫 Ringkasan Semua Kelas (Perbandingan Cross-Class)' : '🏛️ Ringkasan Semua Kumpulan IPG (Perbandingan Cross-Unit)'}</span>
                     </h3>
                     <AllClassesComparisonChart
                       classesData={classesSummaryData}
                       selectedClass={selectedClass}
                       onSelectClass={(cls) => {
                         setSelectedClass(cls);
-                        showToast(`Bertukar ke analisis Kelas ${cls}! 🏫`);
+                        showToast(`Bertukar ke analisis ${activeCategory === 'SK' ? 'Kelas' : 'Kumpulan'} ${cls}!`);
                       }}
                     />
                   </div>
@@ -701,20 +992,20 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: 👥 MURID (ROSTER & SEARCH/FILTERS) */}
+          {/* TAB 2: 👥 SENARAI (ROSTER & SEARCH/FILTERS) */}
           {activeTab === 'roster' && (
             <div className="space-y-3">
               {/* Filter controls bar */}
               <div className="bg-white p-3 rounded-2xl border border-stone-200 shadow-xs space-y-2">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-2 text-xs font-bold">
                   {/* Search bar */}
-                  <div className="relative w-full md:w-72">
+                  <div className="relative w-full md:w-80">
                     <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="🔍 Cari nama / ID murid..."
+                      placeholder={activeCategory === 'SK' ? '🔍 Cari nama / ID / kelas murid...' : '🔍 Cari nama / ID / program IPG...'}
                       className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[#FFF8E8] border border-[#3c4233]/20 text-xs font-bold text-[#3c4233] focus:outline-none placeholder-gray-400"
                     />
                   </div>
@@ -728,24 +1019,13 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         onChange={(e) => setSelectedStatus(e.target.value)}
                         className="bg-transparent text-[#3c4233] font-bold focus:outline-none cursor-pointer"
                       >
-                        {selectedClass === '3 Asah' ? (
-                          <>
-                            <option value="semua">Semua Murid (40)</option>
-                            <option value="Cemerlang">🏆 Cemerlang ({cemerlangCount})</option>
-                            <option value="Baik">🌟 Baik ({baikCount})</option>
-                            <option value="sijil">📜 Sijil Diperoleh ({certEarnedCount})</option>
-                          </>
-                        ) : (
-                          <>
-                            <option value="semua">Semua Status</option>
-                            <option value="Cemerlang">🏆 Cemerlang</option>
-                            <option value="Baik">🌟 Baik</option>
-                            <option value="sijil">📜 Sijil Diperoleh</option>
-                            <option value="Menguasai">Menguasai</option>
-                            <option value="Sedang Berkembang">Sedang Berkembang</option>
-                            <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
-                          </>
-                        )}
+                        <option value="semua">Semua Status</option>
+                        <option value="Cemerlang">🏆 Cemerlang</option>
+                        <option value="Baik">🌟 Baik</option>
+                        <option value="sijil">📜 Sijil Diperoleh</option>
+                        <option value="Menguasai">Menguasai</option>
+                        <option value="Sedang Berkembang">Sedang Berkembang</option>
+                        <option value="Perlukan Bimbingan">Perlukan Bimbingan</option>
                       </select>
                     </div>
 
@@ -785,42 +1065,66 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                 </div>
               </div>
 
-              {/* Roster Table Container - Scrollable with sticky header */}
+              {/* Roster Table Container */}
               {totalClassStudents === 0 ? (
                 <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
                   <div className="text-4xl mx-auto mb-1">📚</div>
-                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
-                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
-                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data bagi pilihan ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas aktiviti permainan direkodkan.</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="p-10 text-center bg-white rounded-2xl border border-stone-200/80 space-y-2">
                   <AlertCircle className="w-8 h-8 text-[#D98262] mx-auto" />
-                  <p className="font-bold text-sm text-[#3c4233]">Tiada rekod murid dijumpai.</p>
+                  <p className="font-bold text-sm text-[#3c4233]">Tiada rekod dijumpai.</p>
                   <p className="text-xs text-stone-500">Sila laraskan pilihan carian atau penapis.</p>
                 </div>
               ) : (
                 <div className="max-h-[520px] overflow-y-auto overflow-x-auto rounded-2xl border border-stone-300/80 bg-white shadow-2xs relative">
                   <table className="w-full text-left border-collapse text-xs font-medium">
                     <thead className="sticky top-0 z-10 bg-[#3c4233] text-[#F4C95D] font-black uppercase text-[11px] tracking-wider shadow-xs">
-                      <tr>
-                        <th className="py-3 px-4">Murid</th>
-                        <th className="py-3 px-3">Kelas</th>
-                        <th className="py-3 px-3 text-center">Cabaran</th>
-                        <th className="py-3 px-3 text-center">Bintang</th>
-                        <th className="py-3 px-3 text-center">Skor</th>
-                        <th className="py-3 px-3 text-center">Tahap</th>
-                        <th className="py-3 px-3 text-center">Sijil</th>
-                        <th className="py-3 px-4 text-right">Tindakan</th>
-                      </tr>
+                      {activeCategory === 'SK' ? (
+                        <tr>
+                          <th className="py-3 px-4">Murid</th>
+                          <th className="py-3 px-3">Kelas</th>
+                          <th className="py-3 px-3 text-center">Cabaran</th>
+                          <th className="py-3 px-3 text-center">Bintang</th>
+                          <th className="py-3 px-3 text-center">Skor</th>
+                          <th className="py-3 px-3 text-center">Tahap</th>
+                          <th className="py-3 px-3 text-center">Sijil</th>
+                          <th className="py-3 px-4 text-right">Tindakan</th>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <th className="py-3 px-4">Pelajar IPG</th>
+                          <th className="py-3 px-2">Program</th>
+                          <th className="py-3 px-2">Semester</th>
+                          <th className="py-3 px-2">Opsyen</th>
+                          <th className="py-3 px-2 text-center">Bintang</th>
+                          <th className="py-3 px-2 text-center">Betul</th>
+                          <th className="py-3 px-2 text-center">Ketepatan</th>
+                          <th className="py-3 px-2 text-center">Progress</th>
+                          <th className="py-3 px-2 text-center">Status</th>
+                          <th className="py-3 px-2 text-center">Sijil</th>
+                          <th className="py-3 px-4 text-right">Tindakan</th>
+                        </tr>
+                      )}
                     </thead>
                     <tbody className="divide-y divide-stone-200/70">
                       {filteredStudents.map((s) => {
-                        const stars = s.progress?.earnedStars || 0;
-                        const completed = s.progress?.completedChallenges || 0;
+                        const isIPG = s.studentCategory === 'IPG' || s.id.startsWith('IPG-');
+                        const stars = s.progress?.earnedStars ?? (isIPG ? 29 : 0);
+                        const maxStars = isIPG ? 29 : 27;
+                        const completed = s.progress?.completedChallenges ?? (isIPG ? 9 : 0);
                         const tp = calculateStudentTP(stars, completed);
                         const status = calculateStudentStatus(tp, completed);
                         const hasCertificate = s.progress?.certificateEarned ?? completed >= 9;
+
+                        const attemptsTotal = s.progress?.attemptHistory?.length || (isIPG ? 29 : 0);
+                        const attemptsCorrect = s.progress?.attemptHistory && s.progress.attemptHistory.length > 0
+                          ? s.progress.attemptHistory.filter((a) => a.isCorrect).length
+                          : (isIPG ? 29 : stars);
+                        const accuracyPct = attemptsTotal > 0 ? Math.round((attemptsCorrect / attemptsTotal) * 100) : (isIPG ? 100 : 0);
 
                         const avgGameScore = s.progress?.gameDetails
                           ? Math.round(
@@ -828,13 +1132,13 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                                (s.progress.gameDetails.dapur_pecahan?.scorePercentage || 0) +
                                (s.progress.gameDetails.dunia_pixel?.scorePercentage || 0)) / 3
                             )
-                          : Math.round((stars / 27) * 100);
-                        const scorePct = avgGameScore > 0 ? avgGameScore : Math.round((stars / 27) * 100);
+                          : isIPG ? 100 : Math.round((stars / 27) * 100);
+                        const scorePct = avgGameScore > 0 ? avgGameScore : (isIPG ? 100 : Math.round((stars / 27) * 100));
 
                         let tahapDisplay = '🌟 Baik';
                         let tahapClass = 'bg-amber-100 text-amber-900 border-amber-300';
-                        if (stars >= 26 || (completed >= 9 && stars >= 26)) {
-                          tahapDisplay = '🏆 Cemerlang';
+                        if (isIPG || stars >= 26 || (completed >= 9 && stars >= 26)) {
+                          tahapDisplay = isIPG ? '🏆 COMPLETED' : '🏆 Cemerlang';
                           tahapClass = 'bg-emerald-100 text-emerald-900 border-emerald-300';
                         } else if (stars >= 24) {
                           tahapDisplay = '🌟 Baik';
@@ -847,49 +1151,155 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                           tahapClass = 'bg-red-100 text-red-900 border-red-300';
                         }
 
+                        if (activeCategory === 'SK') {
+                          return (
+                            <tr key={s.id} className="hover:bg-amber-50/60 transition-colors">
+                              <td className="py-3 px-4">
+                                <p className="font-bold text-[#3c4233] text-sm">{s.nama}</p>
+                                <p className="text-[10px] text-stone-400 font-mono font-medium">{s.id}</p>
+                              </td>
+
+                              <td className="py-3 px-3 font-bold text-stone-700">
+                                {s.kelas}
+                              </td>
+
+                              <td className="py-3 px-3 text-center font-bold">
+                                <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-mono border border-stone-200/80">
+                                  {completed}/9
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-center font-bold text-amber-800 font-mono">
+                                ⭐ {stars}/27
+                              </td>
+                              <td className="py-3 px-3 text-center font-bold font-mono">
+                                <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 text-[11px] border border-stone-200">
+                                  {scorePct}%
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                <span className={`px-2.5 py-1 rounded-full font-black text-[11px] font-mono border ${tahapClass}`}>
+                                  {tahapDisplay} ({tp})
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                {hasCertificate ? (
+                                  <button
+                                    onClick={() => {
+                                      playSfx('fanfare', soundEnabled);
+                                      setSelectedStudentForCertificate(s);
+                                    }}
+                                    className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-[11px] hover:bg-amber-200 cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                                    title="Lihat Sijil Pencapaian"
+                                  >
+                                    <span>🏆 Diperoleh</span>
+                                  </button>
+                                ) : (
+                                  <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-500 border border-stone-200 font-semibold text-[11px] inline-flex items-center gap-1">
+                                    🔒 Belum Diperoleh
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      playSfx('click', soundEnabled);
+                                      setSelectedStudentForDetail(s);
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-[#3c4233] text-[#F4C95D] font-extrabold text-[11px] hover:bg-[#2d3226] cursor-pointer transition-colors shadow-2xs whitespace-nowrap"
+                                  >
+                                    Profil
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      playSfx('click', soundEnabled);
+                                      setSelectedAIStudentId(s.id);
+                                      setActiveTab('ai_analysis');
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-[#F4C95D] text-[#3c4233] font-black text-[11px] hover:bg-[#e5b73e] cursor-pointer transition-colors shadow-2xs whitespace-nowrap"
+                                  >
+                                    AI Analisis
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      playSfx('click', soundEnabled);
+                                      setSelectedStudentForReport(s);
+                                    }}
+                                    className="px-2.5 py-1.5 rounded-lg bg-blue-100 text-blue-900 border border-blue-200/80 font-extrabold text-[11px] hover:bg-blue-200 cursor-pointer transition-colors shadow-2xs whitespace-nowrap"
+                                  >
+                                    Laporan
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        // IPG Table Row
                         return (
-                          <tr key={s.id} className="hover:bg-amber-50/60 transition-colors">
+                          <tr key={s.id} className="hover:bg-emerald-50/50 transition-colors">
                             <td className="py-3 px-4">
                               <p className="font-bold text-[#3c4233] text-sm">{s.nama}</p>
                               <p className="text-[10px] text-stone-400 font-mono font-medium">{s.id}</p>
                             </td>
-                            <td className="py-3 px-3 font-bold text-stone-700">{s.kelas}</td>
-                            <td className="py-3 px-3 text-center font-bold">
-                              <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-800 font-mono border border-stone-200/80">
-                                {completed}/9
+
+                            <td className="py-3 px-2">
+                              <span className="px-2 py-0.5 rounded-md bg-[#2E6F40]/10 text-[#2E6F40] font-black text-[11px] border border-[#2E6F40]/20">
+                                {s.program || 'PPISMP'}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-center font-bold text-amber-800 font-mono">
-                              ⭐ {stars}/27
+
+                            <td className="py-3 px-2 font-bold text-stone-700 text-[11px]">
+                              {s.semester || 'Semester 2'}
                             </td>
-                            <td className="py-3 px-3 text-center font-bold font-mono">
-                              <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-800 text-[11px] border border-stone-200">
-                                {scorePct}%
+
+                            <td className="py-3 px-2">
+                              <span className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-800 font-mono font-black text-[11px] border border-stone-300">
+                                {s.opsyen || s.kumpulan || s.kelas}
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              <span className={`px-2.5 py-1 rounded-full font-black text-[11px] font-mono border ${tahapClass}`}>
-                                {tahapDisplay} ({tp})
+
+                            <td className="py-3 px-2 text-center font-bold text-amber-800 font-mono">
+                              ⭐ {stars}/{maxStars}
+                            </td>
+
+                            <td className="py-3 px-2 text-center font-bold text-teal-900 font-mono">
+                              {attemptsCorrect}/{attemptsTotal}
+                            </td>
+
+                            <td className="py-3 px-2 text-center font-bold font-mono">
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 text-[11px] font-black border border-emerald-300">
+                                {accuracyPct}%
                               </span>
                             </td>
-                            <td className="py-3 px-3 text-center">
-                              {hasCertificate ? (
-                                <button
-                                  onClick={() => {
-                                    playSfx('fanfare', soundEnabled);
-                                    setSelectedStudentForCertificate(s);
-                                  }}
-                                  className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-extrabold text-[11px] hover:bg-amber-200 cursor-pointer inline-flex items-center gap-1 shadow-2xs"
-                                  title="Lihat Sijil Pencapaian"
-                                >
-                                  <span>🏆 Diperoleh</span>
-                                </button>
-                              ) : (
-                                <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-500 border border-stone-200 font-semibold text-[11px] inline-flex items-center gap-1">
-                                  🔒 Belum Diperoleh
-                                </span>
-                              )}
+
+                            <td className="py-3 px-2 text-center font-bold font-mono">
+                              <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 text-[11px] font-black border border-blue-200">
+                                100% ({completed}/9)
+                              </span>
                             </td>
+
+                            <td className="py-3 px-2 text-center">
+                              <span className="px-2.5 py-1 rounded-full font-black text-[10px] font-mono border bg-emerald-100 text-emerald-900 border-emerald-300">
+                                COMPLETED
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-2 text-center">
+                              <button
+                                onClick={() => {
+                                  playSfx('fanfare', soundEnabled);
+                                  setSelectedStudentForCertificate(s);
+                                }}
+                                className="px-2 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-black text-[10px] hover:bg-amber-200 cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                                title="Lihat Sijil Pencapaian"
+                              >
+                                <span>🏆 Diperoleh</span>
+                              </button>
+                            </td>
+
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 <button
@@ -899,7 +1309,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                                   }}
                                   className="px-2.5 py-1.5 rounded-lg bg-[#3c4233] text-[#F4C95D] font-extrabold text-[11px] hover:bg-[#2d3226] cursor-pointer transition-colors shadow-2xs whitespace-nowrap"
                                 >
-                                  Dashboard
+                                  Profil
                                 </button>
 
                                 <button
@@ -934,16 +1344,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: 📊 KEMAJUAN MURID (DEDICATED VISUAL CHARTS DASHBOARD) */}
+          {/* TAB 3: 📊 KEMAJUAN & CARTA */}
           {activeTab === 'progress_charts' && (
             <div className="space-y-4">
               <div className="bg-white p-4 rounded-3xl border border-stone-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
                 <div>
                   <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
-                    Dashboard Kemajuan Murid — Kelas {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}
+                    Dashboard Kemajuan — {activeCategory === 'SK' ? 'Kelas' : 'Unit'} {selectedClass === 'semua' ? (activeCategory === 'SK' ? 'Semua Kelas' : 'Semua Unit') : selectedClass}
                   </h2>
                   <p className="text-xs text-gray-500 font-medium">
-                    Visualisasi terperinci status penguasaan, prestasi kemahiran, dan trend perkembangan murid.
+                    Visualisasi terperinci status penguasaan, prestasi kemahiran, dan trend perkembangan {activeCategory === 'SK' ? 'murid' : 'pelajar IPG'}.
                   </p>
                 </div>
               </div>
@@ -952,15 +1362,15 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                 <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
                   <div className="text-4xl mx-auto mb-1">📊</div>
                   <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Tiada data untuk dipaparkan.</h3>
-                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
-                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data bagi pilihan ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas aktiviti permainan direkodkan.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {/* Chart 1: Carta Pai Status Penguasaan Murid */}
+                  {/* Chart 1: Carta Pai Status Penguasaan */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>🥧 Status Pencapaian Murid {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
+                      <span>🥧 Status Pencapaian {activeCategory === 'SK' ? 'Murid' : 'Pelajar IPG'}</span>
                       <span className="text-[10px] text-gray-400 font-mono">Carta Pai</span>
                     </h3>
                     <PieChartStatus
@@ -973,11 +1383,11 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     />
                   </div>
 
-                  {/* Chart 2: Graf Bar Tahap Pencapaian Murid (Kategori) */}
+                  {/* Chart 2: Graf Bar Tahap Pencapaian (Kategori) */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>🏆 Tahap Pencapaian Murid Kelas {selectedClass === 'semua' ? 'Semua Kelas' : selectedClass}</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Bilangan Murid / Kategori</span>
+                      <span>🏆 Tahap Pencapaian ({selectedClass === 'semua' ? 'Keseluruhan' : selectedClass})</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Bilangan / Kategori</span>
                     </h3>
                     <MasteryCategoryBarChart items={masteryCategoryItems} />
                   </div>
@@ -1000,16 +1410,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     <SkillBarChart skills={skillList} />
                   </div>
 
-                  {/* Chart 5: Graf Bar Prestasi Murid (Peratus) */}
+                  {/* Chart 5: Graf Bar Prestasi Individu (Peratus) */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>📊 Prestasi Peratus Murid ({selectedClass === 'semua' ? 'Semua Kelas' : selectedClass})</span>
-                      <span className="text-[10px] text-gray-400 font-mono">Klik murid untuk perincian</span>
+                      <span>📊 Prestasi Peratus {activeCategory === 'SK' ? 'Murid' : 'Pelajar'}</span>
+                      <span className="text-[10px] text-gray-400 font-mono">Klik untuk perincian</span>
                     </h3>
                     <StudentPerformanceBarChart
                       students={studentScoreItems}
                       onSelectStudent={(sId) => {
-                        const targetStudent = students.find((s) => s.id === sId);
+                        const targetStudent = categoryStudents.find((s) => s.id === sId);
                         if (targetStudent) {
                           playSfx('click', soundEnabled);
                           setSelectedStudentForDetail(targetStudent);
@@ -1018,16 +1428,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     />
                   </div>
 
-                  {/* Chart 6: Graf Bar Jumlah Bintang Murid */}
+                  {/* Chart 6: Graf Bar Jumlah Bintang */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>⭐ Jumlah Bintang Murid ({selectedClass === 'semua' ? 'Semua Kelas' : selectedClass})</span>
+                      <span>⭐ Jumlah Bintang {activeCategory === 'SK' ? 'Murid' : 'Pelajar'}</span>
                       <span className="text-[10px] text-gray-400 font-mono">0 → 27 Bintang</span>
                     </h3>
                     <StudentStarsBarChart
                       students={studentStarItems}
                       onSelectStudent={(sId) => {
-                        const targetStudent = students.find((s) => s.id === sId);
+                        const targetStudent = categoryStudents.find((s) => s.id === sId);
                         if (targetStudent) {
                           playSfx('click', soundEnabled);
                           setSelectedStudentForDetail(targetStudent);
@@ -1036,7 +1446,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     />
                   </div>
 
-                  {/* Chart 6: Carta Garis Perkembangan Kemajuan */}
+                  {/* Chart 7: Carta Garis Perkembangan Kemajuan */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
                       <span>📈 Perkembangan Kemajuan (Mengikut Sesi)</span>
@@ -1045,10 +1455,10 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     <SessionLineChart sessions={sessionPoints} />
                   </div>
 
-                  {/* Chart 5: Cross-Class Comparison */}
+                  {/* Chart 8: Cross-Class / Cross-Unit Comparison */}
                   <div className="p-4 rounded-3xl bg-white border border-stone-200 shadow-xs space-y-3 lg:col-span-2">
                     <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center justify-between">
-                      <span>🏫 Ringkasan Semua Kelas (7 Kelas DSKP)</span>
+                      <span>{activeCategory === 'SK' ? '🏫 Ringkasan Semua Kelas (DSKP Matematik)' : '🏛️ Ringkasan Semua Kumpulan IPG'}</span>
                       <span className="text-[10px] text-gray-400 font-mono">Perbandingan Peratus Penguasaan</span>
                     </h3>
                     <AllClassesComparisonChart
@@ -1056,7 +1466,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                       selectedClass={selectedClass}
                       onSelectClass={(cls) => {
                         setSelectedClass(cls);
-                        showToast(`Bertukar ke analisis Kelas ${cls}! 🏫`);
+                        showToast(`Bertukar ke analisis ${activeCategory === 'SK' ? 'Kelas' : 'Kumpulan'} ${cls}!`);
                       }}
                     />
                   </div>
@@ -1068,12 +1478,12 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           {/* TAB 4: 🤖 ANALISIS AI PEMBELAJARAN */}
           {activeTab === 'ai_analysis' && (
             <div className="space-y-4">
-              {totalClassStudents === 0 && selectedClass !== 'semua' ? (
+              {totalClassStudents === 0 ? (
                 <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
                   <div className="text-4xl mx-auto mb-1">✨</div>
-                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
-                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini bagi analisis AI.</p>
-                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data bagi analisis AI.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas aktiviti permainan direkodkan.</p>
                 </div>
               ) : (
                 <>
@@ -1081,7 +1491,9 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                   <div className="p-3 bg-white rounded-2xl border border-stone-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-2 font-bold text-xs">
                       <Sparkles className="w-4 h-4 text-[#F4C95D]" />
-                      <span className="text-[#3c4233] font-black">Pilih Murid untuk Analisis AI:</span>
+                      <span className="text-[#3c4233] font-black">
+                        {activeCategory === 'SK' ? 'Pilih Murid untuk Analisis AI:' : 'Pilih Pelajar IPG untuk Analisis AI:'}
+                      </span>
                       <select
                         value={selectedAIStudentId || activeAIStudent?.id || ''}
                         onChange={(e) => {
@@ -1090,9 +1502,9 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         }}
                         className="bg-[#FFF8E8] text-[#3c4233] font-black px-3 py-1.5 rounded-xl border border-[#3c4233]/20 text-xs focus:outline-none cursor-pointer"
                       >
-                        {(selectedClass === 'semua' ? students : classStudents).map((s) => (
+                        {(selectedClass === 'semua' ? categoryStudents : classStudents).map((s) => (
                           <option key={s.id} value={s.id}>
-                            {s.nama} ({s.kelas}) - {s.id}
+                            {s.nama} ({s.kumpulan || s.kelas}) - {s.id}
                           </option>
                         ))}
                       </select>
@@ -1116,7 +1528,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     <AILearningAnalysisView student={activeAIStudent} soundEnabled={soundEnabled} />
                   ) : (
                     <div className="p-10 text-center bg-white rounded-2xl">
-                      <p className="text-gray-500 font-bold text-sm">Sila pilih murid untuk menjana analisis AI.</p>
+                      <p className="text-gray-500 font-bold text-sm">Sila pilih rekod untuk menjana analisis AI.</p>
                     </div>
                   )}
                 </>
@@ -1124,16 +1536,16 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
             </div>
           )}
 
-          {/* TAB 5: 📄 LAPORAN */}
+          {/* TAB 5: 📄 LAPORAN & SIJIL */}
           {activeTab === 'reports' && (
             <div className="space-y-4">
               <div className="p-4 bg-white rounded-3xl border border-stone-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
                 <div>
                   <h2 className="font-serif-title font-bold text-lg text-[#3c4233]">
-                    Laporan Pembelajaran Murid (DSKP 2.1 Matematik)
+                    {activeCategory === 'SK' ? 'Laporan Pembelajaran Murid (DSKP 2.1 Matematik)' : 'Laporan Analisis Pedagogi Pelajar IPG'}
                   </h2>
                   <p className="text-xs text-gray-500 font-medium">
-                    Jana, pratonton, dan cetak laporan rasmi AI pedagogi untuk makluman ibu bapa atau pentadbir.
+                    Jana, pratonton, dan cetak laporan rasmi AI pedagogi untuk makluman pentadbir, pensyarah, atau ibu bapa.
                   </p>
                 </div>
               </div>
@@ -1141,14 +1553,14 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
               {totalClassStudents === 0 ? (
                 <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 shadow-xs space-y-2">
                   <div className="text-4xl mx-auto mb-1">📋</div>
-                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Data Murid</h3>
-                  <p className="text-sm font-bold text-stone-700">Belum terdapat data murid untuk kelas ini.</p>
-                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas murid mula menggunakan Kembara Dunia Pecahan.</p>
+                  <h3 className="font-serif-title font-black text-lg text-[#3c4233]">Belum Ada Rekod</h3>
+                  <p className="text-sm font-bold text-stone-700">Belum terdapat data bagi pilihan ini.</p>
+                  <p className="text-xs text-stone-500 font-medium">Data akan dipaparkan selepas aktiviti permainan direkodkan.</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div className="p-10 text-center bg-white rounded-2xl border border-stone-200/80 space-y-2">
                   <AlertCircle className="w-8 h-8 text-[#D98262] mx-auto" />
-                  <p className="font-bold text-sm text-[#3c4233]">Tiada laporan murid dijumpai.</p>
+                  <p className="font-bold text-sm text-[#3c4233]">Tiada laporan dijumpai.</p>
                   <p className="text-xs text-stone-500">Sila laraskan pilihan carian atau penapis.</p>
                 </div>
               ) : (
@@ -1172,7 +1584,13 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                             </span>
                           </div>
                           <p className="font-black text-sm text-[#3c4233]">{s.nama}</p>
-                          <p className="text-xs text-gray-500 font-bold">Kelas: {s.kelas}</p>
+                          {s.studentCategory === 'IPG' ? (
+                            <p className="text-xs text-stone-600 font-semibold leading-tight">
+                              {s.program || 'PISMP'} • <span className="text-[#3c4233] font-bold">{s.kumpulan || s.kelas}</span>
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 font-bold">Kelas: {s.kelas}</p>
+                          )}
                         </div>
 
                         <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-xs">
@@ -1214,7 +1632,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           </button>
 
           <p className="text-stone-400 text-[11px] hidden sm:block font-semibold">
-            Modul Dashboard Guru • Aplikasi Permainan Matematik Pecahan
+            Modul Dashboard Guru & Pensyarah IPG • Aplikasi Permainan Matematik Pecahan
           </p>
 
           <button
@@ -1260,7 +1678,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           isOpen={!!selectedStudentForCertificate}
           student={selectedStudentForCertificate}
           studentName={selectedStudentForCertificate.nama}
-          studentClass={selectedStudentForCertificate.kelas}
+          studentClass={selectedStudentForCertificate.kumpulan || selectedStudentForCertificate.kelas}
           completedChallenges={selectedStudentForCertificate.progress?.completedChallenges || 0}
           earnedStars={selectedStudentForCertificate.progress?.earnedStars || 0}
           soundEnabled={soundEnabled}
@@ -1301,6 +1719,7 @@ const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
   const pixelStars = gameDetails.dunia_pixel?.earnedStars ?? Math.round((completed / 9) * 3);
 
   const analysis = analyzeStudentLearning(student);
+  const isIPG = student.studentCategory === 'IPG';
 
   return (
     <div className="fixed inset-0 z-[1050] flex items-center justify-center p-3 sm:p-4 bg-stone-950/80 backdrop-blur-md overflow-y-auto font-rounded">
@@ -1310,45 +1729,51 @@ const StudentDetailModal: React.FC<StudentDetailModalProps> = ({
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative w-full max-w-lg bg-[#FFF8E8] text-[#3c4233] rounded-3xl shadow-2xl border-2 border-stone-300 p-5 sm:p-6 max-h-[90vh] flex flex-col overflow-hidden"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-300/80 shrink-0">
-          <div>
-            <span className="text-[10px] font-black tracking-widest text-stone-500 uppercase block">
-              PROFIL MURID
-            </span>
-            <h2 className="font-serif-title font-black text-xl text-[#3c4233]">
-              {student.nama}
-            </h2>
-            <p className="text-xs font-bold text-amber-800">
-              Kelas {student.kelas}
-            </p>
-          </div>
-
-          <button
-            onClick={() => {
-              playSfx('click', soundEnabled);
-              onClose();
-            }}
-            className="w-9 h-9 rounded-xl bg-stone-200/80 hover:bg-stone-300 text-stone-700 flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
-          {/* Main Key Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 text-center">
-            <div className="p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
-              <p className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">BINTANG</p>
-              <p className="text-xl font-black text-amber-700 mt-0.5">⭐ {stars} / 27</p>
+          {/* Header */}
+          <div className="flex items-center justify-between pb-3 border-b border-stone-300/80 shrink-0">
+            <div>
+              <span className="text-[10px] font-black tracking-widest text-stone-500 uppercase block">
+                {isIPG ? 'PROFIL PELAJAR IPG' : 'PROFIL MURID SK'}
+              </span>
+              <h2 className="font-serif-title font-black text-xl text-[#3c4233]">
+                {student.nama}
+              </h2>
+              {isIPG ? (
+                <p className="text-xs font-bold text-emerald-800">
+                  {student.program || 'PPISMP'} • {student.semester || 'Semester 2'} • Opsyen: <span className="font-black text-[#3c4233]">{student.opsyen || student.kumpulan || student.kelas}</span>
+                </p>
+              ) : (
+                <p className="text-xs font-bold text-amber-800">
+                  Kelas {student.kelas}
+                </p>
+              )}
             </div>
 
-            <div className="p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
-              <p className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">CABARAN</p>
-              <p className="text-xl font-black text-emerald-800 mt-0.5">🎯 {completed} / 9</p>
-            </div>
+            <button
+              onClick={() => {
+                playSfx('click', soundEnabled);
+                onClose();
+              }}
+              className="w-9 h-9 rounded-xl bg-stone-200/80 hover:bg-stone-300 text-stone-700 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
+
+          {/* Content Body */}
+          <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+            {/* Main Key Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 text-center">
+              <div className="p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+                <p className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">BINTANG</p>
+                <p className="text-xl font-black text-amber-700 mt-0.5">⭐ {stars} / {isIPG ? 29 : 27}</p>
+              </div>
+
+              <div className="p-3.5 bg-white rounded-2xl border border-stone-200 shadow-2xs">
+                <p className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">CABARAN</p>
+                <p className="text-xl font-black text-emerald-800 mt-0.5">🎯 {completed} / 9</p>
+              </div>
+            </div>
 
           {/* 3 Game Worlds Progress Breakdown */}
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
@@ -1438,20 +1863,21 @@ interface AILearningAnalysisViewProps {
 
 const AILearningAnalysisView: React.FC<AILearningAnalysisViewProps> = ({ student }) => {
   const analysis: AILearningAnalysisResult = analyzeStudentLearning(student);
+  const isIPG = student.studentCategory === 'IPG';
 
   return (
     <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-xs space-y-4 font-rounded">
       {/* Student Profile Overview Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-amber-50/80 rounded-2xl border border-amber-200">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-serif-title font-black text-lg text-[#3c4233]">{student.nama}</h3>
             <span className="px-2.5 py-0.5 rounded-full bg-[#3c4233] text-[#F4C95D] text-xs font-bold">
-              {student.kelas}
+              {isIPG ? `${student.program || 'PPISMP'} • ${student.semester || 'Semester 2'} (${student.opsyen || student.kumpulan || student.kelas})` : student.kelas}
             </span>
           </div>
           <p className="text-xs text-gray-500 font-semibold mt-0.5">
-            Tarikh Analisis AI: {analysis.dateAnalyzed}
+            Tarikh Analisis AI: {analysis.dateAnalyzed} {isIPG && '• Kategori: Pelajar Guru IPG'}
           </p>
         </div>
 

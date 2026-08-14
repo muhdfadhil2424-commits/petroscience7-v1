@@ -151,7 +151,16 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
               </span>
               <h1 className="text-2xl font-black text-[#3c4233] mt-1">{analytics.studentName}</h1>
               <p className="text-xs text-gray-500 font-bold">
-                Kelas: <span className="text-[#3c4233]">{analytics.studentClass}</span> • Tarikh Analisis: {analytics.dateAnalyzed}
+                {student.studentCategory === 'IPG' ? (
+                  <>
+                    Program: <span className="text-[#3c4233]">{student.program || 'PPISMP'}</span> • Semester: <span className="text-[#3c4233]">{student.semester || 'Semester 2'}</span> • Opsyen: <span className="text-[#3c4233]">{student.opsyen || student.kumpulan || student.kelas}</span>
+                  </>
+                ) : (
+                  <>
+                    Kelas: <span className="text-[#3c4233]">{analytics.studentClass}</span>
+                  </>
+                )}
+                {' • '}Tarikh Analisis: {analytics.dateAnalyzed}
               </p>
             </div>
 
