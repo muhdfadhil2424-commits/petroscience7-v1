@@ -1,51 +1,60 @@
-const CACHE_NAME = 'edusense-v2';
+const CACHE_NAME = 'edusense-v3';
 
-// Fasa Install
+// Senarai fail penting yang mesti dimasukkan ke cache secara automatik
+const CORE_ASSETS = [
+  './',
+  './index.html',
+  './js/tf.min.js',
+  './js/teachablemachine-image.min.js',
+  './js/posenet.min.js',
+  './js/teachablemachine-pose.min.js',
+  './models/emotion/model.json',
+  './models/emotion/metadata.json',
+  './models/emotion/weights.bin',
+  './models/pose/model.json',
+  './models/pose/metadata.json',
+  './models/pose/weights.bin'
+];
+
+// Fasa Install: Simpan semua fail penting
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(CORE_ASSETS);
+    })
+  );
   self.skipWaiting();
 });
 
-// Fasa Activate
+// Fasa Activate: Padam cache lama
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       );
     }).then(() => self.clients.claim())
   );
 });
 
-// Fasa Fetch: Simpan ke Cache secara automatik sewaktu ONLINE
+// Fasa Fetch: Ambil dari Cache jika tiada sambungan internet
 self.addEventListener('fetch', (event) => {
-  // Hanya simpan request GET (panggilan fail)
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse; // Guna fail dari cache jika offline
+        return cachedResponse;
       }
-
       return fetch(event.request).then((response) => {
-        // Jika response sah, simpan satu salinan ke dalam cache
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        if (!response || response.status !== 200) {
           return response;
         }
-
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
         });
-
         return response;
-      }).catch(() => {
-        // Jika internet terputus dan tiada cache, elakkan crash
-        console.log('Offline: Fail tidak dijumpai dalam cache', event.request.url);
       });
     })
   );
