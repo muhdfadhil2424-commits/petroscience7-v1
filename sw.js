@@ -1,6 +1,5 @@
-const CACHE_NAME = 'edusense-v4';
+const CACHE_NAME = 'edusense-v5';
 
-// Senarai fail penting yang mesti dimasukkan ke cache secara automatik
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -20,11 +19,13 @@ const CORE_ASSETS = [
   './models/pose/weights.bin'
 ];
 
-// Fasa Install: Simpan semua fail penting
+// Fasa Install: Simpan fail satu per satu (kalis ralat)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_ASSETS);
+      return Promise.allSettled(
+        CORE_ASSETS.map((asset) => cache.add(asset))
+      );
     })
   );
   self.skipWaiting();
@@ -41,7 +42,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fasa Fetch: Ambil dari Cache jika tiada sambungan internet
+// Fasa Fetch: Buka dari Cache semasa Offline
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
