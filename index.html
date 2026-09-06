@@ -1878,7 +1878,13 @@
                 const modelURL = URL + "model.json";
                 const metadataURL = URL + "metadata.json";
 
-                model = await tmImage.load(modelURL, metadataURL);
+               const dbName = 'indexeddb://model-emosi-edusense';
+    try {
+      model = await tmImage.loadFromIndexedDB(dbName);
+    } catch (e) {
+      model = await tmImage.load(modelURL, metadataURL);
+      await model.save(dbName);
+    }
                 maxPredictions = model.getTotalClasses();
 
                 webcam = new tmImage.Webcam(260, 260, true);
@@ -2108,7 +2114,13 @@
                 const modelURL = POSE_URL + "model.json";
                 const metadataURL = POSE_URL + "metadata.json";
 
-                poseModel = await tmPose.load(modelURL, metadataURL);
+                const dbNamePose = 'indexeddb://model-pose-edusense';
+    try {
+      model = await tmPose.loadFromIndexedDB(dbNamePose);
+    } catch (e) {
+      model = await tmPose.load(modelURL, metadataURL);
+      await model.save(dbNamePose);
+    }
                 poseMaxPredictions = poseModel.getTotalClasses();
 
                 const size = 350; 
