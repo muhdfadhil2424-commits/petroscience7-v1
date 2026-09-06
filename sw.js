@@ -1,9 +1,13 @@
-const CACHE_NAME = 'edusense-v3';
+const CACHE_NAME = 'edusense-v4';
 
 // Senarai fail penting yang mesti dimasukkan ke cache secara automatik
 const CORE_ASSETS = [
   './',
   './index.html',
+  './logo.jpeg',
+  './goyang-dumang.mp3',
+  './video-pecahan.mp4',
+  './video-pecahan-2.mp4',
   './js/tf.min.js',
   './js/teachablemachine-image.min.js',
   './js/posenet.min.js',
