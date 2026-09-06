@@ -1,4 +1,4 @@
-const CACHE_NAME = 'edusense-v5';
+const CACHE_NAME = 'edusense-v6';
 
 const CORE_ASSETS = [
   './',
@@ -19,12 +19,18 @@ const CORE_ASSETS = [
   './models/pose/weights.bin'
 ];
 
-// Fasa Install: Simpan fail satu per satu (kalis ralat)
+// Fasa Install: Simpan fail secara selamat
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.allSettled(
-        CORE_ASSETS.map((asset) => cache.add(asset))
+        CORE_ASSETS.map((asset) => 
+          fetch(asset)
+            .then((response) => {
+              if (response.ok) return cache.put(asset, response);
+            })
+            .catch((err) => console.log('Gagal cache asset:', asset, err))
+        )
       );
     })
   );
@@ -42,25 +48,34 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fasa Fetch: Buka dari Cache semasa Offline
+// Fasa Fetch: Ambil dari Cache dahulu, jika tiada baru buat fetch (Offline First)
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse;
+        return cachedResponse; // Ambil terus dari cache jika wujud
       }
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200) {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+
+      // Jika tiada dalam cache, cuba ambil dari internet
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // Menghalang unhandled promise rejection semasa offline
+          return new Response('Offline and resource not found in cache', {
+            status: 503,
+            statusText: 'Service Unavailable'
+          });
         });
-        return response;
-      });
     })
   );
 });
