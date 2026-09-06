@@ -2268,5 +2268,14 @@
             setTimeout(() => { speakText(currentDialog); }, 800);
         });
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('Service Worker Berjaya Didaftarkan (Offline Mode Ready)'))
+        .catch((err) => console.error('Gagal daftar Service Worker:', err));
+    });
+  }
+</script>
 </body>
 </html>
