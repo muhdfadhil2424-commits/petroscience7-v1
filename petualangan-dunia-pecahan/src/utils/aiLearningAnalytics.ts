@@ -112,56 +112,74 @@ export function analyzeStudentLearning(student: StudentProfile): AILearningAnaly
   const avgResponseTimeSeconds = Math.round(totalTimeSecs / totalAttemptsCount) || 16;
   const accuracyRate = Math.min(100, Math.round((correctAttemptsCount / totalAttemptsCount) * 100));
 
-  // 2. DSKP 2.1 Skill Analysis (Matematik Tahun 4)
+  // 2. DSKP 3.1 Skill Analysis (Matematik Tahun 3)
   const dskpSkillTemplates = [
     {
-      id: 'DSKP-2.1.1',
-      dskpCode: '2.1.1',
+      id: 'DSKP-3.1.1',
+      dskpCode: '3.1.1',
+      title: 'Mengenal Pecahan Wajar',
+      description: 'Mengenal pasti pecahan wajar sebagai sebahagian daripada satu kumpulan dan pecahan dengan pengangka 1 hingga 9 dan penyebut hingga 10.',
+      keywords: ['wajar', 'kenal', 'arena', 'bahagian'],
+      gameDomain: 'arena_pecahan',
+    },
+    {
+      id: 'DSKP-3.1.2',
+      dskpCode: '3.1.2',
+      title: 'Pecahan Setara',
+      description: 'Menyatakan pecahan setara bagi pecahan wajar yang penyebutnya hingga 10.',
+      keywords: ['setara', 'sama nilai', 'arena'],
+      gameDomain: 'arena_pecahan',
+    },
+    {
+      id: 'DSKP-3.1.3',
+      dskpCode: '3.1.3',
+      title: 'Bentuk Termudah',
+      description: 'Menukar pecahan wajar kepada bentuk termudah, penyebutnya hingga 10.',
+      keywords: ['termudah', 'ringkas', 'arena'],
+      gameDomain: 'arena_pecahan',
+    },
+    {
+      id: 'DSKP-3.1.4',
+      dskpCode: '3.1.4',
       title: 'Pecahan Tak Wajar & Nombor Bercampur',
-      description: 'Menukar pecahan tak wajar kepada nombor bercampur dan sebaliknya.',
+      description: 'Menyatakan pecahan tak wajar dan nombor bercampur melibatkan penyebut hingga 10.',
       keywords: ['tak wajar', 'bercampur', 'pixel', 'tukar'],
       gameDomain: 'dunia_pixel',
     },
     {
-      id: 'DSKP-2.1.2',
-      dskpCode: '2.1.2',
+      id: 'DSKP-3.1.5',
+      dskpCode: '3.1.5',
       title: 'Penambahan Pecahan',
-      description: 'Menambah hingga tiga pecahan wajar dan nombor bercampur.',
+      description: 'Menambah dua pecahan wajar melibatkan penyebut sama dan penyebut berbeza hingga 10.',
       keywords: ['penambahan', 'tambah', 'dapur', 'plus'],
       gameDomain: 'dapur_pecahan',
     },
     {
-      id: 'DSKP-2.1.3',
-      dskpCode: '2.1.3',
+      id: 'DSKP-3.1.6',
+      dskpCode: '3.1.6',
       title: 'Penolakan Pecahan',
-      description: 'Menolak hingga dua pecahan wajar daripada satu pecahan wajar.',
+      description: 'Menolak dua pecahan wajar melibatkan penyebut sama dan penyebut berbeza hingga 10.',
       keywords: ['penolakan', 'tolak', 'dapur', 'minus'],
       gameDomain: 'dapur_pecahan',
     },
     {
-      id: 'DSKP-2.1.4',
-      dskpCode: '2.1.4',
-      title: 'Operasi Bergabung Tambah & Tolak',
-      description: 'Melaksanakan operasi bergabung tambah dan tolak pecahan wajar.',
-      keywords: ['bergabung', 'operasi', 'pixel', 'dapur'],
+      id: 'DSKP-3.1.7',
+      dskpCode: '3.1.7',
+      title: 'Pecahan Per Seratus & Peratus',
+      description: 'Mengenal pasti peratus dan perkaitan pecahan per seratus.',
+      keywords: ['peratus', 'seratus', 'pixel'],
       gameDomain: 'dunia_pixel',
-    },
-    {
-      id: 'DSKP-2.1.5',
-      dskpCode: '2.1.5',
-      title: 'Pecahan daripada Kuantiti & Pecahan Setara',
-      description: 'Menentukan nilai pecahan setara dan kuantiti daripada sesuatu kumpulan.',
-      keywords: ['kuantiti', 'setara', 'arena', 'konsep'],
-      gameDomain: 'arena_pecahan',
     },
   ];
 
   const analyzedSkills: DSKPSkillAnalysis[] = dskpSkillTemplates.map((template) => {
-    // Filter attempts for this skill
+    // Filter attempts for this skill by dskpCode or keywords or gameDomain
     const skillAttempts = attempts.filter((a) =>
-      a.kemahiran?.toLowerCase().includes(template.keywords[0]) ||
-      a.gameId === template.gameDomain ||
-      a.soalan?.toLowerCase().includes(template.keywords[0])
+      a.dskpCode === template.dskpCode ||
+      (a.kemahiran && a.kemahiran.includes(template.dskpCode)) ||
+      (a.kemahiran && a.kemahiran.toLowerCase().includes(template.keywords[0])) ||
+      (a.soalan && a.soalan.toLowerCase().includes(template.keywords[0])) ||
+      (a.gameId === template.gameDomain)
     );
 
     let attemptsCount = skillAttempts.length;

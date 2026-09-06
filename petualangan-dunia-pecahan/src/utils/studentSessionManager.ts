@@ -1,13 +1,22 @@
 import { StudentProfile, GameSession, TeacherAuth, UserProgress, AttemptRecord } from '../types';
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
 import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
-import { IPG_STUDENTS_DATA } from '../data/ipgStudentsData';
 
-const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v13';
-const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v13';
-const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v13';
-const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v13';
-const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v13';
+const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v14';
+const SESSIONS_STORAGE_KEY = 'wira_pecahan_sessions_v14';
+const CURRENT_STUDENT_STORAGE_KEY = 'wira_pecahan_current_student_v14';
+const CURRENT_SESSION_STORAGE_KEY = 'wira_pecahan_current_session_v14';
+const TEACHER_AUTH_STORAGE_KEY = 'wira_pecahan_teacher_auth_v14';
+
+// Standard Structured Storage Keys for offline persistence & external interoperability
+export const KEMBARA_STORAGE_KEYS = {
+  STUDENT_SESSION: 'kembara_student_session',
+  STUDENT_PROGRESS: 'kembara_student_progress',
+  GAME_RESULTS: 'kembara_game_results',
+  CERTIFICATE: 'kembara_certificate',
+  APP_SETTINGS: 'kembara_app_settings',
+  LAST_SYNCED: 'kembara_last_synced',
+} as const;
 
 // Helper to calculate Tahap Penguasaan (TP1 - TP6) based on stars & completed challenges
 export function calculateStudentTP(stars: number, completed: number): string {
@@ -68,7 +77,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-001',
     nama: 'Aiman Hakim',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
     progress: {
       completedChallenges: 9,
@@ -127,7 +135,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-002',
     nama: 'Siti Aisyah',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
     progress: {
       completedChallenges: 8,
@@ -168,7 +175,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-003',
     nama: 'Danish Amir',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 1).toISOString(),
     progress: {
       completedChallenges: 4,
@@ -192,7 +198,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-004',
     nama: 'Nur Sarah Balqis',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
     progress: {
       completedChallenges: 5,
@@ -216,7 +221,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-005',
     nama: 'Muhammad Rayyan',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 1).toISOString(),
     progress: {
       completedChallenges: 2,
@@ -242,7 +246,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-006',
     nama: 'Adam Harith',
     kelas: '4 Berkelah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 4).toISOString(),
     progress: {
       completedChallenges: 7,
@@ -266,7 +269,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
     id: 'MURID-007',
     nama: 'Nur Arissa',
     kelas: '4 Berkelah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
     progress: {
       completedChallenges: 3,
@@ -286,9 +288,6 @@ const DEMO_STUDENTS: StudentProfile[] = [
       attemptHistory: [],
     },
   },
-
-  // IPG Students Seed Dataset
-  ...IPG_STUDENTS_DATA,
 ];
 
 const DEMO_SESSIONS: GameSession[] = [
@@ -297,7 +296,6 @@ const DEMO_SESSIONS: GameSession[] = [
     studentId: 'MURID-001',
     nama: 'Aiman Hakim',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikh: new Date(Date.now() - 86400000 * 2).toLocaleDateString('ms-MY'),
     masaMula: '09:15 AM',
     masaTamat: '09:45 AM',
@@ -309,36 +307,11 @@ const DEMO_SESSIONS: GameSession[] = [
     studentId: 'MURID-002',
     nama: 'Siti Aisyah',
     kelas: '4 Asah',
-    studentCategory: 'SK',
     tarikh: new Date(Date.now() - 86400000 * 1).toLocaleDateString('ms-MY'),
     masaMula: '10:30 AM',
     masaTamat: '11:00 AM',
     worldId: 'arena_pecahan',
     starsGained: 6,
-  },
-  {
-    sessionId: 'SESI-IPG-01',
-    studentId: 'IPG-001',
-    nama: 'Amir Hakim',
-    kelas: 'MATH',
-    studentCategory: 'IPG',
-    tarikh: new Date(Date.now() - 86400000 * 2).toLocaleDateString('ms-MY'),
-    masaMula: '02:15 PM',
-    masaTamat: '02:45 PM',
-    worldId: 'dunia_pixel',
-    starsGained: 9,
-  },
-  {
-    sessionId: 'SESI-IPG-02',
-    studentId: 'IPG-002',
-    nama: 'Nur Aisyah',
-    kelas: 'BM',
-    studentCategory: 'IPG',
-    tarikh: new Date(Date.now() - 86400000 * 1).toLocaleDateString('ms-MY'),
-    masaMula: '03:30 PM',
-    masaTamat: '04:00 PM',
-    worldId: 'dapur_pecahan',
-    starsGained: 9,
   },
 ];
 
@@ -346,9 +319,12 @@ const DEMO_SESSIONS: GameSession[] = [
 export function initializeStorageWithSeed(): void {
   try {
     // Clear old versions from previous iterations
-    for (let i = 1; i <= 11; i++) {
+    for (let i = 1; i <= 13; i++) {
       localStorage.removeItem(`wira_pecahan_students_v${i}`);
       localStorage.removeItem(`wira_pecahan_sessions_v${i}`);
+      localStorage.removeItem(`wira_pecahan_current_student_v${i}`);
+      localStorage.removeItem(`wira_pecahan_current_session_v${i}`);
+      localStorage.removeItem(`wira_pecahan_teacher_auth_v${i}`);
     }
 
     const existing = localStorage.getItem(STUDENTS_STORAGE_KEY);
@@ -359,10 +335,8 @@ export function initializeStorageWithSeed(): void {
       const parsed: StudentProfile[] = JSON.parse(existing);
       const class3Asah = parsed.filter((s) => s.kelas === '3 Asah');
       const is3AsahComplete = class3Asah.length === 40 && class3Asah.every((s) => (s.progress?.completedChallenges || 0) === 9);
-      const ipgList = parsed.filter((s) => s.studentCategory === 'IPG' || s.id.startsWith('IPG-'));
-      const hasAmirHakim = ipgList.some((s) => s.id === 'IPG-001' && s.nama === 'Amir Hakim' && s.program === 'PPISMP');
       
-      if (!is3AsahComplete || ipgList.length !== 8 || !hasAmirHakim) {
+      if (!is3AsahComplete) {
         localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
         localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
       }
@@ -378,43 +352,17 @@ export function getAllStudents(): StudentProfile[] {
   try {
     const saved = localStorage.getItem(STUDENTS_STORAGE_KEY);
     if (!saved) return DEMO_STUDENTS;
-    const list: StudentProfile[] = JSON.parse(saved);
-    // Ensure backwards compatibility for studentCategory
-    return list.map((s) => ({
-      ...s,
-      studentCategory: s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK'),
-    }));
+    return JSON.parse(saved);
   } catch {
     return DEMO_STUDENTS;
   }
 }
 
-// Get students isolated by category
-export function getStudentsByCategory(category: 'SK' | 'IPG'): StudentProfile[] {
-  const all = getAllStudents();
-  return all.filter((s) => {
-    const cat = s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK');
-    return cat === category;
-  });
-}
-
-// Generate unique automatic student ID (MURID-001 for SK, IPG-001 for IPG)
-export function generateNextStudentId(category: 'SK' | 'IPG' = 'SK'): string {
+// Generate unique automatic student ID (MURID-001, MURID-002, ...)
+export function generateNextStudentId(): string {
   const students = getAllStudents();
   let maxNum = 0;
   
-  if (category === 'IPG') {
-    students.forEach((s) => {
-      const match = s.id.match(/^IPG-(\d+)$/i);
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
-      }
-    });
-    const nextNum = maxNum + 1;
-    return `IPG-${String(nextNum).padStart(3, '0')}`;
-  }
-
   students.forEach((s) => {
     const match = s.id.match(/^MURID-(\d+)$/i);
     if (match) {
@@ -427,22 +375,15 @@ export function generateNextStudentId(category: 'SK' | 'IPG' = 'SK'): string {
 }
 
 // Create or Register student profile
-export function registerStudent(
-  nama: string,
-  kelas: string,
-  category: 'SK' | 'IPG' = 'SK',
-  ipgDetails?: { program?: string; semester?: string; opsyen?: string; kumpulan?: string }
-): StudentProfile {
+export function registerStudent(nama: string, kelas: string): StudentProfile {
   const students = getAllStudents();
   const trimmedNama = nama.trim();
-  const trimmedKelas = (category === 'IPG' && (ipgDetails?.opsyen || ipgDetails?.kumpulan) ? (ipgDetails.opsyen || ipgDetails.kumpulan)! : kelas).trim();
+  const trimmedKelas = kelas.trim();
 
-  // Check if a student with exact same name and class and category already exists
-  const existing = students.find((s) => {
-    const sCat = s.studentCategory || (s.id.startsWith('IPG-') ? 'IPG' : 'SK');
-    if (sCat !== category) return false;
-    return s.nama.toLowerCase() === trimmedNama.toLowerCase() && s.kelas.toLowerCase() === trimmedKelas.toLowerCase();
-  });
+  // Check if a student with exact same name and class already exists
+  const existing = students.find(
+    (s) => s.nama.toLowerCase() === trimmedNama.toLowerCase() && s.kelas.toLowerCase() === trimmedKelas.toLowerCase()
+  );
 
   if (existing) {
     setCurrentStudent(existing);
@@ -450,14 +391,9 @@ export function registerStudent(
   }
 
   const newStudent: StudentProfile = {
-    id: generateNextStudentId(category),
+    id: generateNextStudentId(),
     nama: trimmedNama,
     kelas: trimmedKelas,
-    studentCategory: category,
-    program: category === 'IPG' ? ipgDetails?.program : undefined,
-    semester: category === 'IPG' ? ipgDetails?.semester : undefined,
-    opsyen: category === 'IPG' ? (ipgDetails?.opsyen || trimmedKelas) : undefined,
-    kumpulan: category === 'IPG' ? (ipgDetails?.kumpulan || ipgDetails?.opsyen || trimmedKelas) : undefined,
     tarikhDaftar: new Date().toISOString(),
     progress: DEFAULT_USER_PROGRESS,
   };
@@ -473,9 +409,7 @@ export function getCurrentStudent(): StudentProfile | null {
   try {
     const saved = localStorage.getItem(CURRENT_STUDENT_STORAGE_KEY);
     if (!saved) return null;
-    const st: StudentProfile = JSON.parse(saved);
-    st.studentCategory = st.studentCategory || (st.id.startsWith('IPG-') ? 'IPG' : 'SK');
-    return st;
+    return JSON.parse(saved);
   } catch {
     return null;
   }
@@ -483,7 +417,6 @@ export function getCurrentStudent(): StudentProfile | null {
 
 export function setCurrentStudent(student: StudentProfile | null): void {
   if (student) {
-    student.studentCategory = student.studentCategory || (student.id.startsWith('IPG-') ? 'IPG' : 'SK');
     localStorage.setItem(CURRENT_STUDENT_STORAGE_KEY, JSON.stringify(student));
   } else {
     localStorage.removeItem(CURRENT_STUDENT_STORAGE_KEY);
@@ -505,29 +438,170 @@ export function saveStudentProgress(studentId: string, progress: UserProgress): 
     }
   }
 
+  // Stamp ISO lastUpdated & offline flag
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  progress.lastUpdated = new Date().toISOString();
+  progress.isSavedOffline = !isOnline;
+
   if (idx !== -1) {
     students[idx].progress = progress;
+    students[idx].lastUpdated = progress.lastUpdated;
     localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(students));
 
     // Update current active student if matches
     const current = getCurrentStudent();
     if (current && current.id === studentId) {
       current.progress = progress;
+      current.lastUpdated = progress.lastUpdated;
       setCurrentStudent(current);
     }
+
+    // Secondary backup sync into standard structured keys
+    try {
+      localStorage.setItem(
+        KEMBARA_STORAGE_KEYS.STUDENT_PROGRESS,
+        JSON.stringify({
+          studentId,
+          studentName: students[idx].nama,
+          className: students[idx].kelas,
+          progress,
+          score: progress.score || 0,
+          stars: progress.earnedStars,
+          completedChallenges: progress.completedChallenges,
+          certificateEarned: !!progress.certificateEarned,
+          lastUpdated: progress.lastUpdated,
+        })
+      );
+      if (progress.certificateEarned) {
+        localStorage.setItem(
+          KEMBARA_STORAGE_KEYS.CERTIFICATE,
+          JSON.stringify({
+            studentId,
+            studentName: students[idx].nama,
+            className: students[idx].kelas,
+            earnedStars: progress.earnedStars,
+            completedChallenges: progress.completedChallenges,
+            certificateDate: progress.certificateDate,
+            lastUpdated: progress.lastUpdated,
+          })
+        );
+      }
+      localStorage.setItem(KEMBARA_STORAGE_KEYS.LAST_SYNCED, progress.lastUpdated);
+    } catch {
+      // ignore storage quota error
+    }
   }
+}
+
+// Load student progress from local storage
+export function loadStudentProgress(studentId?: string): UserProgress | null {
+  const targetId = studentId || getCurrentStudent()?.id;
+  if (!targetId) {
+    // Try reading directly from secondary standard backup key
+    try {
+      const backup = localStorage.getItem(KEMBARA_STORAGE_KEYS.STUDENT_PROGRESS);
+      if (backup) {
+        const parsed = JSON.parse(backup);
+        return parsed.progress || null;
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  const students = getAllStudents();
+  const found = students.find((s) => s.id === targetId);
+  return found?.progress || null;
+}
+
+// Update partial progress cleanly
+export function updateStudentProgress(studentId: string, partial: Partial<UserProgress>): UserProgress {
+  const current = loadStudentProgress(studentId) || DEFAULT_USER_PROGRESS;
+  const merged: UserProgress = {
+    ...current,
+    ...partial,
+    lastUpdated: new Date().toISOString(),
+  };
+  saveStudentProgress(studentId, merged);
+  return merged;
+}
+
+// Save specific game attempt / challenge result
+export function saveGameResult(record: AttemptRecord): void {
+  try {
+    // 1. Append to current student's attemptHistory
+    const targetId = record.studentId || getCurrentStudent()?.id;
+    if (targetId) {
+      const current = loadStudentProgress(targetId) || DEFAULT_USER_PROGRESS;
+      const history = current.attemptHistory ? [...current.attemptHistory] : [];
+      history.push(record);
+      saveStudentProgress(targetId, {
+        ...current,
+        attemptHistory: history,
+      });
+    }
+
+    // 2. Also save to standalone structured results key
+    const existingRaw = localStorage.getItem(KEMBARA_STORAGE_KEYS.GAME_RESULTS);
+    const existingList: AttemptRecord[] = existingRaw ? JSON.parse(existingRaw) : [];
+    existingList.push(record);
+    localStorage.setItem(KEMBARA_STORAGE_KEYS.GAME_RESULTS, JSON.stringify(existingList.slice(-200)));
+  } catch (err) {
+    console.error('Failed to save game result', err);
+  }
+}
+
+// Load game results / attempt history
+export function loadGameResult(studentId?: string): AttemptRecord[] {
+  const targetId = studentId || getCurrentStudent()?.id;
+  if (targetId) {
+    const p = loadStudentProgress(targetId);
+    if (p?.attemptHistory) return p.attemptHistory;
+  }
+  try {
+    const raw = localStorage.getItem(KEMBARA_STORAGE_KEYS.GAME_RESULTS);
+    if (!raw) return [];
+    const list: AttemptRecord[] = JSON.parse(raw);
+    return targetId ? list.filter((r) => r.studentId === targetId) : list;
+  } catch {
+    return [];
+  }
+}
+
+// Summary of offline storage health
+export function getOfflineStorageSummary(): {
+  totalStudents: number;
+  totalSessions: number;
+  hasActiveSession: boolean;
+  activeStudentName?: string;
+  isOffline: boolean;
+  lastUpdated: string;
+} {
+  const students = getAllStudents();
+  const sessions = getAllSessions();
+  const activeStudent = getCurrentStudent();
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+  const lastSync = localStorage.getItem(KEMBARA_STORAGE_KEYS.LAST_SYNCED) || new Date().toISOString();
+
+  return {
+    totalStudents: students.length,
+    totalSessions: sessions.length,
+    hasActiveSession: !!activeStudent,
+    activeStudentName: activeStudent?.nama,
+    isOffline: !isOnline,
+    lastUpdated: lastSync,
+  };
 }
 
 // GAME SESSION MANAGEMENT
 export function startNewGameSession(student: StudentProfile): GameSession {
   const now = new Date();
-  const category = student.studentCategory || (student.id.startsWith('IPG-') ? 'IPG' : 'SK');
   const newSession: GameSession = {
-    sessionId: `SESI-${category === 'IPG' ? 'IPG-' : ''}${Date.now().toString().slice(-6)}`,
+    sessionId: `SESI-${Date.now().toString().slice(-6)}`,
     studentId: student.id,
     nama: student.nama,
     kelas: student.kelas,
-    studentCategory: category,
     tarikh: now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' }),
     masaMula: now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }),
     masaTamat: null,
@@ -550,22 +624,10 @@ export function getAllSessions(): GameSession[] {
   try {
     const saved = localStorage.getItem(SESSIONS_STORAGE_KEY);
     if (!saved) return DEMO_SESSIONS;
-    const list: GameSession[] = JSON.parse(saved);
-    return list.map((s) => ({
-      ...s,
-      studentCategory: s.studentCategory || (s.studentId.startsWith('IPG-') ? 'IPG' : 'SK'),
-    }));
+    return JSON.parse(saved);
   } catch {
     return DEMO_SESSIONS;
   }
-}
-
-export function getSessionsByCategory(category: 'SK' | 'IPG'): GameSession[] {
-  const all = getAllSessions();
-  return all.filter((s) => {
-    const cat = s.studentCategory || (s.studentId.startsWith('IPG-') ? 'IPG' : 'SK');
-    return cat === category;
-  });
 }
 
 export function getCurrentSession(): GameSession | null {

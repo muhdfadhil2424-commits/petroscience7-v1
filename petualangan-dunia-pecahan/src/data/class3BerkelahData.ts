@@ -5,7 +5,6 @@ export const CLASS_3_BERKELAH_STUDENTS: StudentProfile[] = [
     id: 'MURID-3B001',
     nama: 'Ammar Zikri',
     kelas: '3 Berkelah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 3).toISOString(),
     progress: {
       completedChallenges: 9,
@@ -31,7 +30,6 @@ export const CLASS_3_BERKELAH_STUDENTS: StudentProfile[] = [
     id: 'MURID-3B002',
     nama: 'Nurul Huda',
     kelas: '3 Berkelah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 2).toISOString(),
     progress: {
       completedChallenges: 7,
@@ -56,7 +54,6 @@ export const CLASS_3_BERKELAH_STUDENTS: StudentProfile[] = [
     id: 'MURID-3B003',
     nama: 'Harith Iskandar',
     kelas: '3 Berkelah',
-    studentCategory: 'SK',
     tarikhDaftar: new Date(Date.now() - 86400000 * 1).toISOString(),
     progress: {
       completedChallenges: 5,

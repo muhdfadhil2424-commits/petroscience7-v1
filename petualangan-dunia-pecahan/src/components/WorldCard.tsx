@@ -33,6 +33,7 @@ export const WorldCard: React.FC<WorldCardProps> = ({
 
   return (
     <motion.div
+      {...(world.number === 1 ? { 'data-alya': 'game-selection' } : {})}
       whileHover={{ y: -8, scale: 1.02 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={`relative rounded-[2.5rem] p-6 sm:p-7 border-2 flex flex-col justify-between transition-all shadow-xl overflow-hidden cursor-pointer group ${
@@ -117,7 +118,10 @@ export const WorldCard: React.FC<WorldCardProps> = ({
       </div>
 
       {/* World Information */}
-      <div className="mb-6 text-left">
+      <div
+        className="mb-6 text-left"
+        {...(world.number === 1 ? { 'data-alya': 'challenge' } : {})}
+      >
         <h3 className="font-rounded font-extrabold text-2xl text-[#4A3728] tracking-tight mb-1">
           {world.title}
         </h3>
@@ -138,6 +142,7 @@ export const WorldCard: React.FC<WorldCardProps> = ({
       {/* Primary Action Button */}
       {isUnlocked ? (
         <motion.button
+          {...(world.number === 1 ? { 'data-alya': 'start-game' } : {})}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={(e) => {

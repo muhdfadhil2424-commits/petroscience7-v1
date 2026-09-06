@@ -8,6 +8,7 @@ import { CircleFractionVisualizer } from './FractionVisualizers/CircleFractionVi
 import { EggGroupsVisualizer } from './FractionVisualizers/EggGroupsVisualizer';
 import { AdditionFractionVisualizer } from './FractionVisualizers/AdditionFractionVisualizer';
 import { LiquidGaugeVisualizer } from './FractionVisualizers/LiquidGaugeVisualizer';
+import { FractionBenchmarkBadge } from './FractionBenchmarkBadge';
 import { ArrowLeft, CheckCircle2, ChevronRight, HelpCircle, Lightbulb, Sparkles } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
@@ -31,13 +32,15 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
 
   const task: IngredientTask = dish.tasks[currentTaskIndex];
 
-  // Reset state on task change
+  // Reset state on task change and automatically smooth-scroll to top so student can read from top to bottom
   useEffect(() => {
     setSelectedIndices([]);
     setSelectedEggGroupIndices([]);
     setLiquidLevel(0);
     setIsTaskValidated(false);
-  }, [currentTaskIndex]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [currentTaskIndex, dish.id]);
 
   // Handle toggling items in set, bar, circle visualizers
   const handleToggleItem = (idx: number) => {
@@ -95,6 +98,8 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
 
   const handleNextTask = () => {
     sounds.playPop();
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     if (currentTaskIndex < dish.tasks.length - 1) {
       setCurrentTaskIndex((prev) => prev + 1);
     } else {
@@ -153,6 +158,32 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
 
       {/* Interactive Workbench Container */}
       <div className="my-6">
+        {/* Dynamic Benchmark Indicator for Tasks (Non-addition tasks handle it here) */}
+        {task.visualType !== 'addition-fraction' && (
+          <FractionBenchmarkBadge
+            currentCount={
+              task.visualType === 'egg-groups'
+                ? selectedEggGroupIndices.length
+                : task.visualType === 'liquid-gauge'
+                ? liquidLevel
+                : selectedIndices.length
+            }
+            requiredCount={task.numerator}
+            denominator={
+              task.visualType === 'egg-groups'
+                ? (task.totalItems && task.groupSize ? task.totalItems / task.groupSize : 5)
+                : task.denominator
+            }
+            unitLabel={
+              task.visualType === 'egg-groups'
+                ? 'kumpulan sarang'
+                : task.visualType === 'liquid-gauge'
+                ? 'aras tolok'
+                : task.unit || 'bahagian'
+            }
+          />
+        )}
+
         <AnimatePresence mode="wait">
           <motion.div
             key={task.id}
@@ -206,6 +237,10 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
 
             {task.visualType === 'addition-fraction' && (
               <AdditionFractionVisualizer
+                firstVal={task.additionParams?.firstFraction.num || 3}
+                targetSum={task.additionParams?.targetNumerator || 8}
+                denominator={task.denominator || 10}
+                options={[3, 5, 6]}
                 onSuccess={() => setIsTaskValidated(true)}
               />
             )}

@@ -1,0 +1,9 @@
+node_modules
+**/node_modules
+.vercel
+.next
+dist
+build
+*.mp4
+*.mp3
+*.MOV

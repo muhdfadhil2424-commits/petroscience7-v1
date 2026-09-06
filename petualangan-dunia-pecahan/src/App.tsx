@@ -8,6 +8,7 @@ import { WorldsHub } from './components/WorldsHub';
 import { AlyaWidget } from './components/AlyaWidget';
 import { AlyaContext } from './utils/alyaEngine';
 import { CaraBermainModal } from './components/CaraBermainModal';
+import { NotaPecahanModal } from './components/NotaPecahanModal';
 import { LockedWorldModal } from './components/LockedWorldModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WorldPreviewModal } from './components/WorldPreviewModal';
@@ -19,12 +20,22 @@ import { DuniaPixelGameplay } from './components/DuniaPixelGameplay';
 import { StudentProfileModal } from './components/StudentProfileModal';
 import { TeacherLoginModal } from './components/TeacherLoginModal';
 import { TeacherDashboardModal } from './components/TeacherDashboardModal';
+import { KelasInteraktifView } from './components/interactiveClass/KelasInteraktifView';
 import { CertificateModal } from './components/CertificateModal';
+import { AlyaTutorial, TUTORIAL_STEPS } from './components/AlyaTutorial';
+import { NetworkToastNotification, NetworkStatusBadge } from './components/NetworkStatusBadge';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { playSfx } from './utils/audio';
 import {
   getCurrentStudent,
+  setCurrentStudent,
   saveStudentProgress,
   getTeacherAuth,
 } from './utils/studentSessionManager';
+import {
+  createNewSessionQuestionSet,
+  getCurrentSessionQuestionSet,
+} from './utils/sessionQuestionManager';
 import { Sparkles, Heart } from 'lucide-react';
 
 const PROGRESS_STORAGE_KEY = 'pecahan_game_progress_v1';
@@ -125,13 +136,20 @@ export function migrateProgressData(raw: any): UserProgress {
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<'hub' | 'pizza_pecahan' | 'arena_pecahan' | 'dapur_pecahan' | 'dunia_pixel'>('hub');
+  const [currentView, setCurrentView] = useState<'hub' | 'pizza_pecahan' | 'arena_pecahan' | 'dapur_pecahan' | 'dunia_pixel' | 'kelas_interaktif'>('hub');
+  const { isOnline, toastMessage, clearToast } = useNetworkStatus();
 
   // Student & Teacher State - default initial screen is Student Login (if no active student)
   const [currentStudent, setCurrentStudentState] = useState<StudentProfile | null>(() => getCurrentStudent());
   const [isStudentProfileOpen, setIsStudentProfileOpen] = useState<boolean>(() => !getCurrentStudent());
   const [isTeacherLoginOpen, setIsTeacherLoginOpen] = useState<boolean>(false);
   const [isTeacherDashboardOpen, setIsTeacherDashboardOpen] = useState<boolean>(false);
+
+  // Alya Tutorial State (Bahagian 1 & 2 - Integrasi Nota Pecahan)
+  const [tutorialOpen, setTutorialOpen] = useState<boolean>(false);
+  const [tutorialStep, setTutorialStep] = useState<number>(0);
+  const [notesOpenedFromTutorial, setNotesOpenedFromTutorial] = useState<boolean>(false);
+  const [tutorialPausedForNotes, setTutorialPausedForNotes] = useState<boolean>(false);
 
   // LocalStorage state initialization with robust progress migration
   const [progress, setProgress] = useState<UserProgress>(() => {
@@ -163,6 +181,7 @@ export default function App() {
 
   // Modal visibility state
   const [isCaraBermainOpen, setIsCaraBermainOpen] = useState(false);
+  const [isNotaPecahanOpen, setIsNotaPecahanOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isGrandVictoryOpen, setIsGrandVictoryOpen] = useState(false);
   const [isCertificateOpen, setIsCertificateOpen] = useState(false);
@@ -192,6 +211,9 @@ export default function App() {
   // Handle student login start
   const handleStudentStart = (student: StudentProfile) => {
     setCurrentStudentState(student);
+    // Generate brand-new randomized question set for 9 challenges (45 questions)
+    createNewSessionQuestionSet();
+
     if (student.progress) {
       const migrated = migrateProgressData(student.progress);
       setProgress(migrated);
@@ -199,6 +221,83 @@ export default function App() {
       setProgress(DEFAULT_PROGRESS);
     }
     setIsStudentProfileOpen(false);
+
+    // Auto buka Alya Tutorial sebaik sahaja student login berjaya dan Student Hub dipaparkan
+    setTutorialStep(0);
+    setNotesOpenedFromTutorial(false);
+    setTutorialPausedForNotes(false);
+    setTutorialOpen(true);
+  };
+
+  const handleLogoutStudent = () => {
+    setCurrentStudent(null);
+    setCurrentStudentState(null);
+    setTutorialOpen(false);
+    setTutorialStep(0);
+    setNotesOpenedFromTutorial(false);
+    setTutorialPausedForNotes(false);
+    setIsStudentProfileOpen(true);
+  };
+
+  const handleOpenNotaPecahan = (isFromTutorialAction: boolean = false) => {
+    // Jika dibuka semasa tutorial step 1 (atau melalui tindakan spotlight tutorial), set state tutorial khas
+    if ((tutorialOpen && tutorialStep === 1) || isFromTutorialAction) {
+      setNotesOpenedFromTutorial(true);
+      setTutorialPausedForNotes(true);
+      setTutorialOpen(false); // Tutup overlay tutorial supaya tidak mengganggu murid membaca nota
+    }
+    setIsNotaPecahanOpen(true);
+  };
+
+  const handleCloseNotaPecahan = () => {
+    setIsNotaPecahanOpen(false);
+    // Jika nota dibuka dari tutorial, sambung semula tutorial secara automatik pada Step 2 (STEP SELEPAS KELUAR NOTA)
+    if (notesOpenedFromTutorial || tutorialPausedForNotes) {
+      setNotesOpenedFromTutorial(false);
+      setTutorialPausedForNotes(false);
+      setTutorialStep(2); // Step 2: "Hebat! 🌟 Sekarang kamu sudah tahu di mana nak belajar..."
+      setTutorialOpen(true);
+      playSfx('chime', settings.soundEnabled);
+    }
+  };
+
+  const handleTutorialNext = () => {
+    setTutorialStep((prev) => {
+      if (prev === 1) {
+        // Step 1 ialah NOTA PECAHAN - murid perlu tekan butang nota pecahan
+        handleOpenNotaPecahan(true);
+        return 1;
+      }
+      if (prev < TUTORIAL_STEPS.length - 1) {
+        return prev + 1;
+      } else {
+        setTutorialOpen(false);
+        return 0;
+      }
+    });
+  };
+
+  const handleTutorialBack = () => {
+    setTutorialStep((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleTutorialSkip = () => {
+    setTutorialOpen(false);
+    setNotesOpenedFromTutorial(false);
+    setTutorialPausedForNotes(false);
+  };
+
+  const handleTutorialComplete = () => {
+    setTutorialOpen(false);
+    setTutorialStep(0);
+    setNotesOpenedFromTutorial(false);
+    setTutorialPausedForNotes(false);
+  };
+
+  const handleTutorialAction = (actionType: string) => {
+    if (actionType === 'open_notes') {
+      handleOpenNotaPecahan(true);
+    }
   };
 
 
@@ -229,6 +328,14 @@ export default function App() {
 
   const handleOpenPizzaPecahan = () => {
     setCurrentView('pizza_pecahan');
+  };
+
+  const handleOpenKelasInteraktif = () => {
+    playSfx('click', settings.soundEnabled);
+    setIsStudentProfileOpen(false);
+    setIsTeacherLoginOpen(false);
+    setIsTeacherDashboardOpen(false);
+    setCurrentView('kelas_interaktif');
   };
 
   const handleLockedWorldClick = (world: WorldInfo) => {
@@ -383,6 +490,7 @@ export default function App() {
   if (currentView === 'pizza_pecahan') {
     return (
       <>
+        <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
         <PizzaPecahanCoverPage
           soundEnabled={settings.soundEnabled}
           onBackToHub={() => setCurrentView('hub')}
@@ -396,6 +504,7 @@ export default function App() {
   if (currentView === 'arena_pecahan') {
     return (
       <>
+        <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
         <ArenaPecahanGameplay
           soundEnabled={settings.soundEnabled}
           onBackToHub={() => setCurrentView('hub')}
@@ -411,6 +520,7 @@ export default function App() {
   if (currentView === 'dapur_pecahan') {
     return (
       <>
+        <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
         <DapurPecahanGameplay
           soundEnabled={settings.soundEnabled}
           onBackToHub={() => setCurrentView('hub')}
@@ -426,6 +536,7 @@ export default function App() {
   if (currentView === 'dunia_pixel') {
     return (
       <>
+        <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
         <DuniaPixelGameplay
           soundEnabled={settings.soundEnabled}
           onBackToHub={() => setCurrentView('hub')}
@@ -438,20 +549,39 @@ export default function App() {
     );
   }
 
+  if (currentView === 'kelas_interaktif') {
+    return (
+      <>
+        <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
+        <KelasInteraktifView
+          soundEnabled={settings.soundEnabled}
+          onBackToMain={() => setCurrentView('hub')}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FFF8E8] text-[#4A3728] relative overflow-x-hidden">
+      {/* Network Toast Notification */}
+      <NetworkToastNotification message={toastMessage} isOnline={isOnline} onClose={clearToast} />
+
       {/* Top Navigation */}
       <Navbar
         stars={progress.earnedStars}
         completedChallenges={progress.completedChallenges}
         soundEnabled={settings.soundEnabled}
         student={currentStudent}
+        isOnlineOverride={isOnline}
         onToggleSound={handleToggleSound}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenHowToPlay={() => setIsCaraBermainOpen(true)}
+        onOpenNotaPecahan={() => handleOpenNotaPecahan()}
         onOpenStudentProfile={() => setIsStudentProfileOpen(true)}
         onOpenTeacherLogin={() => setIsTeacherLoginOpen(true)}
+        onOpenKelasInteraktif={handleOpenKelasInteraktif}
         onOpenCertificate={() => setIsCertificateOpen(true)}
+        onLogout={handleLogoutStudent}
       />
 
       {/* Main Container */}
@@ -461,6 +591,7 @@ export default function App() {
           soundEnabled={settings.soundEnabled}
           onStartAdventure={handleStartAdventure}
           onOpenHowToPlay={() => setIsCaraBermainOpen(true)}
+          onOpenNotaPecahan={() => handleOpenNotaPecahan()}
         />
 
         {/* Progress Bar Display */}
@@ -505,6 +636,20 @@ export default function App() {
         isOpen={isCaraBermainOpen}
         soundEnabled={settings.soundEnabled}
         onClose={() => setIsCaraBermainOpen(false)}
+        onOpenNotaPecahan={() => {
+          setIsCaraBermainOpen(false);
+          handleOpenNotaPecahan();
+        }}
+      />
+
+      <NotaPecahanModal
+        isOpen={isNotaPecahanOpen}
+        soundEnabled={settings.soundEnabled}
+        onClose={handleCloseNotaPecahan}
+        onGoToGame={() => {
+          handleCloseNotaPecahan();
+          handleStartAdventure();
+        }}
       />
 
       <LockedWorldModal
@@ -560,11 +705,27 @@ export default function App() {
       <StudentProfileModal
         isOpen={isStudentProfileOpen}
         soundEnabled={settings.soundEnabled}
+        currentStudent={currentStudent}
         onStudentStart={handleStudentStart}
+        onClose={() => setIsStudentProfileOpen(false)}
+        onLogout={handleLogoutStudent}
         onOpenTeacherLogin={() => {
           setIsStudentProfileOpen(false);
           setIsTeacherLoginOpen(true);
         }}
+        onOpenKelasInteraktif={handleOpenKelasInteraktif}
+      />
+
+      {/* Alya Tutorial Overlay (Bahagian 1 & 2) */}
+      <AlyaTutorial
+        isOpen={tutorialOpen && !!currentStudent && currentView === 'hub' && !isNotaPecahanOpen}
+        currentStep={tutorialStep}
+        onNext={handleTutorialNext}
+        onBack={handleTutorialBack}
+        onSkip={handleTutorialSkip}
+        onComplete={handleTutorialComplete}
+        onActionRequired={handleTutorialAction}
+        soundEnabled={settings.soundEnabled}
       />
 
       <TeacherLoginModal
@@ -575,6 +736,7 @@ export default function App() {
           setIsTeacherLoginOpen(false);
           setIsTeacherDashboardOpen(true);
         }}
+        onOpenKelasInteraktif={handleOpenKelasInteraktif}
       />
 
       <TeacherDashboardModal
@@ -582,6 +744,7 @@ export default function App() {
         soundEnabled={settings.soundEnabled}
         onClose={() => setIsTeacherDashboardOpen(false)}
         onLogout={() => setIsTeacherDashboardOpen(false)}
+        onOpenKelasInteraktif={handleOpenKelasInteraktif}
       />
     </div>
   );

@@ -9,6 +9,7 @@ interface TeacherLoginModalProps {
   soundEnabled: boolean;
   onClose: () => void;
   onSuccessLogin: () => void;
+  onOpenKelasInteraktif?: () => void;
 }
 
 export const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({
@@ -16,6 +17,7 @@ export const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({
   soundEnabled,
   onClose,
   onSuccessLogin,
+  onOpenKelasInteraktif,
 }) => {
   const [username, setUsername] = useState('guru');
   const [password, setPassword] = useState('cikgu123');
@@ -161,9 +163,24 @@ export const TeacherLoginModal: React.FC<TeacherLoginModalProps> = ({
             className="w-full py-3.5 rounded-2xl bg-[#3c4233] hover:bg-[#2d3226] text-amber-300 font-bold text-base shadow-lg border-2 border-amber-400/40 flex items-center justify-center gap-2 cursor-pointer mt-2"
           >
             <Lock className="w-4 h-4 text-amber-300" />
-            <span>🔐 LOG MASUK</span>
+            <span>🔐 LOG MASUK GURU</span>
           </motion.button>
         </form>
+
+        {onOpenKelasInteraktif && (
+          <div className="mt-4 pt-3 border-t border-stone-300 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                playSfx('click', soundEnabled);
+                onOpenKelasInteraktif();
+              }}
+              className="w-full py-2.5 px-3 rounded-2xl bg-[#D98262] hover:bg-[#c26e50] text-white font-bold text-xs shadow-md border border-[#b55b3c] flex items-center justify-center gap-2 cursor-pointer transition-all"
+            >
+              <span>👨‍🏫 MODE KELAS INTERAKTIF (KAD JAWAPAN)</span>
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );

@@ -1,7 +1,13 @@
-// Alya Intelligent Local Fraction Tutor Engine for Year 3 Malaysia Curriculum
+// Alya Intelligent Local Fraction AI Learning Guide Engine for Year 3 Malaysia Curriculum
 
 export interface AlyaContext {
-  worldId?: string; // 'hub' | 'pizza_pecahan' | 'arena_pecahan' | 'dapur_pecahan' | 'dunia_pixel'
+  worldId?: string;
+  currentGame?: string;
+  currentStage?: string | number;
+  currentQuestion?: string;
+  studentAnswer?: string;
+  mistakeCount?: number;
+  hintCount?: number;
   challengeName?: string;
   questionText?: string;
   fractionData?: {
@@ -14,142 +20,365 @@ export interface AlyaContext {
   lastAttemptResult?: 'correct' | 'incorrect' | null;
 }
 
-export function getAlyaHint(context: AlyaContext, level: 1 | 2 | 3): string {
-  const { worldId, challengeName, questionText, fractionData } = context;
+/**
+ * 4-Step Hint Hierarchy:
+ * Step 1: HINT 1 (Soalan memancing fikiran tanpa berikan jawapan)
+ * Step 2: HINT 2 (Bimbingan langkah demi langkah)
+ * Step 3: PENERANGAN (Penerangan konsep berkaitan)
+ * Step 4: CUBA SEMULA (Galakan cuba semula dengan keyakinan)
+ */
+export function getAlyaHint(context: AlyaContext, step: 1 | 2 | 3 | 4 = 1): string {
+  const game = context.currentGame || context.worldId || 'hub';
+  const den = context.fractionData?.denominator || 4;
+  const num = context.fractionData?.numerator || 1;
 
-  // 1. Pizza Pecahan Hints
-  if (worldId === 'pizza_pecahan') {
-    const num = fractionData?.numerator || 3;
-    const den = fractionData?.denominator || 4;
-    const topping = fractionData?.topping || 'keju';
-
-    if (level === 1) {
-      return `💡 Cuba lihat nombor di bawah pecahan (${den}). Pizza itu perlu dibahagikan kepada berapa bahagian yang sama besar?`;
+  // 1. Dapur Pecahan / Pizza Pecahan
+  if (game.includes('dapur') || game.includes('pizza')) {
+    if (step === 1) {
+      return `💡 **Hint 1:** Jom Alya tolong! 🩷 Tengok nombor bawah dulu. Ada berapa bahagian semuanya?`;
     }
-    if (level === 2) {
-      return `💡 Bagus! Mula-mula potong pizza kepada ${den} bahagian. Kemudian, fikirkan berapa bahagian yang perlu diletakkan ${topping}.`;
+    if (step === 2) {
+      return `💡 **Hint 2:** Bagus! Nombor bawah ialah ${den}. Sekarang tengok nombor atas (${num}). Berapa bahagian yang diambil?`;
     }
-    return `💡 Bimbingan: Potong pizza kepada ${den} keping, lalu pilih ${topping} dan letakkan pada ${num} daripada ${den} keping pizza tersebut! 🍕`;
+    if (step === 3) {
+      return `🧠 **Konsep:** Pecahan ${num}/${den} bermaksud ${num} daripada ${den} bahagian sama besar! 🍕`;
+    }
+    return `🔄 **Cuba Lagi:** Alya yakin kamu boleh buat! Pilih ${num} daripada ${den} bahagian ya. 🩷`;
   }
 
-  // 2. Arena Pecahan Hints
-  if (worldId === 'arena_pecahan') {
-    if (level === 1) {
-      return `💡 Lihat nombor di atas (pengangka) dan nombor di bawah (penyebut). Adakah penyebutnya sama?`;
+  // 2. Arena Pecahan
+  if (game.includes('arena')) {
+    if (step === 1) {
+      return `💡 **Hint 1:** Jom Alya tolong! 🩷 Tengok nombor bawah (penyebut). Sama tak?`;
     }
-    if (level === 2) {
-      return `💡 Jika penyebut sama, kamu hanya perlu bandingkan atau tambah/tolak nombor di atas sahaja!`;
+    if (step === 2) {
+      return `💡 **Hint 2:** Kalau nombor bawah sama, bandingkan nombor atas saja!`;
     }
-    return `💡 Bimbingan: Untuk soalan ini, fokus pada pengangka. Pilih jawapan yang mempunyai pengangka yang tepat! 🏟️`;
+    if (step === 3) {
+      return `🧠 **Konsep:** Nombor atas lebih besar bermaksud nilai pecahan lebih besar!`;
+    }
+    return `🔄 **Cuba Lagi:** Hebat! Sekarang pilih jawapan yang betul. Kamu boleh! 🩷`;
   }
 
-  // 3. Dapur Pecahan Hints
-  if (worldId === 'dapur_pecahan') {
-    if (level === 1) {
-      return `💡 Perhatikan cawan sukat resepi. Garis manakah yang menunjukkan pecahan yang dikehendaki?`;
+  // 3. Dunia Pixel
+  if (game.includes('pixel')) {
+    if (step === 1) {
+      return `💡 **Hint 1:** Jom Alya tolong! 🩷 Cuba darab nombor atas dan bawah dengan nombor yang sama.`;
     }
-    if (level === 2) {
-      return `💡 Tuangkan bahan ke dalam cawan sukat mengikut takat pengangka yang diminta.`;
+    if (step === 2) {
+      return `💡 **Hint 2:** Contoh: 1/2 bila darab 2 atas dan bawah jadi 2/4. Nilainya sama!`;
     }
-    return `💡 Bimbingan: Isikan cawan sehingga takat garis pecahan yang sama dengan resepi Chef! 🍳`;
+    if (step === 3) {
+      return `🧠 **Konsep:** Pecahan setara ialah pecahan berlainan nombor tapi saiz sama besar! ✨`;
+    }
+    return `🔄 **Cuba Lagi:** Pilih kad pecahan yang sama nilai. Alya tolong kamu! 🩷`;
   }
 
-  // 4. Dunia Pixel Hints
-  if (worldId === 'dunia_pixel') {
-    if (level === 1) {
-      return `💡 Raksasa ini perlukan serangan pecahan! Adakah nombor pecahan raksasa ini lebih besar atau setara?`;
-    }
-    if (level === 2) {
-      return `💡 Tukarkan pecahan kepada penyebut yang sama untuk mencari kuasa serangan pecahan setara!`;
-    }
-    return `💡 Bimbingan: Gunakan kad pecahan setara untuk mematahkan pertahanan Raksasa Pixel! ⚔️`;
+  // 4. Default / Hub
+  if (step === 1) {
+    return `💡 **Hint 1:** Jom Alya tolong! 🩷 Nombor atas ialah pengangka, nombor bawah ialah penyebut.`;
   }
-
-  // 5. Default Hub Hints
-  if (level === 1) {
-    return `💡 Pecahan ialah bahagian daripada satu keseluruhan yang sama besar. Pengangka di atas, penyebut di bawah! 🍕`;
+  if (step === 2) {
+    return `💡 **Hint 2:** Nombor bawah = semua bahagian. Nombor atas = bahagian yang kita pilih.`;
   }
-  if (level === 2) {
-    return `💡 Mulakan pengembaraan dengan Arena Pecahan untuk menguji kefahaman asas pecahan kamu! ⭐`;
+  if (step === 3) {
+    return `🧠 **Konsep:** Pecahan wajar: nombor atas lebih kecil daripada nombor bawah (contoh: 1/2, 2/3).`;
   }
-  return `💡 Selesaikan kesemua 9 cabaran merentasi 3 dunia untuk mendapat Lencana Master Pecahan! 🏆`;
+  return `🔄 **Cuba Lagi:** Kamu pasti boleh! Jom cuba jawab soalan. 🩷`;
 }
 
-export function answerAlyaQuestion(userQuery: string, context: AlyaContext): string {
+/**
+ * Feedback for student mistakes, strictly adhering to positive encouragement:
+ * "Belum tepat lagi. Tak mengapa! 🩷" + tailored hint.
+ */
+export function getIncorrectFeedback(context: AlyaContext): string {
+  const game = context.currentGame || context.worldId || 'hub';
+
+  if (game.includes('arena')) {
+    return 'Belum tepat lagi. Tak mengapa! 🩷 Tengok nombor bawah dulu ya.';
+  }
+  if (game.includes('dapur') || game.includes('pizza')) {
+    return 'Belum tepat lagi. Tak mengapa! 🩷 Kira potongan pizza dengan teliti. Jom cuba!';
+  }
+  if (game.includes('pixel')) {
+    return 'Belum tepat lagi. Tak mengapa! 🩷 Cari pecahan yang sama nilai ya.';
+  }
+  return 'Belum tepat lagi. Tak mengapa! 🩷 Jom cuba sekali lagi!';
+}
+
+/**
+ * Intelligent Answer Engine for Alya AI Learning Guide
+ */
+export function answerAlyaQuestion(userQuery: string, context: AlyaContext = {}): string {
   const query = userQuery.toLowerCase().trim();
 
   if (!query) {
-    return 'Hai! Boleh Alya bantu awak belajar pecahan hari ini? 😊';
+    return 'Hai! Saya Alya! 🩷 Ada soalan tentang pecahan? Jom tanya Alya!';
   }
 
-  // Check off-topic / non-math
-  const mathKeywords = [
-    'pecahan', 'wajar', 'setara', 'pengangka', 'penyebut', 'tambah', 'tolak',
-    'darab', 'bahagi', 'kek', 'pizza', 'ringkas', 'termudah', 'nombor',
-    'sama', 'besar', 'kecil', 'maksud', 'bantu', 'tolong', 'apa', 'bagaimana', 'kenapa'
+  // 1. Check for Out-of-Scope Questions
+  // Whitelisted math & fraction words
+  const fractionMathKeywords = [
+    'pecahan', 'pengangka', 'penyebut', 'setara', 'wajar', 'tak wajar', 'bercampur',
+    'separuh', 'suku', 'setengah', 'bahagian', 'jumlah', 'tambah', 'tolak',
+    'banding', 'besar', 'kecil', 'sama', 'termudah', 'ringkas', 'potong',
+    'pizza', 'kek', 'cawan', 'sukat', '1/2', '1/4', '3/4', '2/4', '1/3', '2/3',
+    'jawapan', 'hint', 'petunjuk', 'bantu', 'tolong', 'apa', 'kenapa', 'mengapa',
+    'bagaimana', 'macam mana', 'maksud', 'erti', 'siapa alya', 'hai', 'hello',
+    'salam', 'terima kasih', 'tq', 'thank'
   ];
 
-  const hasMathKeyword = mathKeywords.some(k => query.includes(k));
+  const containsMath = fractionMathKeywords.some((kw) => query.includes(kw));
 
-  if (!hasMathKeyword && (query.includes('suka') || query.includes('makan') || query.includes('siapa') || query.includes('nama') || query.includes('game'))) {
-    return 'Hehe 😊 Alya boleh bantu awak belajar Matematik! Cuba tanya Alya tentang pecahan.';
+  // If asking irrelevant off-topic questions (e.g. weather, games outside fractions, movies, politics)
+  const isClearlyOffTopic =
+    query.includes('cuaca') ||
+    query.includes('presiden') ||
+    query.includes('kereta') ||
+    query.includes('lagu') ||
+    query.includes('roblox') ||
+    query.includes('minecraft') ||
+    query.includes('bola sepak') ||
+    query.includes('formula 1') ||
+    query.includes('siapa perdana menteri');
+
+  if (isClearlyOffTopic || (!containsMath && query.length > 8)) {
+    return 'Alya sedia tolong tentang pecahan saja ya! 🩷';
   }
 
-  // 1. Mengenal Pecahan / Maksud Pecahan
-  if (query.includes('apa itu pecahan') || query.includes('maksud pecahan') || query.includes('maksud 3/4') || query.includes('maksud 1/2')) {
-    return 'Pecahan ialah sebahagian daripada satu keseluruhan yang dibahagi kepada beberapa bahagian yang sama besar. 🍕\n\nContohnya **3/4** bermaksud **3 bahagian** yang diambil daripada **4 bahagian** keseluruhan!';
+  // 2. Salam & Greeting
+  if (query === 'hai' || query === 'hello' || query.startsWith('hai alya') || query.startsWith('salam')) {
+    return 'Hai! Jom belajar pecahan dengan Alya! 🩷 Apa yang nak ditanya?';
   }
 
-  // 2. Pengangka & Penyebut
-  if (query.includes('pengangka') || query.includes('penyebut') || query.includes('nombor atas') || query.includes('nombor bawah')) {
-    return 'Dalam pecahan seperti 3/4:\n1️⃣ **Nombor di atas (3)** ialah **Pengangka** — bahagian yang kita ambil.\n2️⃣ **Nombor di bawah (4)** ialah **Penyebut** — jumlah semua bahagian sama besar! 😊';
+  // 3. Asking for Direct Answers ("Jawapan dia apa?", "Apa jawapan soalan ni?")
+  if (
+    query.includes('jawapan dia apa') ||
+    query.includes('jawapan soalan ni') ||
+    query.includes('apa jawapannya') ||
+    query.includes('bagi jawapan') ||
+    query.includes('beritahu jawapan') ||
+    query.includes('apakah jawapan') ||
+    query.includes('jawapan apa') ||
+    query === 'jawapan'
+  ) {
+    return 'Jom Alya tolong! 🩷\n\nTengok nombor bawah dulu.\nAda berapa bahagian semuanya?';
   }
 
-  // 3. Pecahan Wajar
-  if (query.includes('pecahan wajar') || query.includes('2/5')) {
-    return 'Pecahan wajar ialah pecahan yang nombor di atas (**pengangka**) LEBIH KECIL daripada nombor di bawah (**penyebut**). 😊\n\nContoh: 2/5 (2 lebih kecil daripada 5), jadi 2/5 ialah **pecahan wajar**!';
+  // 4. "Apa itu pecahan?" / Maksud Pecahan
+  if (
+    query.includes('apa itu pecahan') ||
+    query.includes('apa pecahan') ||
+    query.includes('maksud pecahan') ||
+    query.includes('erti pecahan') ||
+    query === 'pecahan'
+  ) {
+    return 'Pecahan ialah bahagian daripada satu benda yang dipotong sama besar. 🩷\n\n• Nombor atas = Pengangka\n• Nombor bawah = Penyebut';
   }
 
-  // 4. Pecahan Setara
-  if (query.includes('setara') || query.includes('1/2 sama dengan 2/4') || query.includes('kenapa 1/2 sama')) {
-    return 'Ya! **1/2** dan **2/4** ialah **pecahan setara**! ✨\n\nBermaksud saiz bahagiannya sama besar. Jika pengangka dan penyebut 1/2 didarab dengan 2, kita dapat 2/4! (1×2=2, 2×2=4)';
+  // 5. "Apa maksud 1/2?" / "Apa itu 1/2?"
+  if (
+    query.includes('apa maksud 1/2') ||
+    query.includes('maksud 1/2') ||
+    query.includes('apa itu 1/2') ||
+    query.includes('erti 1/2')
+  ) {
+    return '1/2 maksudnya 1 daripada 2 bahagian sama besar (separuh)! 🍕';
   }
 
-  // 5. Meringkaskan / Bentuk Termudah
-  if (query.includes('ringkas') || query.includes('termudah') || query.includes('4/8')) {
-    return 'Untuk meringkaskan pecahan seperti 4/8:\n1️⃣ Bahagikan pengangka dan penyebut dengan nombor yang sama (iaitu 4).\n2️⃣ 4 ÷ 4 = 1\n3️⃣ 8 ÷ 4 = 2\n\nJadi, 4/8 dalam bentuk termudah ialah **1/2**! 🎉';
+  // 6. "Apa itu pengangka?"
+  if (
+    query.includes('apa itu pengangka') ||
+    query.includes('apa pengangka') ||
+    query.includes('maksud pengangka') ||
+    query.includes('nombor atas')
+  ) {
+    return 'Pengangka ialah nombor di atas! 🩷\n\nIa tunjuk bilangan bahagian yang kita pilih.';
   }
 
-  // 6. Membandingkan Pecahan
-  if (query.includes('lebih besar') || query.includes('lebih kecil') || query.includes('banding') || query.includes('1/2 atau 1/4')) {
-    return '1/2 adalah LEBIH BESAR daripada 1/4! 🍕\n\nBayangkan pizza: 1/2 ialah separuh pizza, manakala 1/4 ialah satu daripada 4 keping sahaja!';
+  // 7. "Apa itu penyebut?"
+  if (
+    query.includes('apa itu penyebut') ||
+    query.includes('apa penyebut') ||
+    query.includes('maksud penyebut') ||
+    query.includes('nombor bawah')
+  ) {
+    return 'Penyebut ialah nombor di bawah! 🩷\n\nIa tunjuk jumlah semua bahagian yang sama besar.';
   }
 
-  // 7. Menambah Pecahan
-  if (query.includes('tambah') || query.includes('1/4 + 2/4')) {
-    return 'Untuk menambah pecahan dengan penyebut yang sama:\n1️⃣ Pastikan penyebut (bawah) sama: cth 4.\n2️⃣ Tambahkan pengangka (atas): 1 + 2 = 3.\n3️⃣ Jawapannya ialah **3/4**! 🌟';
+  // 8. "Kenapa 1/2 lebih besar daripada 1/4?" / "1/2 atau 1/4 lebih besar"
+  if (
+    query.includes('kenapa 1/2 lebih besar') ||
+    query.includes('1/2 lebih besar daripada 1/4') ||
+    query.includes('kenapa 1/2 > 1/4') ||
+    query.includes('1/2 atau 1/4')
+  ) {
+    return 'Kalau pizza potong 2, kepingannya lebih besar daripada potong 4! Jadi 1/2 lebih besar daripada 1/4. 🩷';
   }
 
-  // 8. Menolak Pecahan
-  if (query.includes('tolak') || query.includes('3/4 - 1/4')) {
-    return 'Untuk menolak pecahan dengan penyebut yang sama:\n1️⃣ Tolakkan pengangka (atas): 3 - 1 = 2.\n2️⃣ Kekalkan penyebut: 2/4.\n3️⃣ Ringkaskan 2/4 menjadi **1/2**! 😊';
+  // 9. "Macam mana nak cari pecahan setara?" / Pecahan Setara
+  if (
+    query.includes('pecahan setara') ||
+    query.includes('cari pecahan setara') ||
+    query.includes('macam mana nak cari pecahan setara') ||
+    query.includes('apa itu pecahan setara')
+  ) {
+    return 'Pecahan setara ialah pecahan berlainan nombor tapi sama saiz! ✨\n\nContoh: 1/2 darab 2 atas dan bawah jadi 2/4. Nilainya sama! 🩷';
   }
 
-  // 9. Soalan Cerita (kek / pizza)
-  if (query.includes('ibu') || query.includes('adik') || query.includes('makan') || query.includes('kek')) {
-    return 'Mari kita kira bersama! 🎂\n1️⃣ Ibu makan: 1/4 kek\n2️⃣ Adik makan: 2/4 kek\n3️⃣ Jumlah = 1/4 + 2/4 = **3/4** bahagian kek yang telah dimakan!';
+  // 10. "Macam mana nak bandingkan pecahan?" / Bandingkan Pecahan
+  if (
+    query.includes('banding') ||
+    query.includes('macam mana nak bandingkan pecahan') ||
+    query.includes('cara banding pecahan') ||
+    query.includes('mana lebih besar')
+  ) {
+    return 'Kalau nombor bawah sama, tengok nombor atas. Nombor atas lebih besar = pecahan lebih besar! 🩷';
   }
 
-  // 10. Meminta Jawapan Terus ("apa jawapannya")
-  if (query.includes('jawapan') || query.includes('apa jawapan')) {
-    return 'Cuba dahulu! 💡 Lihat penyebut di bawah, adakah kedua-duanya sama? Tekan butang **💡 Petunjuk** jika perlukan langkah bimbingan!';
+  // 11. Pecahan Wajar
+  if (query.includes('pecahan wajar')) {
+    return 'Pecahan wajar ialah nombor atas LEBIH KECIL daripada nombor bawah. Contoh: 1/2, 2/3, 3/4. 🩷';
   }
 
-  // 11. Minta Bantuan Umum ("tolong saya", "tak faham")
-  if (query.includes('tolong') || query.includes('tak faham') || query.includes('susah')) {
-    return 'Tak mengapa kalau belum faham! Alya sedia bantu awak satu demi satu. 😊\n\nCuba tekan butang **💡 Petunjuk** di bawah, atau tanya Alya soalan seperti *"Apa itu pecahan?"*';
+  // 12. Menambah & Menolak Pecahan
+  if (query.includes('tambah') || query.includes('tolak')) {
+    return 'Kalau nombor bawah sama, tambah atau tolak nombor atas sahaja! Nombor bawah kekal. 🩷\n\nContoh: 1/4 + 2/4 = 3/4!';
   }
 
-  // Default friendly response
-  return `Bagus! Untuk topik ini, ingat bahawa pecahan terdiri daripada pengangka di atas dan penyebut di bawah. Ada soalan lagi tentang pecahan? 😊`;
+  // 13. Kinestetik / Cuba Sendiri
+  if (query.includes('cuba sendiri') || query.includes('kinestetik') || query.includes('nak cuba') || query.includes('aktiviti')) {
+    return 'Sekarang kamu cuba sendiri! 🩷\n\nTekan tab **✋ Cuba Sekarang** di atas untuk membuka aktiviti interaktif. Kamu boleh tekan, pilih bahagian, padankan pecahan setara, bandingkan dan susun pecahan!';
+  }
+
+  // 14. Ucapan Terima Kasih
+  if (query.includes('terima kasih') || query.includes('tq') || query.includes('thanks')) {
+    return 'Sama-sama! 🩷 Alya gembira dapat belajar bersama kamu. Teruskan usaha hebat kamu ya! 🌟';
+  }
+
+  // 14. Friendly Fraction Guidance Default
+  return 'Jom kita fikir bersama! 🩷 Dalam pecahan, ingat bahawa pengangka berada di atas dan penyebut berada di bawah. Ada bahagian yang ingin kamu tanyakan kepada Alya?';
 }
+
+export interface FractionVisualData {
+  numerator: number;
+  denominator: number;
+  type?: 'bar' | 'pizza' | 'number-line' | 'shape';
+  comparison?: {
+    numerator: number;
+    denominator: number;
+  };
+  comparisonTitle?: string;
+  caption?: string;
+}
+
+/**
+ * Intelligent detector to automatically generate Visual Fraction representations
+ * for Alya's replies and student queries (Visual Mode / Visual Learning)
+ */
+export function detectVisualForAlya(
+  rawQuery: string,
+  rawReplyText: string,
+  context?: AlyaContext
+): FractionVisualData | null {
+  const q = rawQuery.toLowerCase();
+  const r = rawReplyText.toLowerCase();
+
+  // 1. Check for specific comparison (e.g. "Kenapa 1/2 lebih besar daripada 1/4?")
+  if (
+    (q.includes('1/2') && q.includes('1/4')) ||
+    (r.includes('1/2') && r.includes('1/4') && (r.includes('lebih besar') || q.includes('lebih besar')))
+  ) {
+    return {
+      numerator: 1,
+      denominator: 2,
+      type: 'bar',
+      comparison: { numerator: 1, denominator: 4 },
+      comparisonTitle: 'Perbandingan Saiz: 1/2 berbanding 1/4',
+      caption: 'Kepingan 1/2 adalah 2 kali ganda lebih besar daripada kepingan 1/4 kerana dibahagi kepada lebih sedikit bahagian! 🍕',
+    };
+  }
+
+  // 2. Generic comparison between two fractions a/b and c/d
+  const compMatch = (q + ' ' + r).match(/(\d+)\/(\d+)[\s\S]{1,40}(?:lebih besar|lebih kecil|banding|berbanding|atau)[\s\S]{1,40}(\d+)\/(\d+)/i);
+  if (compMatch) {
+    const n1 = parseInt(compMatch[1], 10);
+    const d1 = parseInt(compMatch[2], 10);
+    const n2 = parseInt(compMatch[3], 10);
+    const d2 = parseInt(compMatch[4], 10);
+    if (d1 >= 1 && d1 <= 12 && d2 >= 1 && d2 <= 12) {
+      return {
+        numerator: n1,
+        denominator: d1,
+        type: 'bar',
+        comparison: { numerator: n2, denominator: d2 },
+        comparisonTitle: `Perbandingan: ${n1}/${d1} berbanding ${n2}/${d2}`,
+        caption: `Membandingkan bahagian ${n1}/${d1} dengan ${n2}/${d2}.`,
+      };
+    }
+  }
+
+  // 3. Question: "Apa itu pengangka?"
+  if (q.includes('pengangka')) {
+    return {
+      numerator: 1,
+      denominator: 4,
+      type: 'bar',
+      caption: 'Pengangka (nombor 1 di atas): 1 bahagian yang diambil atau dipilih daripada 4 bahagian keseluruhan.',
+    };
+  }
+
+  // 4. Question: "Apa itu penyebut?"
+  if (q.includes('penyebut')) {
+    return {
+      numerator: 4,
+      denominator: 4,
+      type: 'pizza',
+      caption: 'Penyebut (nombor 4 di bawah): Jumlah SEMUA 4 bahagian yang sama besar dalam satu keseluruhan.',
+    };
+  }
+
+  // 5. Check if query asks for a specific fraction "Apa maksud X/Y?" or contains "X/Y"
+  const fractionMatch = q.match(/(\d+)\/(\d+)/) || r.match(/(\d+)\/(\d+)/);
+  if (fractionMatch) {
+    const num = parseInt(fractionMatch[1], 10);
+    const den = parseInt(fractionMatch[2], 10);
+    if (den >= 1 && den <= 12 && num <= den) {
+      const isPizzaPreferred = q.includes('pizza') || q.includes('maksud 1/2') || (context?.currentGame || '').includes('pizza');
+      return {
+        numerator: num,
+        denominator: den,
+        type: isPizzaPreferred ? 'pizza' : 'bar',
+        caption: `${num} daripada ${den} bahagian yang sama besar.`,
+      };
+    }
+  }
+
+  // 6. Question: "Apa itu pecahan?"
+  if (q.includes('apa itu pecahan') || q.includes('maksud pecahan')) {
+    return {
+      numerator: 1,
+      denominator: 2,
+      type: 'pizza',
+      caption: 'Pecahan 1/2: 1 daripada 2 bahagian pizza yang sama besar (separuh).',
+    };
+  }
+
+  // 7. Context fraction data (if current game level has active fractions)
+  if (context?.fractionData?.denominator) {
+    const den = context.fractionData.denominator;
+    const num = context.fractionData.numerator || 1;
+    if (den >= 1 && den <= 12) {
+      return {
+        numerator: num,
+        denominator: den,
+        type: (context.currentGame || '').includes('pizza') ? 'pizza' : 'bar',
+        caption: `Soalan Semasa: ${num} daripada ${den} bahagian yang sama besar.`,
+      };
+    }
+  }
+
+  return null;
+}
+
+

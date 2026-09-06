@@ -18,9 +18,9 @@ export const MathFraction: React.FC<MathFractionProps> = ({
   lineColor,
 }) => {
   const sizeMap = {
-    xs: { text: 'text-[11px]', padding: 'px-0.5', line: 'border-b', gap: 'my-[1px]' },
-    sm: { text: 'text-xs sm:text-sm', padding: 'px-1', line: 'border-b-2', gap: 'my-[1px]' },
-    md: { text: 'text-sm sm:text-base', padding: 'px-1.5', line: 'border-b-2', gap: 'my-[1.5px]' },
+    xs: { text: 'text-xs sm:text-sm', padding: 'px-0.5', line: 'border-b', gap: 'my-[1px]' },
+    sm: { text: 'text-sm sm:text-base', padding: 'px-1', line: 'border-b-2', gap: 'my-[1px]' },
+    md: { text: 'text-base sm:text-lg', padding: 'px-1.5', line: 'border-b-2', gap: 'my-[1.5px]' },
     lg: { text: 'text-lg sm:text-xl', padding: 'px-2', line: 'border-b-2', gap: 'my-[2px]' },
     xl: { text: 'text-xl sm:text-2xl', padding: 'px-2.5', line: 'border-b-3', gap: 'my-[2px]' },
     '2xl': { text: 'text-2xl sm:text-4xl', padding: 'px-3', line: 'border-b-3', gap: 'my-[2.5px]' },

@@ -28,11 +28,15 @@ import { playSfx, toggleDuniaPixelBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
 import { AlyaCharacter } from './AlyaCharacter';
 import { FormattedMathText } from './MathFraction';
+import DynamicMathVisual from './DynamicMathVisual';
 
 import bannerDuniaPixel from '../assets/images/banner_dunia_pixel_1785426808447.jpg';
 import mapDunia1Img from '../assets/images/map_dunia1_hutan_1785733906195.jpg';
 import mapDunia2Img from '../assets/images/map_dunia2_gua_1785733923688.jpg';
 import mapDunia3Img from '../assets/images/map_dunia3_gunung_1785733976521.jpg';
+import { getSessionQuestions, trackQuestionAttempt } from '../utils/sessionQuestionManager';
+import { getCurrentStudent } from '../utils/studentSessionManager';
+import { QuestionBankItem } from '../data/questionBank/types';
 
 interface DuniaPixelGameplayProps {
   soundEnabled: boolean;
@@ -53,13 +57,69 @@ export interface FractionMonster {
   questionText: string; // e.g. "Monster ini perlukan 3/4 bahagian cahaya!" or "1/4 + 2/4 = ?"
   questionBadge: string; // e.g. "3/4" or "1/2 = ?" or "1/4 + 2/4"
   correctAnswer: string; // e.g. "3/4" or "2/4" or "3/4"
-  options: string[]; // 3 inventory fraction choices, e.g. ["1/4", "2/4", "3/4"]
+  options: string[]; // 3 or 4 fraction choices
   explanation: string;
   gridVisual?: { filled: number; total: number }; // visual preview if applicable
   x: number; // percentage in world grid 0-100
   y: number; // percentage in world grid 0-100
   isSaved: boolean;
   actionState?: 'idle' | 'walking' | 'hopping' | 'sleeping';
+  dskpCode?: string;
+  hint?: string;
+  bankItem?: QuestionBankItem;
+}
+
+// Convert Question Bank Item to Fraction Monster with distributed map positions
+export function convertBankToFractionMonster(
+  q: QuestionBankItem,
+  index: number
+): FractionMonster {
+  const monsterTypes: Array<'rumput' | 'batu' | 'air' | 'api' | 'awan' | 'kristal'> = [
+    'rumput', 'air', 'batu', 'awan', 'api', 'kristal'
+  ];
+  const monsterAvatars = ['🌿👾', '💧👾', '🪨👾', '☁️👾', '🔥👾', '💎👾'];
+  const petAvatars = ['🐰', '🐥', '🐼', '🕊️', '🦊', '🐬', '🐱', '🐶', '🦄', '🐲', '🐹', '🐨', '🦋', '🐢', '🐯'];
+  
+  const typeIdx = index % monsterTypes.length;
+  const petIdx = index % petAvatars.length;
+
+  // Grid coordinates calculated neatly across the adventure map
+  const mapPositions = [
+    { x: 22, y: 35 }, { x: 70, y: 28 }, { x: 38, y: 68 }, { x: 82, y: 62 }, { x: 18, y: 78 },
+    { x: 50, y: 45 }, { x: 80, y: 40 }, { x: 28, y: 52 }, { x: 62, y: 60 }, { x: 35, y: 22 },
+    { x: 75, y: 78 }, { x: 15, y: 20 }, { x: 85, y: 20 }, { x: 45, y: 32 }, { x: 65, y: 72 }
+  ];
+  const pos = mapPositions[index % mapPositions.length];
+
+  let filled = 1;
+  let total = 4;
+  const match = q.correctAnswer.match(/(\d+)\/(\d+)/) || q.question.match(/(\d+)\/(\d+)/);
+  if (match) {
+    filled = parseInt(match[1], 10);
+    total = parseInt(match[2], 10);
+  }
+
+  return {
+    id: q.questionId,
+    name: `Raksasa Pecahan #${index + 1}`,
+    type: monsterTypes[typeIdx],
+    avatar: monsterAvatars[typeIdx],
+    petAvatar: petAvatars[petIdx],
+    dialogText: `Hai pengembara! ${q.question}`,
+    questionText: q.question,
+    questionBadge: q.correctAnswer,
+    correctAnswer: q.correctAnswer,
+    options: q.options,
+    explanation: q.explanation,
+    gridVisual: { filled, total },
+    x: pos.x,
+    y: pos.y,
+    isSaved: false,
+    actionState: index % 2 === 0 ? 'hopping' : 'walking',
+    dskpCode: q.dskpCode,
+    hint: q.hint,
+    bankItem: q,
+  };
 }
 
 export interface PixelRpgLevel {
@@ -317,7 +377,9 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
 
   // Active level state & monsters
   const currentLevel = RPG_LEVELS.find((l) => l.id === activeLevelId) || RPG_LEVELS[0];
-  const [monstersState, setMonstersState] = useState<FractionMonster[]>(currentLevel.monsters);
+  const [monstersState, setMonstersState] = useState<FractionMonster[]>(() =>
+    getSessionQuestions('pixel', 1).map((q, idx) => convertBankToFractionMonster(q, idx))
+  );
   const [storyDialogMonster, setStoryDialogMonster] = useState<FractionMonster | null>(null);
   const [activeEncounterMonster, setActiveEncounterMonster] = useState<FractionMonster | null>(null);
 
@@ -523,7 +585,9 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
     setActiveLevelId(levelId);
 
     const targetLvl = RPG_LEVELS.find((l) => l.id === levelId) || RPG_LEVELS[0];
-    setMonstersState(targetLvl.monsters.map((m) => ({ ...m, isSaved: false })));
+    // Fetch 15 randomized session questions for the challenge
+    const questions = getSessionQuestions('pixel', levelId);
+    setMonstersState(questions.map((q, idx) => convertBankToFractionMonster(q, idx)));
     setPlayerPos(getSpawnPosForLevel(levelId));
     setLives(3);
     setActiveEncounterMonster(null);
@@ -532,7 +596,21 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
     setShowLevelFinishModal(false);
     setCurrentScreen('gameplay');
 
-    setAlyaMessage(`Selamat datang ke ${targetLvl.title}! Cari dan sembuhkan semua monster pecahan!`);
+    setAlyaMessage(`Selamat datang ke ${targetLvl.title}! Cari dan sembuhkan semua 15 raksasa pecahan!`);
+  };
+
+  // Jump smoothly to the next unsaved monster for seamless question progression
+  const handleGoToNextMonster = () => {
+    playSfx('click', soundEnabled);
+    const unsaved = monstersState.filter((m) => !m.isSaved);
+    if (unsaved.length > 0) {
+      const nextM = unsaved[0];
+      setPlayerPos({ x: nextM.x, y: Math.min(nextM.y + 8, 90) });
+      setActiveEncounterMonster(nextM);
+      setStoryDialogMonster(null);
+      setSelectedFractionCard(null);
+      setFeedbackMessage(null);
+    }
   };
 
   // Attempt to Heal Monster with selected fraction card
@@ -543,6 +621,21 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
     }
 
     const isCorrect = selectedFractionCard === activeEncounterMonster.correctAnswer;
+
+    // Track question attempt with questionId and DSKP metadata
+    const student = getCurrentStudent();
+    trackQuestionAttempt({
+      questionId: activeEncounterMonster.id,
+      gameId: 'pixel',
+      challengeId: activeLevelId,
+      dskpCode: activeEncounterMonster.dskpCode || '3.1.1',
+      studentName: student?.nama || 'Murid Tahun 3',
+      class: student?.kelas || 'Tahun 3',
+      answer: selectedFractionCard,
+      isCorrect,
+      attempts: 3 - lives + 1,
+      timestamp: Date.now(),
+    });
 
     if (isCorrect) {
       // Correct answer!
@@ -683,7 +776,8 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
       const nextLvl = (activeLevelId + 1) as 1 | 2 | 3;
       setActiveLevelId(nextLvl);
       const nextLvlData = RPG_LEVELS.find((l) => l.id === nextLvl) || RPG_LEVELS[0];
-      setMonstersState(nextLvlData.monsters.map((m) => ({ ...m, isSaved: false })));
+      const questions = getSessionQuestions('pixel', nextLvl);
+      setMonstersState(questions.map((q, idx) => convertBankToFractionMonster(q, idx)));
       setPlayerPos(getSpawnPosForLevel(nextLvl));
       setIsPortalOpen(false);
       setAlyaMessage(`Selamat datang ke ${nextLvlData.title}! Terokai persekitaran baharu & selamatkan monster di kawasan ini!`);
@@ -758,6 +852,24 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
             <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
             <span>{totalPixelStars}/9</span>
           </div>
+
+          {/* Gameplay Challenge Question Progress and Next Monster Button */}
+          {currentScreen === 'gameplay' && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-2xl border-2 border-emerald-500/70 text-xs font-black text-emerald-300">
+                <span>👾 Soalan {Math.min(monstersState.length, monstersState.filter((m) => m.isSaved).length + 1)}/{monstersState.length}</span>
+              </div>
+              {monstersState.some((m) => !m.isSaved) && (
+                <button
+                  onClick={handleGoToNextMonster}
+                  className="px-3 py-1.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-md border-b-2 border-amber-700 flex items-center gap-1 cursor-pointer transition-all animate-pulse"
+                  title="Pergi ke soalan seterusnya"
+                >
+                  <span>➡️ Soalan Seterusnya ({monstersState.filter((m) => m.isSaved).length + 1}/{monstersState.length})</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Sound Toggle */}
           <button
@@ -1497,7 +1609,7 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
               {/* Raksasa Encounter Header */}
               <div className="text-center space-y-2">
                 <span className="inline-block px-4 py-1.5 rounded-full bg-amber-950 border-2 border-amber-400 text-[#FFD54A] font-black text-sm">
-                  👾 BANTU RAKSASA INI!
+                  👾 SOALAN {Math.max(1, monstersState.findIndex((m) => m.id === activeEncounterMonster.id) + 1)}/{monstersState.length} • BANTU RAKSASA INI!
                 </span>
 
                 <div className="flex justify-center items-center gap-3 py-2">
@@ -1517,8 +1629,16 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                 </div>
               </div>
 
-              {/* Visual Grid representation if available */}
-              {activeEncounterMonster.gridVisual && (
+              {/* Visual Mathematical Graphic representation */}
+              {activeEncounterMonster.bankItem ? (
+                <div className="flex justify-center my-2">
+                  <DynamicMathVisual
+                    question={activeEncounterMonster.bankItem}
+                    visualType={activeEncounterMonster.bankItem.visualType}
+                    visualData={activeEncounterMonster.bankItem.visualData}
+                  />
+                </div>
+              ) : activeEncounterMonster.gridVisual ? (
                 <div className="bg-slate-950 p-3 rounded-2xl border-2 border-slate-800 flex flex-col items-center justify-center gap-2">
                   <span className="text-xs text-[#FFD54A] font-black">GAMBARAN BLOK PECAHAN:</span>
                   <div className="flex gap-2">
@@ -1536,7 +1656,7 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                     ))}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* INVENTORY FRACTION CARDS SELECTION */}
               <div className="space-y-2">
@@ -1545,7 +1665,11 @@ export const DuniaPixelGameplay: React.FC<DuniaPixelGameplayProps> = ({
                   <span>PILIH JAWAPAN YANG BETUL:</span>
                 </span>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div
+                  className={`grid ${
+                    activeEncounterMonster.options.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'
+                  } gap-3`}
+                >
                   {activeEncounterMonster.options.map((opt) => (
                     <button
                       key={opt}

@@ -7,12 +7,14 @@ interface CaraBermainModalProps {
   isOpen: boolean;
   soundEnabled: boolean;
   onClose: () => void;
+  onOpenNotaPecahan?: () => void;
 }
 
 export const CaraBermainModal: React.FC<CaraBermainModalProps> = ({
   isOpen,
   soundEnabled,
   onClose,
+  onOpenNotaPecahan,
 }) => {
   if (!isOpen) return null;
 
@@ -114,16 +116,32 @@ export const CaraBermainModal: React.FC<CaraBermainModalProps> = ({
             </div>
           </div>
 
-          {/* Action Button */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handleUnderstandClick}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#F4C95D] to-[#D98262] text-[#4A3728] font-rounded font-bold text-lg shadow-lg border-2 border-white flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Check className="w-5 h-5 stroke-[3]" />
-            <span>FAHAM! JOM MAIN!</span>
-          </motion.button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {onOpenNotaPecahan && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  playSfx('click', soundEnabled);
+                  onOpenNotaPecahan();
+                }}
+                className="w-full sm:w-1/2 py-3.5 rounded-2xl bg-amber-100 hover:bg-amber-200 text-[#4A3728] font-rounded font-bold text-sm sm:text-base border-2 border-amber-300 flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-sm"
+              >
+                <span>📚 Baca Nota DSKP</span>
+              </motion.button>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleUnderstandClick}
+              className={`w-full ${onOpenNotaPecahan ? 'sm:w-1/2' : ''} py-3.5 rounded-2xl bg-gradient-to-r from-[#F4C95D] to-[#D98262] text-[#4A3728] font-rounded font-bold text-base shadow-lg border-2 border-white flex items-center justify-center gap-2 cursor-pointer`}
+            >
+              <Check className="w-5 h-5 stroke-[3]" />
+              <span>FAHAM! JOM MAIN!</span>
+            </motion.button>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>

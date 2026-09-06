@@ -20,6 +20,10 @@ import {
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
 import { FormattedMathText } from './MathFraction';
+import DynamicMathVisual from './DynamicMathVisual';
+import { getSessionQuestions, trackQuestionAttempt } from '../utils/sessionQuestionManager';
+import { getCurrentStudent } from '../utils/studentSessionManager';
+import { QuestionBankItem } from '../data/questionBank/types';
 
 // Assets
 import bannerArena from '../assets/images/banner_arena_pecahan_1785426776474.jpg';
@@ -56,6 +60,7 @@ const DEFAULT_ARENA_STORAGE: ArenaStorageData = {
 // Question Data Types
 export interface QuestionItem {
   id: string;
+  dskpCode?: string;
   questionText: string;
   visualType: 'circle' | 'square' | 'pizza' | 'chocolate' | 'apple' | 'text_only';
   visualNumerator: number;
@@ -63,6 +68,49 @@ export interface QuestionItem {
   options: { label: string; fractionNum: number; fractionDenom: number }[];
   correctIndex: number;
   explanation: string;
+  hint?: string;
+  bankItem?: QuestionBankItem;
+}
+
+export function convertBankToArenaQuestion(q: QuestionBankItem): QuestionItem {
+  let visualNum = 1;
+  let visualDenom = 4;
+  const match = q.correctAnswer.match(/(\d+)\/(\d+)/) || q.question.match(/(\d+)\/(\d+)/);
+  if (match) {
+    visualNum = parseInt(match[1], 10);
+    visualDenom = parseInt(match[2], 10);
+  }
+
+  let mappedVisual: 'circle' | 'square' | 'pizza' | 'chocolate' | 'apple' | 'text_only' = 'pizza';
+  if (q.visualType === 'pizza' || q.visualType === 'pizza_fraction') mappedVisual = 'pizza';
+  else if (q.visualType === 'fraction_group' || q.visualType === 'object_group') mappedVisual = 'apple';
+  else if (q.visualType === 'fraction_bar' || q.visualType === 'equivalent_bars') mappedVisual = 'chocolate';
+  else if (q.visualType === 'percentage_grid') mappedVisual = 'square';
+  else if (visualDenom <= 4) mappedVisual = 'circle';
+  else mappedVisual = 'square';
+
+  const correctIndex = q.options.indexOf(q.correctAnswer);
+
+  return {
+    id: q.questionId,
+    dskpCode: q.dskpCode,
+    questionText: q.question,
+    visualType: mappedVisual,
+    visualNumerator: Math.min(visualNum, visualDenom || 4),
+    visualDenominator: visualDenom || 4,
+    options: q.options.map((opt) => {
+      const optMatch = opt.match(/(\d+)\/(\d+)/);
+      return {
+        label: opt,
+        fractionNum: optMatch ? parseInt(optMatch[1], 10) : 1,
+        fractionDenom: optMatch ? parseInt(optMatch[2], 10) : 1,
+      };
+    }),
+    correctIndex: correctIndex >= 0 ? correctIndex : 0,
+    explanation: q.explanation,
+    hint: q.hint,
+    bankItem: q,
+  };
 }
 
 // Level 1 Questions: Lari & Pilih (Basic fraction identification with visual shapes)
@@ -322,8 +370,10 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
   const [showFinishModal, setShowFinishModal] = useState<boolean>(false);
   const [earnedStarsCurrentLevel, setEarnedStarsCurrentLevel] = useState<number>(3);
 
-  const activeQuestions =
-    activeLevelId === 1 ? LEVEL1_QUESTIONS : activeLevelId === 2 ? LEVEL2_QUESTIONS : LEVEL3_QUESTIONS;
+  // Dynamic Session Questions (15 randomized questions per challenge)
+  const [activeQuestions, setActiveQuestions] = useState<QuestionItem[]>(() =>
+    getSessionQuestions('arena', 1).map(convertBankToArenaQuestion)
+  );
 
   const currentQ = activeQuestions[currentQuestionIndex] || activeQuestions[0];
 
@@ -342,11 +392,11 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
   }, [bgmEnabled, soundEnabled]);
 
   // Core Movement & Answer Evaluation Function
-  const movePlayerToLane = (lane: 1 | 2 | 3) => {
+  const movePlayerToLane = (lane: number) => {
     if (selectedOptionIndex !== null) return; // Prevent double trigger during evaluation
 
-    const optionIdx = lane - 1; // Lane 1 -> Option 0, Lane 2 -> Option 1, Lane 3 -> Option 2
-    setCurrentLane(lane);
+    const optionIdx = lane - 1;
+    setCurrentLane(lane as 1 | 2 | 3);
     setSelectedOptionIndex(optionIdx);
 
     // Trigger Runner Action Animations
@@ -360,6 +410,21 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
     }
 
     const isCorrect = optionIdx === currentQ.correctIndex;
+
+    // Track question attempt with questionId and DSKP code
+    const student = getCurrentStudent();
+    trackQuestionAttempt({
+      questionId: currentQ.id,
+      gameId: 'arena',
+      challengeId: activeLevelId,
+      dskpCode: currentQ.dskpCode || '3.1.1',
+      studentName: student?.nama || 'Murid Tahun 3',
+      class: student?.kelas || 'Tahun 3',
+      answer: currentQ.options[optionIdx]?.label || '',
+      isCorrect,
+      attempts: mistakesCount + 1,
+      timestamp: Date.now(),
+    });
 
     if (isCorrect) {
       playSfx('chime', soundEnabled);
@@ -402,12 +467,14 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
     if (currentScreen !== 'gameplay' || showFinishModal) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' || e.key === 'a') {
+      if (e.key === 'ArrowLeft' || e.key === '1' || e.key === 'a') {
         movePlayerToLane(1);
-      } else if (e.key === 'ArrowUp' || e.key === ' ' || e.key === 'w') {
+      } else if (e.key === 'ArrowUp' || e.key === '2' || e.key === ' ' || e.key === 'w') {
         movePlayerToLane(2);
-      } else if (e.key === 'ArrowRight' || e.key === 'd') {
+      } else if (e.key === 'ArrowRight' || e.key === '3' || e.key === 'd') {
         movePlayerToLane(3);
+      } else if (e.key === 'ArrowDown' || e.key === '4' || e.key === 's') {
+        movePlayerToLane(4);
       }
     };
 
@@ -431,6 +498,9 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
   const handleStartLevel = (levelId: 1 | 2 | 3) => {
     playSfx('click', soundEnabled);
     setActiveLevelId(levelId);
+    // Fetch randomized session questions for the challenge (15 questions)
+    const questions = getSessionQuestions('arena', levelId).map(convertBankToArenaQuestion);
+    setActiveQuestions(questions);
     setCurrentQuestionIndex(0);
     setScorePoints(0);
     setMistakesCount(0);
@@ -941,7 +1011,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
           <div className="bg-white rounded-3xl p-5 border-3 border-emerald-400 shadow-lg relative overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <span className="bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1.5">
-                <span>🏃 SOALAN {currentQuestionIndex + 1} / {activeQuestions.length}</span>
+                <span>🏃 Soalan {currentQuestionIndex + 1}/{activeQuestions.length}</span>
               </span>
 
               <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
@@ -954,8 +1024,16 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
               <FormattedMathText text={currentQ.questionText} size="xl" />
             </h2>
 
-            {/* Visual Graphic Representation depending on visualType */}
-            {currentQ.visualType !== 'text_only' && (
+            {/* Dynamic Visual Mathematical Representation */}
+            {currentQ.bankItem ? (
+              <div className="flex justify-center my-3">
+                <DynamicMathVisual
+                  question={currentQ.bankItem}
+                  visualType={currentQ.bankItem.visualType}
+                  visualData={currentQ.bankItem.visualData}
+                />
+              </div>
+            ) : currentQ.visualType !== 'text_only' ? (
               <div className="flex justify-center my-3">
                 <div className="bg-[#FFF8E8] p-4 rounded-2xl border-2 border-amber-300 shadow-inner flex items-center justify-center min-w-[200px]">
                   {currentQ.visualType === 'pizza' && (
@@ -1060,7 +1138,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
                   )}
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Feedback Message */}
             {feedback && (
@@ -1126,7 +1204,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
 
                     {/* Helper label */}
                     <span className="text-[10px] text-gray-400 font-sans mt-0.5">
-                      {idx === 0 ? 'Laluan 1 [←]' : idx === 1 ? 'Laluan 2 [↑]' : 'Laluan 3 [→]'}
+                      {idx === 0 ? 'Laluan 1 [←]' : idx === 1 ? 'Laluan 2 [↑]' : idx === 2 ? 'Laluan 3 [→]' : 'Laluan 4 [↓]'}
                     </span>
                   </motion.button>
                 );
@@ -1136,9 +1214,14 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
             {/* RUNNER AVATAR ANIMATION TRACK */}
             <div className="relative w-full h-20 bg-emerald-700 rounded-2xl border-2 border-emerald-800 shadow-inner overflow-hidden">
               
-              {/* 3 Track Lane Columns with Active Highlights */}
-              <div className="absolute inset-0 grid grid-cols-3 pointer-events-none z-0">
-                {[1, 2, 3].map((laneNum) => {
+              {/* Dynamic Track Lane Columns with Active Highlights */}
+              <div
+                className={`absolute inset-0 grid pointer-events-none z-0 ${
+                  currentQ.options.length === 4 ? 'grid-cols-4' : 'grid-cols-3'
+                }`}
+              >
+                {currentQ.options.map((_, idx) => {
+                  const laneNum = idx + 1;
                   const isActive = currentLane === laneNum;
                   return (
                     <div
@@ -1164,7 +1247,7 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
               {/* Animated Runner Character */}
               <motion.div
                 animate={{
-                  left: currentLane === 1 ? '16.66%' : currentLane === 3 ? '83.33%' : '50%',
+                  left: `${((currentLane - 0.5) / currentQ.options.length) * 100}%`,
                   y: isJumping ? [-5, -35, 0] : [0, -3, 0],
                   scale: isSpeedBoost ? [1, 1.25, 1] : 1,
                 }}
@@ -1185,39 +1268,36 @@ export const ArenaPecahanGameplay: React.FC<ArenaPecahanGameplayProps> = ({
             </div>
 
             {/* Mobile / Touch Action Controls */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-3">
-              <button
-                onClick={() => movePlayerToLane(1)}
-                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
-                  currentLane === 1
-                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
-                    : 'bg-[#D98262] hover:bg-[#c87253] text-white border-[#9a4b2e]'
-                }`}
-              >
-                <span>⬅️ LALUAN 1</span>
-              </button>
-
-              <button
-                onClick={() => movePlayerToLane(2)}
-                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
-                  currentLane === 2
-                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
-                    : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-700'
-                }`}
-              >
-                <span>{activeLevelId === 2 ? '🦘 LOMPAT TENGAH' : '⬆️ LALUAN 2'}</span>
-              </button>
-
-              <button
-                onClick={() => movePlayerToLane(3)}
-                className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
-                  currentLane === 3
-                    ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
-                    : 'bg-[#D98262] hover:bg-[#c87253] text-white border-[#9a4b2e]'
-                }`}
-              >
-                <span>➡️ LALUAN 3</span>
-              </button>
+            <div
+              className={`grid ${
+                currentQ.options.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'
+              } gap-2 sm:gap-3 mt-3`}
+            >
+              {currentQ.options.map((_, idx) => {
+                const laneNum = idx + 1;
+                const isCurrentActive = currentLane === laneNum;
+                const arrowIcon =
+                  laneNum === 1 ? '⬅️' : laneNum === 2 ? '⬆️' : laneNum === 3 ? '➡️' : '⬇️';
+                return (
+                  <button
+                    key={laneNum}
+                    onClick={() => movePlayerToLane(laneNum)}
+                    className={`py-3.5 rounded-2xl font-rounded font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md border-b-4 cursor-pointer transition-all ${
+                      isCurrentActive
+                        ? 'bg-emerald-600 text-white border-emerald-800 ring-2 ring-emerald-300 scale-[1.02]'
+                        : laneNum === 2 && activeLevelId === 2
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white border-amber-700'
+                        : 'bg-[#D98262] hover:bg-[#c87253] text-white border-[#9a4b2e]'
+                    }`}
+                  >
+                    <span>
+                      {laneNum === 2 && activeLevelId === 2
+                        ? '🦘 LOMPAT TENGAH'
+                        : `${arrowIcon} LALUAN ${laneNum}`}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </main>

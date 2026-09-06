@@ -1,0 +1,17 @@
+{
+  "name": "Dapur Pecahan Chef Alya",
+  "short_name": "DapurPecahan",
+  "description": "Simulasi pembelajaran pecahan Matematik Tahun 3 (DSKP 3.1) bertema dapur dan memasak bersama Chef Alya.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#5A5A40",
+  "icons": [
+    {
+      "src": "/chef_alya_avatar_1785314793438.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

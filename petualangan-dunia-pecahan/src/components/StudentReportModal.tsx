@@ -100,7 +100,7 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
                 📄 Laporan Analisis AI Pembelajaran
               </h2>
               <p className="text-xs text-gray-600 font-semibold">
-                Laporan komprehensif DSKP KSSR Matematik Tahun 4
+                Laporan komprehensif DSKP KSSR Matematik Tahun 3
               </p>
             </div>
           </div>
@@ -151,15 +151,7 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
               </span>
               <h1 className="text-2xl font-black text-[#3c4233] mt-1">{analytics.studentName}</h1>
               <p className="text-xs text-gray-500 font-bold">
-                {student.studentCategory === 'IPG' ? (
-                  <>
-                    Program: <span className="text-[#3c4233]">{student.program || 'PPISMP'}</span> • Semester: <span className="text-[#3c4233]">{student.semester || 'Semester 2'}</span> • Opsyen: <span className="text-[#3c4233]">{student.opsyen || student.kumpulan || student.kelas}</span>
-                  </>
-                ) : (
-                  <>
-                    Kelas: <span className="text-[#3c4233]">{analytics.studentClass}</span>
-                  </>
-                )}
+                Kelas: <span className="text-[#3c4233]">{analytics.studentClass}</span>
                 {' • '}Tarikh Analisis: {analytics.dateAnalyzed}
               </p>
             </div>
@@ -209,7 +201,7 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
               <div className="p-4 rounded-2xl bg-white border border-[#3c4233]/15 shadow-sm space-y-3">
                 <h3 className="font-serif-title font-bold text-sm text-[#3c4233] flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4 text-[#3c4233]" />
-                  <span>Analisis Penguasaan Kemahiran DSKP 2.1 (Matematik Tahun 4)</span>
+                  <span>Analisis Penguasaan Kemahiran DSKP 3.1 (Matematik Tahun 3)</span>
                 </h3>
 
                 <div className="space-y-2.5 text-xs font-bold">
@@ -373,7 +365,7 @@ export const StudentReportModal: React.FC<StudentReportModalProps> = ({
         {/* Footer */}
         <div className="pt-3 border-t-2 border-[#3c4233]/20 flex justify-between items-center shrink-0 no-print">
           <p className="text-xs text-gray-500 font-semibold">
-            Standard Kurikulum KSSR DSKP 2.1 • Wira Pecahan AI Analytics
+            Standard Kurikulum KSSR DSKP 3.1 • Kembara Dunia Pecahan AI Analytics
           </p>
 
           <button

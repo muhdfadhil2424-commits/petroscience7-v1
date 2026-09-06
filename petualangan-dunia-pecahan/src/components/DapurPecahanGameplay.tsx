@@ -21,6 +21,10 @@ import {
 import { playSfx, togglePizzaBgm } from '../utils/audio';
 import confetti from 'canvas-confetti';
 import { FormattedMathText } from './MathFraction';
+import DynamicMathVisual from './DynamicMathVisual';
+import { getSessionQuestions, trackQuestionAttempt } from '../utils/sessionQuestionManager';
+import { getCurrentStudent } from '../utils/studentSessionManager';
+import { QuestionBankItem } from '../data/questionBank/types';
 
 // Assets
 import bannerDapur from '../assets/images/banner_dapur_pecahan_1785426792370.jpg';
@@ -57,16 +61,84 @@ const DEFAULT_DAPUR_STORAGE: DapurStorageData = {
 // Question type for Cooking Challenges
 export interface CookingChallenge {
   id: string;
+  dskpCode?: string;
   ingredientName: string;
   ingredientIcon: string;
   chefInstruction: string;
   targetFractionText: string;
   targetNumerator: number;
   targetDenominator: number;
-  visualType: 'measuring_cup' | 'pizza_slice' | 'chocolate' | 'apple' | 'text_prompt';
+  visualType: 'measuring_cup' | 'pizza_slice' | 'chocolate' | 'apple' | 'percentage_grid' | 'text_prompt';
   options: { label: string; num: number; denom: number }[];
   correctIndex: number;
   explanation: string;
+  hint?: string;
+  bankItem?: QuestionBankItem;
+}
+
+/**
+ * Converts a QuestionBankItem into a CookingChallenge object
+ */
+export function convertBankToCookingChallenge(q: QuestionBankItem): CookingChallenge {
+  let targetNum = 1;
+  let targetDenom = 4;
+  const match = q.correctAnswer.match(/(\d+)\/(\d+)/) || q.question.match(/(\d+)\/(\d+)/);
+  if (match) {
+    targetNum = parseInt(match[1], 10);
+    targetDenom = parseInt(match[2], 10);
+  }
+
+  let mappedVisual: 'measuring_cup' | 'pizza_slice' | 'chocolate' | 'apple' | 'percentage_grid' | 'text_prompt' = 'measuring_cup';
+  let icon = '🥣';
+  let ingredientName = 'Bahan Masakan Chef';
+
+  if (q.visualType === 'pizza' || q.visualType === 'pizza_fraction') {
+    mappedVisual = 'pizza_slice';
+    icon = '🍕';
+    ingredientName = 'Pesanan Pizza Istimewa';
+  } else if (q.visualType === 'fraction_bar' || q.visualType === 'equivalent_bars' || q.visualType === 'operation_bars') {
+    mappedVisual = 'chocolate';
+    icon = '🍫';
+    ingredientName = 'Coklat Masakan';
+  } else if (q.visualType === 'percentage_grid') {
+    mappedVisual = 'percentage_grid';
+    icon = '🎂';
+    ingredientName = 'Kek Peratus & Pecahan';
+  } else if (q.visualType === 'fraction_group' || q.visualType === 'object_group') {
+    mappedVisual = 'apple';
+    icon = '🍎';
+    ingredientName = 'Buah-buahan Segar';
+  } else {
+    mappedVisual = 'measuring_cup';
+    icon = '🥛';
+    ingredientName = 'Sukatan Cecair & Susu';
+  }
+
+  const correctIndex = q.options.indexOf(q.correctAnswer);
+
+  return {
+    id: q.questionId,
+    dskpCode: q.dskpCode,
+    ingredientName,
+    ingredientIcon: icon,
+    chefInstruction: `Chef Alya: "${q.question}"`,
+    targetFractionText: q.correctAnswer,
+    targetNumerator: targetNum,
+    targetDenominator: targetDenom,
+    visualType: mappedVisual,
+    options: q.options.map((opt) => {
+      const optMatch = opt.match(/(\d+)\/(\d+)/);
+      return {
+        label: opt,
+        num: optMatch ? parseInt(optMatch[1], 10) : 1,
+        denom: optMatch ? parseInt(optMatch[2], 10) : 1,
+      };
+    }),
+    correctIndex: correctIndex >= 0 ? correctIndex : 0,
+    explanation: q.explanation,
+    hint: q.hint,
+    bankItem: q,
+  };
 }
 
 // Pool of Peringkat 1 Challenges (Sukat Bahan)
@@ -639,16 +711,18 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
   const [p3AddedIngredients, setP3AddedIngredients] = useState<string[]>([]);
   const [p3CookingPhase, setP3CookingPhase] = useState<'measuring' | 'ready_to_cook' | 'mixing' | 'baking' | 'cooked'>('measuring');
   const [bakingProgress, setBakingProgress] = useState<number>(0);
+  const [showMinigameMode, setShowMinigameMode] = useState<boolean>(false);
 
-  // Active Challenges array
-  const activeChallenges =
-    activeLevelId === 1 ? PERINGKAT1_CHALLENGES : activeLevelId === 2 ? PERINGKAT2_CHALLENGES : PERINGKAT3_CHALLENGES;
+  // Dynamic Session Questions (15 randomized questions per challenge)
+  const [activeChallenges, setActiveChallenges] = useState<CookingChallenge[]>(() =>
+    getSessionQuestions('dapur', 1).map(convertBankToCookingChallenge)
+  );
 
   const currentC = activeChallenges[currentChallengeIndex] || activeChallenges[0];
 
   // Sync liquid fill percent when challenge changes
   useEffect(() => {
-    if (currentC && activeLevelId !== 2) {
+    if (currentC) {
       setSelectedOptionIndex(null);
       setIsPouring(false);
       const instr = currentC.chefInstruction.toLowerCase();
@@ -690,6 +764,9 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
   const handleStartLevel = (levelId: 1 | 2 | 3) => {
     playSfx('click', soundEnabled);
     setActiveLevelId(levelId);
+    // Fetch randomized session questions for the challenge (15 questions)
+    const challenges = getSessionQuestions('dapur', levelId).map(convertBankToCookingChallenge);
+    setActiveChallenges(challenges);
     setCurrentChallengeIndex(0);
     setLives(3);
     setSelectedOptionIndex(null);
@@ -697,6 +774,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
     setIsPouring(false);
     setShowGameOverModal(false);
     setShowFinishModal(false);
+    setShowMinigameMode(false);
     setCurrentScreen('gameplay');
 
     if (levelId === 3) {
@@ -706,7 +784,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
       setP3CookingPhase('measuring');
       setBakingProgress(0);
       setFeedback({
-        text: 'Cabaran Chef: Pilih hidangan resepi dan sukat bahan-bahan dengan cawan penyukat!',
+        text: 'Cabaran Chef: Sila teliti soalan pecahan dan pilih sukatan yang tepat!',
         type: 'info',
       });
     } else if (levelId === 2) {
@@ -719,7 +797,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
       setHasAddedP2(false);
       setBowlFillLevel(0);
       setFeedback({
-        text: 'Cabaran 1: Bahagikan pizza kepada 4 bahagian sama besar!',
+        text: 'Cabaran Pizza: Sila pilih pecahan yang diminta oleh Chef Alya!',
         type: 'info',
       });
     } else {
@@ -1023,6 +1101,21 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
     setSelectedOptionIndex(optionIdx);
     const chosen = currentC.options[optionIdx];
     const isCorrect = optionIdx === currentC.correctIndex;
+
+    // Track attempt with questionId, dskpCode, isCorrect, etc.
+    const student = getCurrentStudent();
+    trackQuestionAttempt({
+      questionId: currentC.id,
+      gameId: 'dapur',
+      challengeId: activeLevelId,
+      dskpCode: currentC.dskpCode || '3.1.1',
+      studentName: student?.nama || 'Murid Tahun 3',
+      class: student?.kelas || 'Tahun 3',
+      answer: currentC.options[optionIdx]?.label || '',
+      isCorrect,
+      attempts: 3 - lives + 1,
+      timestamp: Date.now(),
+    });
 
     // Calculate percentage fill based on chosen fraction
     const fillPct = Math.round((chosen.num / chosen.denom) * 100);
@@ -1496,7 +1589,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
         <main className="max-w-6xl mx-auto w-full px-4 py-4 sm:py-6 pb-32 flex-1 flex flex-col gap-5">
           
           {/* PERINGKAT 3 INTERACTIVE CHEF CHALLENGE */}
-          {activeLevelId === 3 ? (
+          {showMinigameMode && activeLevelId === 3 ? (
             <div className="space-y-5">
               {/* LEVEL 3 HUD BAR */}
               <div className="bg-white rounded-3xl p-4 border-3 border-amber-400 shadow-md flex flex-wrap items-center justify-between gap-3">
@@ -1507,6 +1600,12 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                   <span className="text-xs font-bold text-[#D98262]">
                     {CHEF_RECIPES[p3RecipeIndex].icon} {CHEF_RECIPES[p3RecipeIndex].name}
                   </span>
+                  <button
+                    onClick={() => setShowMinigameMode(false)}
+                    className="ml-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs cursor-pointer"
+                  >
+                    ⬅️ Kembali ke Soalan ({currentChallengeIndex + 1}/{activeChallenges.length})
+                  </button>
                 </div>
 
                 {/* Lives Counter */}
@@ -1789,7 +1888,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                 </div>
               )}
             </div>
-          ) : activeLevelId === 2 ? (
+          ) : showMinigameMode && activeLevelId === 2 ? (
             <div className="space-y-5">
               {/* LEVEL 2 HUD BAR */}
               <div className="bg-white rounded-3xl p-4 border-3 border-amber-400 shadow-md flex flex-wrap items-center justify-between gap-3">
@@ -1803,6 +1902,12 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                     {p2Step === 2 && '🔢 Pecahan Setara'}
                     {p2Step === 3 && '➕ Tambah Pecahan'}
                   </span>
+                  <button
+                    onClick={() => setShowMinigameMode(false)}
+                    className="ml-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs cursor-pointer"
+                  >
+                    ⬅️ Kembali ke Soalan ({currentChallengeIndex + 1}/{activeChallenges.length})
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -2129,11 +2234,27 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
               <div className="bg-white rounded-3xl p-4 border-3 border-[#F6C7A8] shadow-md flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <span className="bg-amber-100 text-amber-900 text-xs font-extrabold px-3 py-1 rounded-full border border-amber-300 flex items-center gap-1.5">
-                    <span>🥣 CABARAN {currentChallengeIndex + 1} / {activeChallenges.length}</span>
+                    <span>🥣 Soalan {currentChallengeIndex + 1}/{activeChallenges.length}</span>
                   </span>
                   <span className="text-xs font-bold text-[#D98262]">
                     {currentC.ingredientIcon} {currentC.ingredientName}
                   </span>
+                  {activeLevelId === 2 && (
+                    <button
+                      onClick={() => setShowMinigameMode(true)}
+                      className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      🍕 Mod Potong Pizza
+                    </button>
+                  )}
+                  {activeLevelId === 3 && (
+                    <button
+                      onClick={() => setShowMinigameMode(true)}
+                      className="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      🍰 Mod Campur Resipi
+                    </button>
+                  )}
                 </div>
 
                 {/* LIVES COUNTER (3 HEARTS) */}
@@ -2177,135 +2298,144 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                 
                 {/* Visual Display Graphic (Visual Types) */}
                 <div className="flex flex-col items-center justify-center">
-                  
-                  {/* MEASURING CUP VISUAL (3D ANIMATED CUP WITH GLASS HANDLE & CLEAR TICK MARKS) */}
-                  {(currentC.visualType === 'measuring_cup' || currentC.visualType === 'text_prompt') && (
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="relative flex items-center justify-center">
-                        
-                        {/* Glass Handle on Left */}
-                        <div className="w-6 h-36 border-4 border-r-0 border-amber-800/80 rounded-l-2xl bg-amber-200/40 -mr-1 z-0 shadow-sm" />
+                  {currentC.bankItem ? (
+                    <DynamicMathVisual
+                      question={currentC.bankItem}
+                      visualType={currentC.bankItem.visualType}
+                      visualData={currentC.bankItem.visualData}
+                    />
+                  ) : (
+                    <>
+                      {/* MEASURING CUP VISUAL (3D ANIMATED CUP WITH GLASS HANDLE & CLEAR TICK MARKS) */}
+                      {(currentC.visualType === 'measuring_cup' || currentC.visualType === 'text_prompt') && (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="relative flex items-center justify-center">
+                            
+                            {/* Glass Handle on Left */}
+                            <div className="w-6 h-36 border-4 border-r-0 border-amber-800/80 rounded-l-2xl bg-amber-200/40 -mr-1 z-0 shadow-sm" />
 
-                        {/* Glass Cup Body */}
-                        <div className="relative w-48 h-64 bg-white/80 backdrop-blur-md rounded-b-3xl rounded-t-lg border-4 border-amber-800 shadow-2xl flex flex-col justify-end overflow-hidden z-10">
-                          
-                          {/* Top Rim of Cup */}
-                          <div className="absolute top-0 inset-x-0 h-4 bg-amber-700/20 border-b border-amber-800/50 z-30" />
+                            {/* Glass Cup Body */}
+                            <div className="relative w-48 h-64 bg-white/80 backdrop-blur-md rounded-b-3xl rounded-t-lg border-4 border-amber-800 shadow-2xl flex flex-col justify-end overflow-hidden z-10">
+                              
+                              {/* Top Rim of Cup */}
+                              <div className="absolute top-0 inset-x-0 h-4 bg-amber-700/20 border-b border-amber-800/50 z-30" />
 
-                          {/* 4/4 (100% Penuh) Line */}
-                          <div className="absolute inset-x-0 top-0 h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
-                            <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              4/4 (100%)
-                            </span>
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded">Penuh</span>
+                              {/* 4/4 (100% Penuh) Line */}
+                              <div className="absolute inset-x-0 top-0 h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
+                                <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
+                                  4/4 (100%)
+                                </span>
+                                <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded">Penuh</span>
+                              </div>
+
+                              {/* 3/4 (75%) Line */}
+                              <div className="absolute inset-x-0 top-[25%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
+                                <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
+                                  <FormattedMathText text="3/4" size="xs" /> (75%)
+                                </span>
+                              </div>
+
+                              {/* 2/4 (50%) Line */}
+                              <div className="absolute inset-x-0 top-[50%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
+                                <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
+                                  <FormattedMathText text="2/4" size="xs" /> (50%)
+                                </span>
+                                <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded"><FormattedMathText text="1/2" size="xs" /></span>
+                              </div>
+
+                              {/* 1/4 (25%) Line */}
+                              <div className="absolute inset-x-0 top-[75%] h-[25%] z-20 flex items-start justify-between px-2 pt-1">
+                                <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
+                                  <FormattedMathText text="1/4" size="xs" /> (25%)
+                                </span>
+                              </div>
+
+                              {/* DYNAMIC LIQUID FILLING */}
+                              <motion.div
+                                animate={{ height: `${liquidFillPercent}%` }}
+                                transition={{ duration: 0.6, ease: 'easeOut' }}
+                                className="w-full bg-gradient-to-t from-amber-600 via-amber-400 to-amber-300 relative z-10 border-t-2 border-amber-100 overflow-hidden shadow-inner"
+                              >
+                                {/* Wave Surface Animation */}
+                                <div className="absolute top-0 inset-x-0 h-2 bg-white/50 animate-pulse" />
+                              </motion.div>
+                            </div>
                           </div>
 
-                          {/* 3/4 (75%) Line */}
-                          <div className="absolute inset-x-0 top-[25%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
-                            <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              <FormattedMathText text="3/4" size="xs" /> (75%)
-                            </span>
+                          {/* Cup Base Badge */}
+                          <div className="text-xs font-bold text-amber-950 bg-amber-200/90 px-3 py-1 rounded-full border border-amber-400 shadow-sm">
+                            🥛 Cawan Penyukat Pecahan ({liquidFillPercent}%)
                           </div>
-
-                          {/* 2/4 (50%) Line */}
-                          <div className="absolute inset-x-0 top-[50%] h-[25%] border-b border-dashed border-amber-800/60 z-20 flex items-center justify-between px-2">
-                            <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              <FormattedMathText text="2/4" size="xs" /> (50%)
-                            </span>
-                            <span className="text-[10px] font-bold text-amber-900 bg-amber-200/60 px-1 rounded"><FormattedMathText text="1/2" size="xs" /></span>
-                          </div>
-
-                          {/* 1/4 (25%) Line */}
-                          <div className="absolute inset-x-0 top-[75%] h-[25%] z-20 flex items-start justify-between px-2 pt-1">
-                            <span className="text-[10px] font-extrabold text-amber-950 bg-amber-100/90 px-1.5 py-0.5 rounded border border-amber-300 shadow-xs">
-                              <FormattedMathText text="1/4" size="xs" /> (25%)
-                            </span>
-                          </div>
-
-                          {/* DYNAMIC LIQUID FILLING */}
-                          <motion.div
-                            animate={{ height: `${liquidFillPercent}%` }}
-                            transition={{ duration: 0.6, ease: 'easeOut' }}
-                            className="w-full bg-gradient-to-t from-amber-600 via-amber-400 to-amber-300 relative z-10 border-t-2 border-amber-100 overflow-hidden shadow-inner"
-                          >
-                            {/* Wave Surface Animation */}
-                            <div className="absolute top-0 inset-x-0 h-2 bg-white/50 animate-pulse" />
-                          </motion.div>
                         </div>
-                      </div>
+                      )}
 
-                      {/* Cup Base Badge */}
-                      <div className="text-xs font-bold text-amber-950 bg-amber-200/90 px-3 py-1 rounded-full border border-amber-400 shadow-sm">
-                        🥛 Cawan Penyukat Pecahan ({liquidFillPercent}%)
-                      </div>
-                    </div>
-                  )}
-
-                  {/* CHOCOLATE BAR VISUAL */}
-                  {currentC.visualType === 'chocolate' && (
-                    <div className="grid grid-cols-3 gap-1.5 bg-amber-950 p-3 rounded-2xl shadow-xl border-3 border-amber-900">
-                      {Array.from({ length: currentC.targetDenominator }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center text-lg ${
-                            i < currentC.targetNumerator
-                              ? 'bg-amber-400 border-amber-200 text-amber-950 shadow-inner'
-                              : 'bg-amber-100/40 border-amber-300 text-amber-900/40'
-                          }`}
-                        >
-                          🍫
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* APPLE SLICES VISUAL */}
-                  {currentC.visualType === 'apple' && (
-                    <div className="flex items-center gap-2 bg-white p-4 rounded-2xl border-2 border-red-300 shadow-md">
-                      {Array.from({ length: currentC.targetDenominator }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-12 h-14 rounded-xl border-2 flex items-center justify-center text-2xl ${
-                            i < currentC.targetNumerator
-                              ? 'bg-red-100 border-red-400'
-                              : 'bg-gray-100 border-gray-300 opacity-30'
-                          }`}
-                        >
-                          🍎
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* PIZZA SLICE VISUAL */}
-                  {currentC.visualType === 'pizza_slice' && (
-                    <div className="relative w-40 h-40">
-                      <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-md">
-                        <circle cx="100" cy="100" r="90" fill="#D98262" stroke="#a35032" strokeWidth="4" />
-                        <circle cx="100" cy="100" r="80" fill="#E54B4B" stroke="#b82a2a" strokeWidth="2" />
-                        {Array.from({ length: currentC.targetDenominator }).map((_, i) => {
-                          const angle = (360 / currentC.targetDenominator) * i - 90;
-                          const nextAngle = (360 / currentC.targetDenominator) * (i + 1) - 90;
-                          const rad1 = (angle * Math.PI) / 180;
-                          const rad2 = (nextAngle * Math.PI) / 180;
-                          const x1 = 100 + 75 * Math.cos(rad1);
-                          const y1 = 100 + 75 * Math.sin(rad1);
-                          const x2 = 100 + 75 * Math.cos(rad2);
-                          const y2 = 100 + 75 * Math.sin(rad2);
-                          const path = `M 100 100 L ${x1} ${y1} A 75 75 0 0 1 ${x2} ${y2} Z`;
-                          const isHighlighted = i < currentC.targetNumerator;
-                          return (
-                            <path
+                      {/* CHOCOLATE BAR VISUAL */}
+                      {currentC.visualType === 'chocolate' && (
+                        <div className="grid grid-cols-3 gap-1.5 bg-amber-950 p-3 rounded-2xl shadow-xl border-3 border-amber-900">
+                          {Array.from({ length: currentC.targetDenominator }).map((_, i) => (
+                            <div
                               key={i}
-                              d={path}
-                              fill={isHighlighted ? '#F4C95D' : '#FFF8E8'}
-                              stroke="#4A3728"
-                              strokeWidth="2"
-                            />
-                          );
-                        })}
-                      </svg>
-                    </div>
+                              className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center text-lg ${
+                                i < currentC.targetNumerator
+                                  ? 'bg-amber-400 border-amber-200 text-amber-950 shadow-inner'
+                                  : 'bg-amber-100/40 border-amber-300 text-amber-900/40'
+                              }`}
+                            >
+                              🍫
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* APPLE SLICES VISUAL */}
+                      {currentC.visualType === 'apple' && (
+                        <div className="flex items-center gap-2 bg-white p-4 rounded-2xl border-2 border-red-300 shadow-md">
+                          {Array.from({ length: currentC.targetDenominator }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={`w-12 h-14 rounded-xl border-2 flex items-center justify-center text-2xl ${
+                                i < currentC.targetNumerator
+                                  ? 'bg-red-100 border-red-400'
+                                  : 'bg-gray-100 border-gray-300 opacity-30'
+                              }`}
+                            >
+                              🍎
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* PIZZA SLICE VISUAL */}
+                      {currentC.visualType === 'pizza_slice' && (
+                        <div className="relative w-40 h-40">
+                          <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-md">
+                            <circle cx="100" cy="100" r="90" fill="#D98262" stroke="#a35032" strokeWidth="4" />
+                            <circle cx="100" cy="100" r="80" fill="#E54B4B" stroke="#b82a2a" strokeWidth="2" />
+                            {Array.from({ length: currentC.targetDenominator }).map((_, i) => {
+                              const angle = (360 / currentC.targetDenominator) * i - 90;
+                              const nextAngle = (360 / currentC.targetDenominator) * (i + 1) - 90;
+                              const rad1 = (angle * Math.PI) / 180;
+                              const rad2 = (nextAngle * Math.PI) / 180;
+                              const x1 = 100 + 75 * Math.cos(rad1);
+                              const y1 = 100 + 75 * Math.sin(rad1);
+                              const x2 = 100 + 75 * Math.cos(rad2);
+                              const y2 = 100 + 75 * Math.sin(rad2);
+                              const path = `M 100 100 L ${x1} ${y1} A 75 75 0 0 1 ${x2} ${y2} Z`;
+                              const isHighlighted = i < currentC.targetNumerator;
+                              return (
+                                <path
+                                  key={i}
+                                  d={path}
+                                  fill={isHighlighted ? '#F4C95D' : '#FFF8E8'}
+                                  stroke="#4A3728"
+                                  strokeWidth="2"
+                                />
+                              );
+                            })}
+                          </svg>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -2350,7 +2480,11 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                   PILIH SUKATAN UNTUK DIMASUKKAN KE DALAM MANGKUK:
                 </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div
+                  className={`grid ${
+                    currentC.options.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-1 sm:grid-cols-3'
+                  } gap-3`}
+                >
                   {currentC.options.map((opt, idx) => {
                     const isSelected = selectedOptionIndex === idx;
                     const isCorrect = idx === currentC.correctIndex;
@@ -2369,7 +2503,7 @@ export const DapurPecahanGameplay: React.FC<DapurPecahanGameplayProps> = ({
                             : 'bg-white text-[#4A3728] border-amber-300 hover:bg-amber-50'
                         }`}
                       >
-                        <span>🥛</span>
+                        <span>{currentC.ingredientIcon || '🥣'}</span>
                         <FormattedMathText text={opt.label} size="lg" />
                       </motion.button>
                     );

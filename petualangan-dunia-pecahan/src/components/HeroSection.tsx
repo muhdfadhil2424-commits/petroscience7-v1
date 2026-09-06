@@ -10,12 +10,14 @@ interface HeroSectionProps {
   soundEnabled: boolean;
   onStartAdventure: () => void;
   onOpenHowToPlay: () => void;
+  onOpenNotaPecahan?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   soundEnabled,
   onStartAdventure,
   onOpenHowToPlay,
+  onOpenNotaPecahan,
 }) => {
   const handleMainCtaClick = () => {
     playSfx('fanfare', soundEnabled);
@@ -88,6 +90,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   <span>MULA BERMAIN</span>
                 </motion.button>
 
+                {onOpenNotaPecahan && (
+                  <motion.button
+                    id="btn-hero-nota-pecahan"
+                    data-alya="nota-pecahan"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      playSfx('click', soundEnabled);
+                      onOpenNotaPecahan();
+                    }}
+                    className="w-full sm:w-auto bg-[#F4C95D] hover:bg-[#e6bb4c] text-[#4A3728] px-6 py-3.5 rounded-2xl text-base sm:text-lg font-rounded font-bold shadow-md border-b-4 border-[#c99a2c] active:border-b-0 active:translate-y-1 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <BookOpen className="w-5 h-5 text-[#4A3728]" />
+                    <span>📚 NOTA PECAHAN</span>
+                  </motion.button>
+                )}
+
                 <motion.button
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -95,9 +114,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                     playSfx('click', soundEnabled);
                     onOpenHowToPlay();
                   }}
-                  className="w-full sm:w-auto bg-[#252a1e]/90 hover:bg-[#20241a] text-amber-200 px-6 py-3.5 rounded-2xl text-base sm:text-lg font-rounded font-bold border border-white/20 shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  className="w-full sm:w-auto bg-[#252a1e]/90 hover:bg-[#20241a] text-amber-200 px-5 py-3.5 rounded-2xl text-base sm:text-lg font-rounded font-bold border border-white/20 shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all"
                 >
-                  <BookOpen className="w-5 h-5 text-amber-300" />
                   <span>CARA BERMAIN</span>
                 </motion.button>
               </div>
