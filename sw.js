@@ -1,42 +1,52 @@
-const CACHE_NAME = 'edusense-offline-v1';
-const ASSETS_TO_CACHE = [
-  './',
-  './index.html',
-  './js/tf.min.js',
-  './js/teachablemachine-image.min.js',
-  './js/posenet.min.js',
-  './js/teachablemachine-pose.min.js',
-  './models/emotion/model.json',
-  './models/emotion/metadata.json',
-  './models/emotion/weights.bin',
-  './models/pose/model.json',
-  './models/pose/metadata.json',
-  './models/pose/weights.bin'
-];
+const CACHE_NAME = 'edusense-v2';
 
-// Phase Install: Simpan semua fail ke dalam Cache Browser
+// Fasa Install
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
-// Phase Activate
+// Fasa Activate
 self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
-// Phase Fetch: Ambil fail dari Cache dahulu jika tiada Internet (Offline)
+// Fasa Fetch: Simpan ke Cache secara automatik sewaktu ONLINE
 self.addEventListener('fetch', (event) => {
+  // Hanya simpan request GET (panggilan fail)
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        return cachedResponse;
+        return cachedResponse; // Guna fail dari cache jika offline
       }
-      return fetch(event.request);
+
+      return fetch(event.request).then((response) => {
+        // Jika response sah, simpan satu salinan ke dalam cache
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
+        }
+
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return response;
+      }).catch(() => {
+        // Jika internet terputus dan tiada cache, elakkan crash
+        console.log('Offline: Fail tidak dijumpai dalam cache', event.request.url);
+      });
     })
   );
 });
