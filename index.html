@@ -13,9 +13,9 @@
     
     <!-- TensorFlow & Teachable Machine Libraries (MODUL LOKAL UNTUK OFFLINE) -->
     <script src="./js/tf.min.js"></script>
-<script src="./js/teachablemachine-image.min.js"></script>
-<script src="./js/posenet.min.js"></script>
-<script src="./js/teachablemachine-pose.min.js"></script>
+    <script src="./js/teachablemachine-image.min.js"></script>
+    <script src="./js/posenet.min.js"></script>
+    <script src="./js/teachablemachine-pose.min.js"></script>
     <style>
         :root {
             --bg-cream: #faf8f2;
@@ -1532,7 +1532,7 @@
                             <button class="btn-game-action" onclick="reloadGameIframe()">
                                 <i class="fa-solid fa-rotate-right"></i> Muat Semula Game
                             </button>
-                            <a id="m4-fullscreen-btn" href="http://localhost:3000/" target="_blank" class="btn-game-action">
+                            <a id="m4-fullscreen-btn" href="./dunia-pecahan/index.html" target="_blank" class="btn-game-action">
                                 <i class="fa-solid fa-up-right-from-square"></i> Skrin Penuh
                             </a>
                         </div>
@@ -1544,7 +1544,7 @@
                             <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.2rem; color: var(--accent-gold);"></i>
                             <span>Memuatkan Petualangan Dunia Pecahan...</span>
                         </div>
-                        <iframe id="m4-iframe" src="http://localhost:3000/" class="iframe-container" scrolling="no" onload="hideGameLoader()" style="display: block; width: 100%; min-height: 2400px; border: none; border-radius: 28px; position: relative; z-index: 2;"></iframe>
+                        <iframe id="m4-iframe" src="./dunia-pecahan/index.html" class="iframe-container" scrolling="no" onload="hideGameLoader()" style="display: block; width: 100%; min-height: 2400px; border: none; border-radius: 28px; position: relative; z-index: 2;"></iframe>
                     </div>
                 </div>
             </div>
@@ -1597,8 +1597,8 @@
     </div>
 
     <script>
-        // URL UNTUK APLIKASI PETUALANGAN DUNIA PECAHAN (SLOT 4)
-        const SLOT4_URL = "http://localhost:3000/";
+        // URL RELATIVE UNTUK APLIKASI PETUALANGAN DUNIA PECAHAN (SLOT 4)
+        const SLOT4_URL = "./dunia-pecahan/index.html";
 
         function setSlot4URL() {
             const iframe = document.getElementById('m4-iframe');
@@ -1878,13 +1878,13 @@
                 const modelURL = URL + "model.json";
                 const metadataURL = URL + "metadata.json";
 
-               const dbName = 'indexeddb://model-emosi-edusense';
-    try {
-      model = await tmImage.loadFromIndexedDB(dbName);
-    } catch (e) {
-      model = await tmImage.load(modelURL, metadataURL);
-      await model.save(dbName);
-    }
+                const dbName = 'indexeddb://model-emosi-edusense';
+                try {
+                  model = await tmImage.loadFromIndexedDB(dbName);
+                } catch (e) {
+                  model = await tmImage.load(modelURL, metadataURL);
+                  await model.save(dbName);
+                }
                 maxPredictions = model.getTotalClasses();
 
                 webcam = new tmImage.Webcam(260, 260, true);
@@ -2115,12 +2115,12 @@
                 const metadataURL = POSE_URL + "metadata.json";
 
                 const dbNamePose = 'indexeddb://model-pose-edusense';
-    try {
-      model = await tmPose.loadFromIndexedDB(dbNamePose);
-    } catch (e) {
-      model = await tmPose.load(modelURL, metadataURL);
-      await model.save(dbNamePose);
-    }
+                try {
+                  model = await tmPose.loadFromIndexedDB(dbNamePose);
+                } catch (e) {
+                  model = await tmPose.load(modelURL, metadataURL);
+                  await model.save(dbNamePose);
+                }
                 poseMaxPredictions = poseModel.getTotalClasses();
 
                 const size = 350; 
@@ -2281,13 +2281,13 @@
         });
     </script>
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('Service Worker Berjaya Didaftarkan (Offline Mode Ready)'))
-        .catch((err) => console.error('Gagal daftar Service Worker:', err));
-    });
-  }
-</script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Berjaya Didaftarkan (Offline Mode Ready)'))
+            .catch((err) => console.error('Gagal daftar Service Worker:', err));
+        });
+      }
+    </script>
 </body>
 </html>
