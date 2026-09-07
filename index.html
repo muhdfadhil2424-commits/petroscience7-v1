@@ -1503,7 +1503,7 @@
                             title="Dapur Pecahan Chef Alya"
                             scrolling="no"
                             style="width: 100%; height: 100%; border: none; overflow: hidden;"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allow="camera; microphone; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowfullscreen>
                         </iframe>
                     </div>
@@ -1544,7 +1544,7 @@
                             <i class="fa-solid fa-spinner fa-spin" style="font-size: 2.2rem; color: var(--accent-gold);"></i>
                             <span>Memuatkan Petualangan Dunia Pecahan...</span>
                         </div>
-                        <iframe id="m4-iframe" src="./dunia-pecahan/index.html" class="iframe-container" scrolling="no" onload="hideGameLoader()" style="display: block; width: 100%; min-height: 2400px; border: none; border-radius: 28px; position: relative; z-index: 2;"></iframe>
+                        <iframe id="m4-iframe" src="./dunia-pecahan/index.html" class="iframe-container" scrolling="no" onload="hideGameLoader()" allow="camera; microphone;" style="display: block; width: 100%; min-height: 2400px; border: none; border-radius: 28px; position: relative; z-index: 2;"></iframe>
                     </div>
                 </div>
             </div>
@@ -1887,8 +1887,18 @@
                 }
                 maxPredictions = model.getTotalClasses();
 
-                webcam = new tmImage.Webcam(260, 260, true);
-                await webcam.setup();
+                // Disesuaikan untuk menyokong pelbagai peranti & kamera hadapan peranti mudah alih
+                const flip = true;
+                const width = 260;
+                const height = 260;
+                webcam = new tmImage.Webcam(width, height, flip);
+                
+                // Memastikan izin kamera menggunakan MediaDevices API merentasi browser/peranti
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                }
+                
+                await webcam.setup({ facingMode: "user" });
                 await webcam.play();
                 window.requestAnimationFrame(loop);
 
@@ -1910,7 +1920,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Gagal memuatkan kamera atau model AI.");
+                alert("Gagal memuatkan kamera atau model AI. Sila pastikan kebenaran (permission) kamera telah dibenarkan pada peranti anda.");
                 btnText.innerText = "Mula Pengimbas Kamera";
                 if(statusText) statusText.innerText = "🔴 KAMERA DIHALANG";
             }
@@ -1953,7 +1963,7 @@
         }
 
         async function predict() {
-            if (!model) return;
+            if (!model || !webcam || !webcam.canvas) return;
             const prediction = await model.predict(webcam.canvas);
 
             let happyVal = 0;
@@ -2116,17 +2126,22 @@
 
                 const dbNamePose = 'indexeddb://model-pose-edusense';
                 try {
-                  model = await tmPose.loadFromIndexedDB(dbNamePose);
+                  poseModel = await tmPose.loadFromIndexedDB(dbNamePose);
                 } catch (e) {
-                  model = await tmPose.load(modelURL, metadataURL);
-                  await model.save(dbNamePose);
+                  poseModel = await tmPose.load(modelURL, metadataURL);
+                  await poseModel.save(dbNamePose);
                 }
                 poseMaxPredictions = poseModel.getTotalClasses();
 
-                const size = 350; 
+                const size = Math.min(window.innerWidth - 40, 350); 
                 const flip = true; 
                 poseWebcam = new tmPose.Webcam(size, size, flip); 
-                await poseWebcam.setup(); 
+                
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+                }
+
+                await poseWebcam.setup({ facingMode: "user" }); 
                 await poseWebcam.play();
 
                 const canvas = document.getElementById("canvas");
@@ -2145,7 +2160,7 @@
                 window.requestAnimationFrame(loopZonCeria);
             } catch (err) {
                 console.error(err);
-                alert("Gagal memuatkan kamera pose.");
+                alert("Gagal memuatkan kamera pose. Sila pastikan kebenaran (permission) kamera telah dibenarkan pada peranti anda.");
                 if (btnText) btnText.innerText = "Mula Kamera Pose";
             }
         }
@@ -2174,6 +2189,7 @@
         }
 
         async function predictZonCeria() {
+            if (!poseModel || !poseWebcam || !poseWebcam.canvas) return;
             const { pose, posenetOutput } = await poseModel.estimatePose(poseWebcam.canvas);
             const prediction = await poseModel.predict(posenetOutput);
 
