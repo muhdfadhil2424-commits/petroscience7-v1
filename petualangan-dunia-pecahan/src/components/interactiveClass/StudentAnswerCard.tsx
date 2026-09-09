@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
 import { InteractiveClassStudent, AnswerOption } from '../../types/interactiveClass';
 import { parseStudentIdIndex } from '../../utils/interactiveClassManager';
 import {
   ANSWER_OPTIONS,
   OPTION_METADATA,
   buildQrPayload,
+  generateQrDataUrl,
   downloadSingleQr,
   downloadStudentCardPng,
 } from '../../utils/studentQrManager';
@@ -37,20 +37,12 @@ export const StudentAnswerCard: React.FC<StudentAnswerCardProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    const qrSize = scale === 'print' ? 240 : scale === 'compact' ? 140 : 180;
+    const qrSize = scale === 'print' ? 320 : scale === 'compact' ? 180 : 240;
 
     Promise.all(
       ANSWER_OPTIONS.map((opt) => {
         const payload = buildQrPayload(student.studentId, opt);
-        return QRCode.toDataURL(payload, {
-          width: qrSize,
-          margin: 1,
-          color: {
-            dark: '#0f172a',
-            light: '#ffffff',
-          },
-          errorCorrectionLevel: 'M',
-        }).then((url) => ({ opt, url }));
+        return generateQrDataUrl(payload, qrSize).then((url) => ({ opt, url }));
       })
     ).then((results) => {
       if (isMounted) {
@@ -182,20 +174,25 @@ export const StudentAnswerCard: React.FC<StudentAnswerCardProps> = ({
               </div>
 
               {/* QR Code Identifier under each QR */}
-              <span className="font-mono font-bold text-[10px] text-slate-700 mt-1">
-                {student.studentId}-{opt}
-              </span>
+              <div className="flex flex-col items-center mt-1">
+                <span className="font-mono font-black text-xs text-slate-900">
+                  {student.studentId}
+                </span>
+                <span className="font-mono text-[10px] text-slate-500">
+                  {student.studentId}-{opt}
+                </span>
+              </div>
 
               {/* Single Download button for this QR (Screen only) */}
               {showDownloadButtons && !isPrint && (
                 <button
                   type="button"
                   onClick={(e) => handleDownloadSingle(e, opt)}
-                  className="print:hidden mt-1 text-[9px] font-bold text-slate-600 hover:text-slate-950 underline flex items-center gap-0.5 cursor-pointer"
-                  title={`Muat turun fail imej QR ${opt}`}
+                  className="print:hidden mt-2 px-2.5 py-1 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-[10px] font-bold text-slate-800 hover:text-slate-950 flex items-center gap-1 cursor-pointer transition-colors shadow-xs"
+                  title={`Muat Turun QR ${opt} (PNG)`}
                 >
-                  <Download className="w-2.5 h-2.5" />
-                  <span>QR {opt}</span>
+                  <Download className="w-3 h-3 text-slate-600" />
+                  <span>📥 Muat Turun QR {opt}</span>
                 </button>
               )}
             </div>
@@ -220,7 +217,7 @@ export const StudentAnswerCard: React.FC<StudentAnswerCardProps> = ({
             {student.cardStatus === 'active' ? 'Kad Aktif' : 'Nyahaktif'}
           </span>
           <span className="text-[10px] text-slate-400 font-mono">
-            4 QR Berasingan
+            4 QR Unik (A, B, C, D)
           </span>
         </div>
       </div>
@@ -233,8 +230,8 @@ export const StudentAnswerCard: React.FC<StudentAnswerCardProps> = ({
               type="button"
               onClick={handleDownloadFullCard}
               disabled={isDownloading}
-              className="py-1.5 px-3 rounded-xl bg-[#D98262] hover:bg-[#c26e50] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
-              title="Muat turun imej PNG kad 4 QR penuh murid ini"
+              className="py-2 px-3.5 rounded-xl bg-[#D98262] hover:bg-[#c26e50] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              title="Muat turun imej PNG set kad 4 QR penuh murid ini"
             >
               <Download className="w-3.5 h-3.5" />
               <span>{isDownloading ? 'Menjana...' : '📥 Muat Turun Set QR'}</span>
@@ -248,10 +245,11 @@ export const StudentAnswerCard: React.FC<StudentAnswerCardProps> = ({
                 e.stopPropagation();
                 onPrintSingle(student);
               }}
-              className="py-1.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              className="py-2 px-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              title="Cetak kad jawapan 4 QR murid ini"
             >
               <Printer className="w-3.5 h-3.5 text-amber-300" />
-              <span>🖨️ Cetak Kad</span>
+              <span>🖨️ Cetak Kad Murid</span>
             </button>
           )}
         </div>

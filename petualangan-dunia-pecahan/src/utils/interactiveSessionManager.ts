@@ -1,6 +1,65 @@
 import { ScannedStudentAnswer, AnswerOption } from '../types/interactiveClass';
+import {
+  DEMO_SESSION_STORAGE_KEY,
+  DEMO_MODE_STORAGE_KEY,
+  getStoredDemoSessionAnswers,
+  resetDemoSessionStorage,
+  clearDemoSessionStorage,
+} from '../data/demoClass3AsahSession';
 
 const STORAGE_SESSION_KEY = 'kembara_interactive_session_v1';
+
+export type SessionDataMode = 'demo' | 'live';
+
+/**
+ * Gets currently active session data mode (defaults to 'demo' for 3 Asah initial state)
+ */
+export function getSessionDataMode(): SessionDataMode {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return 'demo';
+  }
+  const mode = window.localStorage.getItem(DEMO_MODE_STORAGE_KEY);
+  if (mode === 'live' || mode === 'demo') {
+    return mode;
+  }
+  return 'demo';
+}
+
+/**
+ * Sets session data mode ('demo' or 'live')
+ */
+export function setSessionDataMode(mode: SessionDataMode): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(DEMO_MODE_STORAGE_KEY, mode);
+  }
+}
+
+/**
+ * Checks if real live scanning session has any recorded answers
+ */
+export function hasLiveSessionAnswers(className?: string): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_SESSION_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return false;
+    for (const qKey of Object.keys(parsed)) {
+      const qMap = parsed[qKey];
+      if (qMap && typeof qMap === 'object') {
+        const entries = Object.values(qMap) as ScannedStudentAnswer[];
+        if (entries.length > 0) {
+          if (!className) return true;
+          if (entries.some((ans) => ans.class.toLowerCase() === className.toLowerCase())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 export interface ClassroomQuestionStats {
   totalStudents: number;
@@ -15,7 +74,33 @@ export interface ClassroomQuestionStats {
 }
 
 /**
- * Loads all saved answers for interactive sessions
+ * Loads answers according to active mode ('demo' or 'live')
+ */
+export function loadAnswersForDashboard(
+  mode: SessionDataMode = getSessionDataMode()
+): Record<string, Record<string, ScannedStudentAnswer>> {
+  if (mode === 'demo') {
+    return getStoredDemoSessionAnswers();
+  }
+  return loadAllSessionAnswers();
+}
+
+/**
+ * Reset Demo session data strictly without touching real data
+ */
+export function resetDemoSessionData(): Record<string, Record<string, ScannedStudentAnswer>> {
+  return resetDemoSessionStorage();
+}
+
+/**
+ * Clear Demo session data strictly without touching real data
+ */
+export function clearDemoSessionData(): void {
+  clearDemoSessionStorage();
+}
+
+/**
+ * Loads all saved answers for interactive sessions (live real session)
  */
 export function loadAllSessionAnswers(): Record<string, Record<string, ScannedStudentAnswer>> {
   try {

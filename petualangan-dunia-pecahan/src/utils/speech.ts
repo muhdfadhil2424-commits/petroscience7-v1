@@ -25,23 +25,32 @@ export function cleanTextForSpeech(rawText: string): string {
 
   let text = rawText;
 
+  // Convert mixed numbers first e.g. 1 1/4 -> satu satu per empat
+  text = text.replace(/(\d+)\s+(\d+)\/(\d+)/g, '$1, $2 per $3');
+
   // Convert common fractions to spoken Malay words for clear pronunciation
   const fractionMap: Record<string, string> = {
-    '1/2': 'satu per dua',
-    '1/3': 'satu per tiga',
-    '2/3': 'dua per tiga',
+    '1/2': 'satu perdua',
+    '1/3': 'satu pertiga',
+    '2/3': 'dua pertiga',
     '1/4': 'satu per empat',
     '2/4': 'dua per empat',
     '3/4': 'tiga per empat',
-    '1/5': 'satu per lima',
-    '2/5': 'dua per lima',
-    '3/5': 'tiga per lima',
-    '4/5': 'empat per lima',
+    '1/5': 'satu perlima',
+    '2/5': 'dua perlima',
+    '3/5': 'tiga perlima',
+    '4/5': 'empat perlima',
     '1/6': 'satu per enam',
     '2/6': 'dua per enam',
     '3/6': 'tiga per enam',
     '4/6': 'empat per enam',
     '5/6': 'lima per enam',
+    '1/7': 'satu per tujuh',
+    '2/7': 'dua per tujuh',
+    '3/7': 'tiga per tujuh',
+    '4/7': 'empat per tujuh',
+    '5/7': 'lima per tujuh',
+    '6/7': 'enam per tujuh',
     '1/8': 'satu per lapan',
     '2/8': 'dua per lapan',
     '3/8': 'tiga per lapan',
@@ -49,6 +58,17 @@ export function cleanTextForSpeech(rawText: string): string {
     '5/8': 'lima per lapan',
     '6/8': 'enam per lapan',
     '7/8': 'tujuh per lapan',
+    '1/9': 'satu per sembilan',
+    '2/9': 'dua per sembilan',
+    '3/9': 'tiga per sembilan',
+    '4/9': 'empat per sembilan',
+    '5/9': 'lima per sembilan',
+    '1/10': 'satu per sepuluh',
+    '3/10': 'tiga per sepuluh',
+    '5/10': 'lima per sepuluh',
+    '7/10': 'tujuh per sepuluh',
+    '8/10': 'lapan per sepuluh',
+    '7/5': 'tujuh per lima',
   };
 
   // Replace fraction strings
@@ -59,6 +79,18 @@ export function cleanTextForSpeech(rawText: string): string {
 
   // Handle general digits a/b -> "a per b"
   text = text.replace(/(\d+)\/(\d+)/g, '$1 per $2');
+
+  // Convert percentage % -> peratus
+  text = text.replace(/(\d+)\s*%/g, '$1 peratus');
+  text = text.replace(/%/g, ' peratus');
+
+  // Convert math operations to spoken Malay
+  text = text.replace(/\+/g, ' tambah ');
+  text = text.replace(/[−–—]/g, ' tolak ');
+  text = text.replace(/(\b\d+\b)\s*-\s*(\b\d+\b)/g, '$1 tolak $2');
+  text = text.replace(/=/g, ' sama dengan ');
+  text = text.replace(/→/g, ' menjadi ');
+  text = text.replace(/÷/g, ' bahagi ');
 
   // Remove Markdown symbols: bold **, italic *, headers #, backticks `, bullet points
   text = text.replace(/\*\*(.*?)\*\*/g, '$1');

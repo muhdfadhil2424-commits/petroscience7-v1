@@ -1,12 +1,15 @@
 import { InteractiveClassStudent, AnswerOption } from '../types/interactiveClass';
 import {
-  INTERACTIVE_CLASS_30_QUESTIONS,
+  INTERACTIVE_CLASS_15_QUESTIONS,
   InteractiveClassQuestion,
 } from '../data/interactiveClass30Questions';
 import {
   loadAllSessionAnswers,
   saveAllSessionAnswers,
 } from './interactiveSessionManager';
+import { buildDemo600Responses } from '../data/demoClass3AsahSession';
+import { LearningProfile } from '../types/learningProfile';
+import { calculateStudentLearningProfile } from './learningProfileManager';
 
 export interface StudentAnalysisResult {
   studentId: string;
@@ -22,7 +25,9 @@ export interface StudentAnalysisResult {
   strongStandards: string[];
   weakStandards: string[];
   intervention: string;
+  enrichment?: string;
   answers: Record<string, { letter: string; isCorrect: boolean; answerText?: string }>;
+  learningProfile?: LearningProfile;
 }
 
 export interface DskpStandardAnalysis {
@@ -33,7 +38,29 @@ export interface DskpStandardAnalysis {
   totalResponses: number;
   correctResponses: number;
   percentage: number;
-  status: 'Cemerlang' | 'Baik' | 'Sederhana' | 'Perlu Bimbingan';
+  status: 'Penguasaan baik' | 'Sedang menguasai' | 'Perlu bimbingan';
+}
+
+export interface QuestionDetailedAnalysis {
+  questionId: string;
+  questionNumber: number;
+  question: string;
+  dskpCode: string;
+  correctAnswer: string;
+  correctAnswerLetter: string;
+  totalAnswered: number;
+  correctCount: number;
+  wrongCount: number;
+  accuracy: number;
+  distribution: {
+    A: number;
+    B: number;
+    C: number;
+    D: number;
+  };
+  mostCommonWrongLetter?: string;
+  misconceptionAlert?: string;
+  pedagogicalTip: string;
 }
 
 export interface ChallengingQuestionResult {
@@ -49,69 +76,115 @@ export interface ChallengingQuestionResult {
   wrongPercentage: number;
   commonWrongLetter?: string;
   pedagogicalTip: string;
+  distribution?: { A: number; B: number; C: number; D: number };
 }
 
 export interface ClassSmartInsights {
   overallAccuracy: number;
-  masteredCount: number;
-  needGuidanceCount: number;
+  masteredCount: number; // >= 80%
+  inProgressCount: number; // 60-79%
+  needGuidanceCount: number; // < 60%
+  unansweredCount: number;
   strongestStandard?: DskpStandardAnalysis;
   weakestStandard?: DskpStandardAnalysis;
   insights: string[];
   recommendations: string[];
+  classAverageDescription: string;
 }
 
-export interface SavedClassSessionArchive {
+export interface SessionHistoryItem {
   sessionId: string;
+  sessionName: string;
   className: string;
   date: string;
   timestamp: number;
-  teacherName: string;
   totalStudents: number;
   totalQuestions: number;
   averageAccuracy: number;
+  dskpAverages: Record<string, number>;
+}
+
+export interface FollowUpActivity {
+  title: string;
+  duration: string;
+  description: string;
+  dskpCode: string;
+  material: string;
 }
 
 export const DSKP_STANDARDS_INFO: Record<string, { name: string; topic: string; tip: string }> = {
   '3.1.1': {
-    name: 'Pecahan Wajar Sebahagian Kumpulan',
+    name: 'Pecahan wajar sebahagian kumpulan',
     topic: 'Kumpulan Objek',
     tip: 'Gunakan bahan konkrit (butang, guli, gasing) untuk membimbing murid membilang subset.',
   },
   '3.1.2': {
-    name: 'Pecahan Setara',
+    name: 'Pecahan setara',
     topic: 'Pecahan Setara',
     tip: 'Gunakan lipatan kertas warna dan garis nombor bersenggat untuk menunjukkan keluasan yang sama.',
   },
   '3.1.3': {
-    name: 'Bentuk Termudah',
+    name: 'Bentuk termudah',
     topic: 'Mempermudah Pecahan',
     tip: 'Bimbing murid mengenal sifir sepunya bagi pengangka dan penyebut untuk pembahagian.',
   },
   '3.1.4': {
-    name: 'Pecahan Peratus',
+    name: 'Pecahan peratus',
     topic: 'Hubungan Peratus & Perseratus',
     tip: 'Gunakan petak seratus (10x10) dan duit syiling sen untuk mengukuhkan konsep peratus.',
   },
   '3.1.5': {
-    name: 'Tambah Dua Pecahan Wajar',
+    name: 'Tambah pecahan',
     topic: 'Operasi Tambah Pecahan',
     tip: 'Tegaskan bahawa penyebut tidak ditambah, dan bimbing pertukaran pecahan setara jika penyebut tidak sama.',
   },
   '3.1.6': {
-    name: 'Tolak Dua Pecahan Wajar',
+    name: 'Tolak pecahan',
     topic: 'Operasi Tolak Pecahan',
     tip: 'Bantu murid menukar nilai 1 kepada pecahan (cth: 1 = 4/4) sebelum menolak pecahan berpenyebut sama.',
   },
   '3.1.7': {
-    name: 'Pecahan Tak Wajar & Nombor Bercampur',
+    name: 'Pecahan tak wajar & nombor bercampur',
     topic: 'Pecahan Tak Wajar & Nombor Bercampur',
     tip: 'Tunjukkan visual kek penuh dan bahagian berasingan untuk menghubungkan 3/2 dengan 1 1/2.',
   },
 };
 
+const STORAGE_SESSION_HISTORY_KEY = 'kembara_interactive_sessions_history_v1';
+
 /**
- * Calculates suggested Tahap Penguasaan (TP 1 - TP 6) for a student based on standard rubrics
+ * Loads session history from local storage
+ */
+export function loadSessionHistory(className?: string): SessionHistoryItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_SESSION_HISTORY_KEY);
+    if (!raw) return [];
+    const list: SessionHistoryItem[] = JSON.parse(raw);
+    if (className) {
+      return list.filter((item) => item.className.toLowerCase() === className.toLowerCase());
+    }
+    return list;
+  } catch (err) {
+    console.warn('Failed to load session history:', err);
+    return [];
+  }
+}
+
+/**
+ * Saves a session item into history
+ */
+export function saveSessionToHistory(item: SessionHistoryItem) {
+  try {
+    const current = loadSessionHistory();
+    const updated = [item, ...current.filter((s) => s.sessionId !== item.sessionId)].slice(0, 10);
+    localStorage.setItem(STORAGE_SESSION_HISTORY_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.warn('Failed to save session history:', err);
+  }
+}
+
+/**
+ * Calculates suggested Tahap Penguasaan (TP 1 - TP 6) based on holistic DSKP criteria
  */
 export function calculateStudentTP(
   correctCount: number,
@@ -126,15 +199,15 @@ export function calculateStudentTP(
     return {
       tp: 1,
       confidence: 'Rendah',
-      reason: 'Belum ada data imbasan jawapan direkodkan bagi murid ini.',
+      reason: 'Belum ada data respons direkodkan bagi murid ini dalam sesi semasa.',
     };
   }
 
   const percentage = Math.round((correctCount / totalAnswered) * 100);
 
-  // Confidence is based on sample size (number of answered questions out of 30)
+  // Confidence is based on sample size (number of answered questions out of 15)
   const confidence: 'Tinggi' | 'Sederhana' | 'Rendah' =
-    totalAnswered >= 20 ? 'Tinggi' : totalAnswered >= 10 ? 'Sederhana' : 'Rendah';
+    totalAnswered >= 12 ? 'Tinggi' : totalAnswered >= 7 ? 'Sederhana' : 'Rendah';
 
   let tp = 1;
   let reason = '';
@@ -152,23 +225,23 @@ export function calculateStudentTP(
   if (percentage >= 90 && isAddMastered && isSubMastered && isMixedMastered) {
     tp = 6;
     reason =
-      'Murid menguasai keseluruhan konsep pecahan Tahun 3 termasuk operasi tambah, tolak, pecahan setara, dan nombor bercampur dengan amat cemerlang.';
+      'Murid menguasai keseluruhan konsep pecahan Tahun 3 termasuk operasi tambah, tolak, pecahan setara, dan nombor bercampur dengan amat cemerlang serta konsisten.';
   } else if (percentage >= 80) {
     tp = 5;
     reason =
-      'Murid menunjukkan kefahaman mantap dalam operasi pecahan wajar serta berkebolehan menyelesaikan pelbagai bentuk soalan rutin.';
+      'Murid menunjukkan kefahaman mantap dalam operasi pecahan wajar serta berkebolehan menyelesaikan pelbagai bentuk soalan rutin dengan yakin.';
   } else if (percentage >= 65) {
     tp = 4;
     reason =
-      'Murid menguasai konsep pecahan setara dan bentuk termudah, serta mampu melakukan operasi asas pecahan dengan baik.';
+      'Murid menguasai konsep pecahan setara dan bentuk termudah, serta mampu melakukan operasi asas pecahan dengan bimbingan minima.';
   } else if (percentage >= 50) {
     tp = 3;
     reason =
-      'Murid boleh menambah dan menolak pecahan berpenyebut sama, namun masih memerlukan bimbingan bagi penyebut tidak sama atau soalan beraras tinggi.';
+      'Murid boleh menambah dan menolak pecahan berpenyebut sama, namun masih memerlukan bimbingan bagi penyebut tidak sama atau soalan beraras sederhana.';
   } else if (percentage >= 30) {
     tp = 2;
     reason =
-      'Murid mengenali pecahan wajar dan sebahagian kumpulan objek, tetapi memerlukan latihan pengukuhan dalam pecahan setara dan operasi.';
+      'Murid mengenali pecahan wajar dan sebahagian kumpulan objek, tetapi memerlukan latihan pengukuhan dalam pecahan setara dan operasi tolak.';
   } else {
     tp = 1;
     reason =
@@ -179,37 +252,55 @@ export function calculateStudentTP(
 }
 
 /**
- * Generates tailored, concise pedagogical intervention for a student based on their weak standards
+ * Generates concise pedagogical intervention recommendation for student
  */
 export function generateInterventionRecommendation(
   weakStandards: string[],
   percentage: number
 ): string {
   if (weakStandards.length === 0 && percentage >= 85) {
-    return 'Kekalkan kecemerlangan. Berikan soalan KBAT dan cabaran penerokaan pecahan bukan rutin.';
+    return 'Kekalkan kecemerlangan dengan aktiviti penerokaan pecahan bukan rutin dan cabaran teka silang kata pecahan.';
   }
 
   if (weakStandards.includes('3.1.6')) {
-    return 'Latih operasi tolak pecahan dengan penyebut 2, 4 dan 8 serta penolakan daripada 1 penuh.';
+    return 'Latih tolak pecahan menggunakan fraction bar dan potongan kertas lipat pizza.';
   }
 
-  if (weakStandards.includes('3.1.5')) {
-    return 'Bimbing langkah menyamakan penyebut sebelum menambah menggunakan carta pecahan setara.';
-  }
-
-  if (weakStandards.includes('3.1.2') || weakStandards.includes('3.1.3')) {
-    return 'Gunakan visual palang dan pendaraban/pembahagian sifir untuk bentuk pecahan termudah.';
-  }
-
-  if (weakStandards.includes('3.1.7')) {
-    return 'Gunakan gambar rajah objek penuh dan lebihan untuk memahami penukaran nombor bercampur.';
+  if (weakStandards.includes('3.1.2')) {
+    return 'Gunakan fraction bar untuk melihat dan memadankan pecahan setara secara visual.';
   }
 
   if (weakStandards.includes('3.1.4')) {
-    return 'Latih menghubungkan penyebut 100 dengan simbol peratus (%) melalui petak 100.';
+    return 'Gunakan grid 100 untuk menghubungkan pecahan dan simbol peratus (%).';
+  }
+
+  if (weakStandards.includes('3.1.7')) {
+    return 'Gunakan gambar kumpulan penuh dan baki untuk memahami pecahan tak wajar dan nombor bercampur.';
+  }
+
+  if (weakStandards.includes('3.1.5')) {
+    return 'Latih langkah menyamakan penyebut sebelum menambah menggunakan carta pecahan setara.';
+  }
+
+  if (weakStandards.includes('3.1.3')) {
+    return 'Bimbing murid mengenal sifir sepunya untuk memudahkan pecahan kepada bentuk termudah.';
+  }
+
+  if (weakStandards.includes('3.1.1')) {
+    return 'Bimbing membilang jumlah objek dan bahagian dipilih menggunakan objek maujud (butang/guli).';
   }
 
   return 'Bimbingan berkala secara berkumpulan kecil menggunakan bahan manipulatif dan visual berwarna.';
+}
+
+/**
+ * Generates Year-3 appropriate enrichment recommendation for high-performing students
+ */
+export function generateEnrichmentRecommendation(percentage: number, suggestedTP: number): string {
+  if (suggestedTP >= 5 || percentage >= 80) {
+    return 'Murid boleh diberikan soalan pecahan yang lebih mencabar beraras KBAT (contoh: menyelesaikan teka-teki resipi kuih tradisional menggunakan pecahan setara).';
+  }
+  return 'Lengkapkan latihan pengukuhan kendiri sebelum beralih ke aktiviti pengayaan.';
 }
 
 /**
@@ -217,7 +308,7 @@ export function generateInterventionRecommendation(
  */
 export function analyzeAllStudents(
   students: InteractiveClassStudent[],
-  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_30_QUESTIONS,
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
   allAnswers = loadAllSessionAnswers()
 ): StudentAnalysisResult[] {
   return students.map((student) => {
@@ -266,7 +357,7 @@ export function analyzeAllStudents(
         const standardPct = (stat.correct / stat.total) * 100;
         if (standardPct >= 70) {
           strongStandards.push(code);
-        } else if (standardPct < 50) {
+        } else if (standardPct < 60) {
           weakStandards.push(code);
         }
       }
@@ -274,6 +365,8 @@ export function analyzeAllStudents(
 
     const { tp, confidence, reason } = calculateStudentTP(correctCount, answeredCount, standardsMap);
     const intervention = generateInterventionRecommendation(weakStandards, percentage);
+    const enrichment = generateEnrichmentRecommendation(percentage, tp);
+    const learningProfile = calculateStudentLearningProfile(student, answersRecord, questions);
 
     return {
       studentId: student.studentId,
@@ -289,16 +382,22 @@ export function analyzeAllStudents(
       strongStandards,
       weakStandards,
       intervention,
+      enrichment,
       answers: answersRecord,
+      learningProfile,
     };
   });
 }
 
 /**
  * Computes breakdown by the 7 DSKP standards (3.1.1 to 3.1.7)
+ * Using strict category labels:
+ * 80–100% → Penguasaan baik
+ * 60–79% → Sedang menguasai
+ * 0–59% → Perlu bimbingan
  */
 export function analyzeDskpStandards(
-  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_30_QUESTIONS,
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
   allAnswers = loadAllSessionAnswers()
 ): DskpStandardAnalysis[] {
   const codes = ['3.1.1', '3.1.2', '3.1.3', '3.1.4', '3.1.5', '3.1.6', '3.1.7'];
@@ -322,10 +421,14 @@ export function analyzeDskpStandards(
 
     const percentage = totalResponses > 0 ? Math.round((correctResponses / totalResponses) * 100) : 0;
 
-    let status: 'Cemerlang' | 'Baik' | 'Sederhana' | 'Perlu Bimbingan' = 'Perlu Bimbingan';
-    if (percentage >= 80) status = 'Cemerlang';
-    else if (percentage >= 65) status = 'Baik';
-    else if (percentage >= 50) status = 'Sederhana';
+    let status: 'Penguasaan baik' | 'Sedang menguasai' | 'Perlu bimbingan' = 'Perlu bimbingan';
+    if (percentage >= 80) {
+      status = 'Penguasaan baik';
+    } else if (percentage >= 60) {
+      status = 'Sedang menguasai';
+    } else {
+      status = 'Perlu bimbingan';
+    }
 
     return {
       code,
@@ -341,79 +444,332 @@ export function analyzeDskpStandards(
 }
 
 /**
- * Identifies the most challenging questions for students (highest wrong count/percentage)
+ * Analyzes all 15 questions in detail including option distribution (A, B, C, D)
  */
-export function findChallengingQuestions(
-  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_30_QUESTIONS,
-  allAnswers = loadAllSessionAnswers(),
-  limit = 5
-): ChallengingQuestionResult[] {
-  const results: ChallengingQuestionResult[] = [];
-
-  questions.forEach((q, idx) => {
+export function analyzeAllQuestionsDetailed(
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
+  allAnswers = loadAllSessionAnswers()
+): QuestionDetailedAnalysis[] {
+  return questions.map((q, idx) => {
     const qAnswers = allAnswers[q.questionId] ? Object.values(allAnswers[q.questionId]) : [];
     const totalAnswered = qAnswers.length;
 
-    if (totalAnswered === 0) return;
-
+    const distribution = { A: 0, B: 0, C: 0, D: 0 };
     let correctCount = 0;
-    const wrongDist: Record<string, number> = { A: 0, B: 0, C: 0, D: 0 };
 
     qAnswers.forEach((ans) => {
+      const letter = ans.answerLetter as 'A' | 'B' | 'C' | 'D';
+      if (distribution[letter] !== undefined) {
+        distribution[letter]++;
+      }
       if (ans.answerLetter === q.correctAnswerLetter) {
         correctCount++;
-      } else {
-        wrongDist[ans.answerLetter] = (wrongDist[ans.answerLetter] || 0) + 1;
       }
     });
 
     const wrongCount = totalAnswered - correctCount;
-    const wrongPercentage = Math.round((wrongCount / totalAnswered) * 100);
+    const accuracy = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
 
-    // Find most frequent wrong distractor letter
-    let maxDistLetter = '';
-    let maxDistVal = 0;
-    Object.entries(wrongDist).forEach(([letter, count]) => {
-      if (letter !== q.correctAnswerLetter && count > maxDistVal) {
-        maxDistVal = count;
-        maxDistLetter = letter;
+    // Find most frequent wrong option
+    let mostCommonWrongLetter: string | undefined = undefined;
+    let maxWrongCount = 0;
+
+    (['A', 'B', 'C', 'D'] as const).forEach((l) => {
+      if (l !== q.correctAnswerLetter && distribution[l] > maxWrongCount) {
+        maxWrongCount = distribution[l];
+        mostCommonWrongLetter = l;
       }
     });
 
-    const info = DSKP_STANDARDS_INFO[q.dskpCode];
-    const tip = info ? info.tip : 'Ulangi demonstrasi visual palang pecahan bersama murid.';
+    let misconceptionAlert: string | undefined = undefined;
+    if (mostCommonWrongLetter && maxWrongCount >= 3 && maxWrongCount >= wrongCount * 0.4) {
+      misconceptionAlert = `Ramai murid memilih ${mostCommonWrongLetter}. Mereka mungkin mempunyai miskonsepsi yang sama.`;
+    }
 
-    results.push({
+    const tip = DSKP_STANDARDS_INFO[q.dskpCode]?.tip || 'Bimbing murid menggunakan visual perwakilan pecahan.';
+
+    return {
       questionId: q.questionId,
       questionNumber: idx + 1,
       question: q.question,
       dskpCode: q.dskpCode,
       correctAnswer: q.correctAnswer,
-      correctLetter: q.correctAnswerLetter,
+      correctAnswerLetter: q.correctAnswerLetter,
       totalAnswered,
       correctCount,
       wrongCount,
-      wrongPercentage,
-      commonWrongLetter: maxDistLetter || undefined,
+      accuracy,
+      distribution,
+      mostCommonWrongLetter,
+      misconceptionAlert,
       pedagogicalTip: tip,
-    });
+    };
   });
-
-  // Sort by highest wrong percentage, then highest wrong count
-  results.sort((a, b) => b.wrongPercentage - a.wrongPercentage || b.wrongCount - a.wrongCount);
-  return results.slice(0, limit);
 }
 
 /**
- * Generates data-grounded smart insights for teacher
+ * Finds the most challenging questions for students
+ */
+export function findChallengingQuestions(
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
+  allAnswers = loadAllSessionAnswers(),
+  limit = 4
+): ChallengingQuestionResult[] {
+  const detailed = analyzeAllQuestionsDetailed(questions, allAnswers);
+  const filtered = detailed.filter((q) => q.totalAnswered > 0);
+
+  filtered.sort((a, b) => {
+    if (a.accuracy !== b.accuracy) {
+      return a.accuracy - b.accuracy; // lowest accuracy first
+    }
+    return b.wrongCount - a.wrongCount;
+  });
+
+  return filtered.slice(0, limit).map((q) => ({
+    questionId: q.questionId,
+    questionNumber: q.questionNumber,
+    question: q.question,
+    dskpCode: q.dskpCode,
+    correctAnswer: q.correctAnswer,
+    correctLetter: q.correctAnswerLetter,
+    totalAnswered: q.totalAnswered,
+    correctCount: q.correctCount,
+    wrongCount: q.wrongCount,
+    wrongPercentage: q.totalAnswered > 0 ? 100 - q.accuracy : 0,
+    commonWrongLetter: q.mostCommonWrongLetter,
+    pedagogicalTip: q.pedagogicalTip,
+    distribution: q.distribution,
+  }));
+}
+
+/**
+ * Finds easiest question and most challenging question from session
+ */
+export function findEasiestAndChallengingQuestions(
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
+  allAnswers = loadAllSessionAnswers()
+): {
+  easiest?: QuestionDetailedAnalysis;
+  hardest?: QuestionDetailedAnalysis;
+} {
+  const detailed = analyzeAllQuestionsDetailed(questions, allAnswers);
+  const active = detailed.filter((q) => q.totalAnswered > 0);
+
+  if (active.length === 0) return {};
+
+  const sorted = [...active].sort((a, b) => b.accuracy - a.accuracy || a.wrongCount - b.wrongCount);
+  const easiest = sorted[0];
+  const hardest = sorted[sorted.length - 1];
+
+  return { easiest, hardest };
+}
+
+/**
+ * Computes class strengths based on real data
+ */
+export function generateClassStrengths(
+  dskpAnalysis: DskpStandardAnalysis[],
+  questionsAnalysis: QuestionDetailedAnalysis[]
+): string[] {
+  const strengths: string[] = [];
+  const activeDskp = dskpAnalysis.filter((s) => s.totalResponses > 0);
+
+  activeDskp
+    .filter((s) => s.percentage >= 75)
+    .sort((a, b) => b.percentage - a.percentage)
+    .forEach((s) => {
+      if (s.code === '3.1.1') strengths.push(`Ramai murid mengenal pasti pecahan wajar (${s.percentage}% betul).`);
+      else if (s.code === '3.1.2') strengths.push(`Murid menunjukkan penguasaan baik dalam pecahan setara (${s.percentage}% betul).`);
+      else if (s.code === '3.1.3') strengths.push(`Kebanyakan murid lancar mempermudah pecahan ke bentuk termudah (${s.percentage}%).`);
+      else if (s.code === '3.1.4') strengths.push(`Kefahaman hubungan pecahan dan peratus berada pada tahap kukuh (${s.percentage}%).`);
+      else if (s.code === '3.1.5') strengths.push(`Kebanyakan murid boleh menyelesaikan tambah pecahan dengan tepat (${s.percentage}%).`);
+      else if (s.code === '3.1.6') strengths.push(`Majoriti murid menguasai operasi tolak pecahan (${s.percentage}%).`);
+      else if (s.code === '3.1.7') strengths.push(`Murid berkebolehan menghubungkan pecahan tak wajar dan nombor bercampur (${s.percentage}%).`);
+      else strengths.push(`Penguasaan baik dalam standard ${s.code} (${s.percentage}%).`);
+    });
+
+  const highQuestions = questionsAnalysis.filter((q) => q.totalAnswered > 0 && q.accuracy >= 85);
+  if (highQuestions.length > 0 && strengths.length < 3) {
+    strengths.push(`${highQuestions.length} daripada 15 soalan mencapai ketepatan tinggi melebihi 85%.`);
+  }
+
+  if (strengths.length === 0) {
+    strengths.push('Murid mempamerkan usaha aktif dalam mengimbas kad jawapan semasa sesi berlangsung.');
+  }
+
+  return strengths.slice(0, 4);
+}
+
+/**
+ * Computes class areas for reinforcement based on real data
+ * Uses constructive tone: "🔎 PERLU PENGUKUHAN"
+ * Strictly avoids: "murid lemah", "kelas lemah", "gagal", "perlu bimbingan"
+ */
+export function generateClassWeaknesses(
+  dskpAnalysis: DskpStandardAnalysis[],
+  questionsAnalysis: QuestionDetailedAnalysis[]
+): string[] {
+  const reinforcements: string[] = [];
+  const activeDskp = dskpAnalysis.filter((s) => s.totalResponses > 0);
+
+  // Identify standards needing reinforcement (lowest first, even if above 60%)
+  const sorted = [...activeDskp].sort((a, b) => a.percentage - b.percentage);
+
+  sorted.slice(0, 3).forEach((s) => {
+    if (s.percentage < 80) {
+      if (s.code === '3.1.6') {
+        reinforcements.push(`Sesetengah murid masih kurang konsisten dalam tolak pecahan (${s.percentage}% ketepatan).`);
+      } else if (s.code === '3.1.4') {
+        reinforcements.push(`Hubungan pecahan dan peratus wajar diperkukuhkan lagi dengan perwakilan visual (${s.percentage}%).`);
+      } else if (s.code === '3.1.2') {
+        reinforcements.push(`Latihan tambahan padanan fraction bar dicadangkan untuk pecahan setara (${s.percentage}%).`);
+      } else if (s.code === '3.1.5') {
+        reinforcements.push(`Operasi tambah pecahan berpenyebut tidak sama memerlukan penegasan langkah samakan penyebut (${s.percentage}%).`);
+      } else if (s.code === '3.1.7') {
+        reinforcements.push(`Perkaitan pecahan tak wajar dan nombor bercampur boleh dimantapkan dengan objek maujud (${s.percentage}%).`);
+      } else if (s.code === '3.1.3') {
+        reinforcements.push(`Murid memerlukan latihan sifir pembahagi untuk mempermudah pecahan (${s.percentage}%).`);
+      } else {
+        reinforcements.push(`Standard ${s.code} wajar diberikan pengukuhan bersasar (${s.percentage}%).`);
+      }
+    }
+  });
+
+  // Check question with highest errors for specific pedagogical focus
+  const activeQuestions = questionsAnalysis.filter((q) => q.totalAnswered > 0);
+  if (activeQuestions.length > 0) {
+    const hardest = [...activeQuestions].sort((a, b) => a.accuracy - b.accuracy)[0];
+    if (hardest && hardest.accuracy < 75 && reinforcements.length < 3) {
+      reinforcements.push(`Soalan Q${hardest.questionNumber} (DSKP ${hardest.dskpCode}) paling mencabar bagi murid (${hardest.wrongCount} murid memilih jawapan lain).`);
+    }
+  }
+
+  if (reinforcements.length === 0) {
+    reinforcements.push('Semua standard pembelajaran DSKP 3.1 dikuasai pada tahap yang sangat memuaskan.');
+  }
+
+  return reinforcements.slice(0, 3);
+}
+
+/**
+ * Generates concise 3-4 sentence summary by Alya based on real data
+ */
+export function generateAlyaSummary(
+  overallAccuracy: number,
+  strongest?: DskpStandardAnalysis,
+  weakest?: DskpStandardAnalysis
+): string {
+  if (overallAccuracy === 0) {
+    return 'Belum ada data respons direkodkan. Mulakan sesi imbasan bersama murid untuk Alya sediakan ringkasan prestasi kelas!';
+  }
+
+  let text = `Secara keseluruhan, kelas mencapai ketepatan ${overallAccuracy}%. `;
+
+  if (strongest && strongest.percentage >= 70) {
+    text += `Murid menunjukkan penguasaan kukuh dalam ${strongest.name}. `;
+  } else {
+    text += `Murid sedang membina kefahaman asas pecahan. `;
+  }
+
+  if (weakest && weakest.percentage < 65) {
+    text += `Kemahiran yang paling perlu diberi perhatian ialah ${weakest.name}. `;
+    text += `Cadangan: Gunakan aktiviti fraction bar atau bahan manipulatif selama 10 minit dalam pengukuhan.`;
+  } else {
+    text += `Pencapaian merentasi standard seimbang dan sedia untuk aktiviti pengukuhan lanjutan.`;
+  }
+
+  return text;
+}
+
+/**
+ * Generates tailored follow-up classroom activities based on weak standards
+ */
+export function generateClassFollowUpActivities(
+  dskpAnalysis: DskpStandardAnalysis[]
+): FollowUpActivity[] {
+  const activities: FollowUpActivity[] = [];
+  const activeDskp = dskpAnalysis.filter((s) => s.totalResponses > 0);
+  const weakCodes = activeDskp.filter((s) => s.percentage < 70).map((s) => s.code);
+
+  if (weakCodes.includes('3.1.6')) {
+    activities.push({
+      title: 'Aktiviti Potong Pizza Pecahan',
+      duration: '10 Minit',
+      description: 'Gunakan bulatan pizza kertas berwarna untuk mensimulasikan penolakan bahagian pecahan berpenyebut sama.',
+      dskpCode: '3.1.6',
+      material: 'Bulatan kertas warna & gunting selamat',
+    });
+  }
+
+  if (weakCodes.includes('3.1.5')) {
+    activities.push({
+      title: 'Aktiviti Fraction Bar Menambah',
+      duration: '10 Minit',
+      description: 'Murid menyusun dua jalur pecahan bersebelahan untuk melihat jumlah keseluruhan sebelum menulis ayat matematik.',
+      dskpCode: '3.1.5',
+      material: 'Jalur palang pecahan (Fraction Bars)',
+    });
+  }
+
+  if (weakCodes.includes('3.1.2')) {
+    activities.push({
+      title: 'Aktiviti Padankan Fraction Bar Setara',
+      duration: '10 Minit',
+      description: 'Murid membandingkan jalur 1/2 dengan 2/4 dan 4/8 untuk membuktikan keluasan panjang yang sama.',
+      dskpCode: '3.1.2',
+      material: 'Kit Jalur Pecahan Setara',
+    });
+  }
+
+  if (weakCodes.includes('3.1.4')) {
+    activities.push({
+      title: 'Aktiviti Mewarna Grid 100',
+      duration: '12 Minit',
+      description: 'Murid mewarna 25 daripada 100 petak dan menulis hubungan 25/100 bersamaan 25%.',
+      dskpCode: '3.1.4',
+      material: 'Kertas Grid 10x10 & Pensel Warna',
+    });
+  }
+
+  if (weakCodes.includes('3.1.7')) {
+    activities.push({
+      title: 'Aktiviti Objek Penuh & Baki',
+      duration: '10 Minit',
+      description: 'Murid mengasingkan pinggan berisi penuh (1) dan pinggan berbaki untuk menukar nombor bercampur kepada pecahan tak wajar.',
+      dskpCode: '3.1.7',
+      material: 'Pinggan kertas & blok pecahan',
+    });
+  }
+
+  // Default fallback activity if all are strong
+  if (activities.length === 0) {
+    activities.push({
+      title: 'Aktiviti Pengukuhan & Cabaran Stesen Pecahan',
+      duration: '15 Minit',
+      description: 'Murid bergerak dalam stesen kecil menyelesaikan kad teka-teki pecahan dan mencipta soalan pecahan mereka sendiri.',
+      dskpCode: '3.1',
+      material: 'Kad Teka-Teki Pecahan Kembara',
+    });
+  }
+
+  return activities.slice(0, 3);
+}
+
+/**
+ * Computes high-level smart class insights
  */
 export function generateSmartClassInsights(
   dskpAnalysis: DskpStandardAnalysis[],
   studentsAnalysis: StudentAnalysisResult[]
 ): ClassSmartInsights {
-  const totalStudents = studentsAnalysis.length;
-  const masteredCount = studentsAnalysis.filter((s) => s.percentage >= 70).length;
-  const needGuidanceCount = studentsAnalysis.filter((s) => s.percentage < 70).length;
+  const masteredCount = studentsAnalysis.filter((s) => s.totalAnswered > 0 && s.percentage >= 80).length;
+  const inProgressCount = studentsAnalysis.filter(
+    (s) => s.totalAnswered > 0 && s.percentage >= 60 && s.percentage < 80
+  ).length;
+  const needGuidanceCount = studentsAnalysis.filter(
+    (s) => s.totalAnswered > 0 && s.percentage < 60
+  ).length;
+  const unansweredCount = studentsAnalysis.filter((s) => s.totalAnswered === 0).length;
 
   let totalCorrect = 0;
   let totalAnswered = 0;
@@ -427,49 +783,45 @@ export function generateSmartClassInsights(
 
   // Filter standards that have actual responses
   const activeStandards = dskpAnalysis.filter((s) => s.totalResponses > 0);
-
   activeStandards.sort((a, b) => b.percentage - a.percentage);
+
   const strongest = activeStandards.length > 0 ? activeStandards[0] : undefined;
   const weakest = activeStandards.length > 0 ? activeStandards[activeStandards.length - 1] : undefined;
+
+  let classAverageDescription = 'Belum ada data imbasan yang direkodkan.';
+  if (totalAnswered > 0) {
+    if (overallAccuracy >= 80) {
+      classAverageDescription = 'Majoriti murid menunjukkan penguasaan yang sangat baik dalam topik ini.';
+    } else if (overallAccuracy >= 60) {
+      classAverageDescription = 'Sebahagian besar murid sedang menguasai kemahiran asas dengan memuaskan.';
+    } else {
+      classAverageDescription = 'Ramai murid masih memerlukan pengukuhan dan bimbingan berfokus.';
+    }
+  }
 
   const insights: string[] = [];
   const recommendations: string[] = [];
 
-  if (strongest && strongest.percentage >= 70) {
-    insights.push(`Majoriti murid menunjukkan penguasaan kukuh dalam Standard ${strongest.code} (${strongest.name}) dengan ketepatan ${strongest.percentage}%.`);
-  } else if (strongest) {
-    insights.push(`Standard pencapaian tertinggi ialah ${strongest.code} (${strongest.name}) pada tahap sederhana (${strongest.percentage}%).`);
+  if (strongest && strongest.percentage >= 75) {
+    insights.push(`Majoriti murid menunjukkan penguasaan kukuh dalam standard ${strongest.code} (${strongest.name}) dengan ${strongest.percentage}% ketepatan.`);
   }
 
   if (weakest && weakest.percentage < 65) {
-    insights.push(`Ramai murid masih keliru atau menghadapi kesukaran dalam Standard ${weakest.code} (${weakest.name}) dengan ketepatan ${weakest.percentage}%.`);
-    recommendations.push(`Guru disarankan memberi aktiviti pengukuhan dan bimbingan berfokus pada Standard ${weakest.code} (${weakest.name}).`);
-  }
-
-  if (activeStandards.some((s) => s.code === '3.1.6' && s.percentage < 60)) {
-    recommendations.push('Berikan penekanan khas kepada operasi tolak pecahan (3.1.6) dengan menggunakan kaedah lipatan kertas dan objek maujud.');
-  }
-
-  if (activeStandards.some((s) => s.code === '3.1.2' && s.percentage >= 75)) {
-    insights.push('Pemahaman pecahan setara (3.1.2) berada pada tahap amat baik, membolehkan murid menyamakan penyebut dengan lebih lancar.');
-  }
-
-  if (insights.length === 0) {
-    insights.push('Sila imbas kad jawapan murid pada soalan interaktif untuk menjana analisis kelas berasaskan data sebenar.');
-  }
-
-  if (recommendations.length === 0) {
-    recommendations.push('Gunakan hasil imbasan untuk menyesuaikan aktiviti pemulihan dan pengayaan PBD di bilik darjah.');
+    insights.push(`Standard ${weakest.code} (${weakest.name}) merupakan kemahiran yang paling memerlukan bimbingan (${weakest.percentage}% ketepatan).`);
+    recommendations.push(`Rancang aktiviti pemulihan berfokus untuk ${weakest.name} menggunakan bahan manipulatif konkrit.`);
   }
 
   return {
     overallAccuracy,
     masteredCount,
+    inProgressCount,
     needGuidanceCount,
+    unansweredCount,
     strongestStandard: strongest,
     weakestStandard: weakest,
     insights,
     recommendations,
+    classAverageDescription,
   };
 }
 
@@ -480,20 +832,25 @@ export function exportClassReportCSV(
   className: string,
   studentsAnalysis: StudentAnalysisResult[],
   dskpAnalysis: DskpStandardAnalysis[],
-  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_30_QUESTIONS
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS
 ) {
   const headers = [
     'Bil',
     'No Kad',
     'Nama Murid',
     'Kelas',
-    'Jumlah Betul (/30)',
-    'Jumlah Salah (/30)',
+    'Jumlah Betul (/15)',
+    'Jumlah Salah (/15)',
     'Peratus (%)',
     'Cadangan TP',
-    'Tahap Keyakinan',
+    'Tahap Keyakinan TP',
+    'Kecenderungan Pembelajaran',
+    'Skor Visual (%)',
+    'Skor Kinestetik (%)',
+    'Skor Auditori (%)',
+    'Keyakinan Profil (%)',
     'Standard Kuat',
-    'Standard Lemah',
+    'Perlu Bimbingan',
     'Cadangan Intervensi',
     ...questions.map((_, i) => `Q${i + 1}`),
   ];
@@ -501,9 +858,11 @@ export function exportClassReportCSV(
   const rows = studentsAnalysis.map((s, idx) => {
     const qAnswers = questions.map((q) => {
       const ans = s.answers[q.questionId];
-      if (!ans) return '-';
+      if (!ans) return 'Tiada Respons';
       return ans.isCorrect ? `${ans.letter} (✓)` : `${ans.letter} (✗)`;
     });
+
+    const lp = s.learningProfile;
 
     return [
       idx + 1,
@@ -515,6 +874,11 @@ export function exportClassReportCSV(
       `${s.percentage}%`,
       `TP ${s.suggestedTP}`,
       s.tpConfidence,
+      `"${lp ? lp.dominantLabel : '-'}"`,
+      lp ? lp.visualScore : 0,
+      lp ? lp.kinestheticScore : 0,
+      lp ? lp.auditoryScore : 0,
+      lp ? lp.confidence : 0,
       `"${s.strongStandards.join(', ') || '-'}"`,
       `"${s.weakStandards.join(', ') || '-'}"`,
       `"${s.intervention.replace(/"/g, '""')}"`,
@@ -537,60 +901,13 @@ export function exportClassReportCSV(
 
 /**
  * Seed realistic simulated scan responses for a class (Useful for teachers testing out the system)
+ * Strictly enforces 40/40 answered, 35 Menguasai (80-100%), 5 Sedang Menguasai (60-79%), 0 Perlu Bimbingan (<60%)
  */
 export function seedRealisticSessionData(
   className: string,
   students: InteractiveClassStudent[],
-  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_30_QUESTIONS
+  questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS
 ) {
-  const letters: ('A' | 'B' | 'C' | 'D')[] = ['A', 'B', 'C', 'D'];
-  const allAnswers = loadAllSessionAnswers();
-
-  students.forEach((student, sIdx) => {
-    // Determine student tier for realistic spread:
-    // 25% top performers (85-100%)
-    // 50% average performers (60-84%)
-    // 25% need guidance (30-59%)
-    const tier = sIdx % 4;
-    const accuracyTarget = tier === 0 ? 0.92 : tier === 1 ? 0.78 : tier === 2 ? 0.68 : 0.48;
-
-    questions.forEach((q) => {
-      if (!allAnswers[q.questionId]) {
-        allAnswers[q.questionId] = {};
-      }
-
-      // Roll chance of correct answer
-      const roll = Math.random();
-      const isCorrect = roll < accuracyTarget;
-
-      let chosenLetter = q.correctAnswerLetter;
-      if (!isCorrect) {
-        const wrongLetters = letters.filter((l) => l !== q.correctAnswerLetter);
-        chosenLetter = wrongLetters[Math.floor(Math.random() * wrongLetters.length)];
-      }
-
-      const optIdx = letters.indexOf(chosenLetter);
-      const answerText = optIdx >= 0 ? q.options[optIdx] : chosenLetter;
-
-      allAnswers[q.questionId][student.studentId] = {
-        sessionId: `SESI_${className.replace(/\s+/g, '_')}`,
-        studentId: student.studentId,
-        studentName: student.studentName,
-        class: className,
-        questionId: q.questionId,
-        dskpCode: q.dskpCode,
-        answerOption: chosenLetter as AnswerOption,
-        orientation: chosenLetter,
-        answerLetter: chosenLetter,
-        answer: answerText,
-        correctAnswer: q.correctAnswer,
-        angleDeg: 0,
-        scannedAt: Date.now() - Math.floor(Math.random() * 3600000),
-        timestamp: Date.now(),
-        isCorrect,
-      };
-    });
-  });
-
-  saveAllSessionAnswers(allAnswers);
+  const { nestedAnswers } = buildDemo600Responses();
+  saveAllSessionAnswers(nestedAnswers);
 }

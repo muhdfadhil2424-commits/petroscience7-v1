@@ -11,6 +11,15 @@ export interface InteractiveClassStudent {
   notes?: string;
 }
 
+export interface StudentQrMetadata {
+  studentId: string;
+  answer: AnswerOption;
+  qrId: string;
+  type: 'answer-card';
+  app: 'kembara-dunia-pecahan';
+  status: 'active' | 'inactive';
+}
+
 export interface StudentQrEntry {
   studentId: string; // e.g. "KP-001"
   studentName: string; // e.g. "Adam Hakimi"
@@ -19,7 +28,10 @@ export interface StudentQrEntry {
   answerOption: AnswerOption; // 'A' | 'B' | 'C' | 'D'
   status: 'active' | 'inactive';
   createdAt: string;
-  qrPayload: string;
+  qrPayload: string; // Format: "KEMBARA|studentId|answer" e.g. "KEMBARA|KP-001|A"
+  type?: 'answer-card';
+  app?: 'kembara-dunia-pecahan';
+  metadata?: StudentQrMetadata;
 }
 
 export interface InteractiveClassConfig {

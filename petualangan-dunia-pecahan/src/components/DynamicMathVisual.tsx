@@ -100,6 +100,42 @@ export const DynamicMathVisual: React.FC<DynamicMathVisualProps> = ({
         );
       }
 
+      if (objectType === 'chocolate' || objectType === 'coklat') {
+        return (
+          <svg viewBox="0 0 40 40" className="w-8 h-8 sm:w-10 sm:h-10 transition-transform">
+            <rect
+              x="6"
+              y="8"
+              width="28"
+              height="24"
+              rx="4"
+              fill={isHighlighted ? '#78350F' : '#E5E7EB'}
+              stroke={isHighlighted ? '#451A03' : '#9CA3AF'}
+              strokeWidth="2"
+            />
+            {/* Chocolate grids */}
+            <rect x="9" y="11" width="10" height="8" rx="1.5" fill={isHighlighted ? '#92400E' : '#F3F4F6'} />
+            <rect x="21" y="11" width="10" height="8" rx="1.5" fill={isHighlighted ? '#92400E' : '#F3F4F6'} />
+            <rect x="9" y="21" width="10" height="8" rx="1.5" fill={isHighlighted ? '#92400E' : '#F3F4F6'} />
+            <rect x="21" y="21" width="10" height="8" rx="1.5" fill={isHighlighted ? '#92400E' : '#F3F4F6'} />
+          </svg>
+        );
+      }
+
+      if (objectType === 'flower' || objectType === 'bunga') {
+        return (
+          <svg viewBox="0 0 40 40" className="w-8 h-8 sm:w-10 sm:h-10 transition-transform">
+            {/* Petals */}
+            <circle cx="20" cy="11" r="6" fill={isHighlighted ? '#EC4899' : '#E5E7EB'} stroke={isHighlighted ? '#BE185D' : '#9CA3AF'} strokeWidth="1.5" />
+            <circle cx="29" cy="20" r="6" fill={isHighlighted ? '#EC4899' : '#E5E7EB'} stroke={isHighlighted ? '#BE185D' : '#9CA3AF'} strokeWidth="1.5" />
+            <circle cx="20" cy="29" r="6" fill={isHighlighted ? '#EC4899' : '#E5E7EB'} stroke={isHighlighted ? '#BE185D' : '#9CA3AF'} strokeWidth="1.5" />
+            <circle cx="11" cy="20" r="6" fill={isHighlighted ? '#EC4899' : '#E5E7EB'} stroke={isHighlighted ? '#BE185D' : '#9CA3AF'} strokeWidth="1.5" />
+            {/* Center */}
+            <circle cx="20" cy="20" r="5" fill={isHighlighted ? '#FBBF24' : '#D1D5DB'} stroke={isHighlighted ? '#D97706' : '#6B7280'} strokeWidth="1.5" />
+          </svg>
+        );
+      }
+
       // Default Star / Trophy
       return (
         <svg viewBox="0 0 40 40" className="w-8 h-8 sm:w-10 sm:h-10 transition-transform">

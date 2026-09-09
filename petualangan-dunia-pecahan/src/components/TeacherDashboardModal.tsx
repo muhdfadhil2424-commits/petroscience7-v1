@@ -34,6 +34,9 @@ import { analyzeStudentLearning, AILearningAnalysisResult } from '../utils/aiLea
 import { playSfx } from '../utils/audio';
 import { StudentReportModal } from './StudentReportModal';
 import { CertificateModal } from './CertificateModal';
+import { StudentLearningProfileModal } from './StudentLearningProfileModal';
+import { LearningProfile } from '../types/learningProfile';
+import { getOrComputeDefaultClassProfiles } from '../utils/learningProfileManager';
 import {
   PieChartStatus,
   SkillBarChart,
@@ -71,6 +74,19 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
   const [selectedStudentForCertificate, setSelectedStudentForCertificate] = useState<StudentProfile | null>(null);
   const [selectedAIStudentId, setSelectedAIStudentId] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Profil Kecenderungan Pembelajaran State & Summary
+  const [selectedLearningMode, setSelectedLearningMode] = useState<string>('semua');
+  const [selectedStudentForLearningProfile, setSelectedStudentForLearningProfile] = useState<{
+    name: string;
+    id: string;
+    studentClass: string;
+    profile: LearningProfile | null;
+  } | null>(null);
+
+  const { profilesMap: learningProfilesMap, summary: classLearningSummary } = React.useMemo(() => {
+    return getOrComputeDefaultClassProfiles();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -110,13 +126,24 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
     else if (selectedProgressFilter === 'proses') matchesProgress = completed > 0 && completed < 9;
     else if (selectedProgressFilter === 'belum') matchesProgress = completed === 0;
 
+    // Filter by Learning Mode
+    let matchesLearningMode = true;
+    if (selectedLearningMode !== 'semua') {
+      const p = learningProfilesMap[s.id] || learningProfilesMap[s.nama];
+      if (selectedLearningMode === 'insufficient_data') {
+        matchesLearningMode = !p || p.dominantMode === 'insufficient_data';
+      } else {
+        matchesLearningMode = p?.dominantMode === selectedLearningMode;
+      }
+    }
+
     const query = searchQuery.toLowerCase();
     const matchesSearch =
       s.nama.toLowerCase().includes(query) ||
       s.id.toLowerCase().includes(query) ||
       s.kelas.toLowerCase().includes(query);
 
-    return matchesStatus && matchesTP && matchesProgress && matchesSearch;
+    return matchesStatus && matchesTP && matchesProgress && matchesSearch && matchesLearningMode;
   });
 
   // Selected Student for AI Analysis Tab
@@ -692,6 +719,137 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                       }}
                     />
                   </div>
+
+                  {/* Card 4: PROFIL PEMBELAJARAN KELAS & INSIGHT ALYA */}
+                  <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-purple-50/50 to-amber-50/80 border-2 border-indigo-200 shadow-xs space-y-3.5 lg:col-span-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-indigo-200/80">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
+                          🧠
+                        </div>
+                        <div>
+                          <h3 className="font-serif-title font-black text-sm sm:text-base text-indigo-950">
+                            PROFIL PEMBELAJARAN KELAS
+                          </h3>
+                          <p className="text-[11px] text-stone-500 font-medium">
+                            Taburan kecenderungan penerimaan maklumat berpandukan data interaksi murid
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-[11px] font-bold text-indigo-900 bg-white px-2.5 py-1 rounded-full border border-indigo-200 shadow-2xs">
+                          Jumlah: <strong>{classLearningSummary.totalStudents} murid</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* 4 Stat Boxes: Visual, Kinestetik, Auditori, Gabungan */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      {/* Visual */}
+                      <div className="bg-white p-3 rounded-2xl border-2 border-blue-200 shadow-2xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                            <span>👀</span>
+                            <span>Visual</span>
+                          </span>
+                          <span className="font-mono text-blue-600 font-bold text-[11px]">
+                            {classLearningSummary.averageVisualScore}%
+                          </span>
+                        </div>
+                        <div className="text-xl font-black text-blue-900 font-mono">
+                          {classLearningSummary.visualCount} <span className="text-xs font-medium text-stone-500">murid</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full"
+                            style={{ width: `${Math.round((classLearningSummary.visualCount / (classLearningSummary.totalStudents || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Kinestetik */}
+                      <div className="bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-2xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                            <span>🖐️</span>
+                            <span>Kinestetik</span>
+                          </span>
+                          <span className="font-mono text-emerald-600 font-bold text-[11px]">
+                            {classLearningSummary.averageKinestheticScore}%
+                          </span>
+                        </div>
+                        <div className="text-xl font-black text-emerald-900 font-mono">
+                          {classLearningSummary.kinestheticCount} <span className="text-xs font-medium text-stone-500">murid</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500 rounded-full"
+                            style={{ width: `${Math.round((classLearningSummary.kinestheticCount / (classLearningSummary.totalStudents || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Auditori */}
+                      <div className="bg-white p-3 rounded-2xl border-2 border-amber-200 shadow-2xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                            <span>🎧</span>
+                            <span>Auditori</span>
+                          </span>
+                          <span className="font-mono text-amber-600 font-bold text-[11px]">
+                            {classLearningSummary.averageAuditoryScore}%
+                          </span>
+                        </div>
+                        <div className="text-xl font-black text-amber-900 font-mono">
+                          {classLearningSummary.auditoryCount} <span className="text-xs font-medium text-stone-500">murid</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500 rounded-full"
+                            style={{ width: `${Math.round((classLearningSummary.auditoryCount / (classLearningSummary.totalStudents || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Gabungan */}
+                      <div className="bg-white p-3 rounded-2xl border-2 border-purple-200 shadow-2xs space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-stone-700 flex items-center gap-1">
+                            <span>🌈</span>
+                            <span>Gabungan</span>
+                          </span>
+                          <span className="font-mono text-purple-600 font-bold text-[11px]">Multimodal</span>
+                        </div>
+                        <div className="text-xl font-black text-purple-900 font-mono">
+                          {classLearningSummary.combinedCount} <span className="text-xs font-medium text-stone-500">murid</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500 rounded-full"
+                            style={{ width: `${Math.round((classLearningSummary.combinedCount / (classLearningSummary.totalStudents || 1)) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 🤖 Insight Alya */}
+                    <div className="bg-white/90 p-3.5 rounded-2xl border border-indigo-200 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🤖</span>
+                        <span className="font-black text-xs text-indigo-950 uppercase tracking-wider">
+                          Insight Alya
+                        </span>
+                        <span className="text-[10px] text-stone-400 font-medium">Cadangan Pedagogi Berdasarkan Taburan Sebenar</span>
+                      </div>
+                      <p className="text-xs text-stone-800 font-medium leading-relaxed bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
+                        “{classLearningSummary.classPedagogicalInsight}”
+                      </p>
+                      <p className="text-[10px] text-stone-500 italic">
+                        * Analisis ini dijana secara langsung daripada data interaksi murid kelas dan bukan andaian tekaan.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -768,6 +926,35 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Filter Kecenderungan Pembelajaran */}
+                <div className="w-full flex items-center gap-1.5 flex-wrap pt-2 mt-1 border-t border-stone-200">
+                  <span className="text-[11px] font-bold text-stone-600 flex items-center gap-1 mr-1">
+                    <span>🧠</span>
+                    <span>Profil Pembelajaran:</span>
+                  </span>
+                  {[
+                    { id: 'semua', label: 'Semua' },
+                    { id: 'visual', label: '👀 Visual' },
+                    { id: 'auditory', label: '🎧 Auditori' },
+                    { id: 'kinesthetic', label: '🖐️ Kinestetik' },
+                    { id: 'combined', label: '🌈 Gabungan' },
+                    { id: 'insufficient_data', label: '⚪ Data Belum Mencukupi' },
+                  ].map((pill) => (
+                    <button
+                      key={pill.id}
+                      type="button"
+                      onClick={() => setSelectedLearningMode(pill.id)}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                        selectedLearningMode === pill.id
+                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-2xs ring-1 ring-indigo-300'
+                          : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                      }`}
+                    >
+                      {pill.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Roster Table Container */}
@@ -795,6 +982,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         <th className="py-3 px-3 text-center">Bintang</th>
                         <th className="py-3 px-3 text-center">Skor</th>
                         <th className="py-3 px-3 text-center">Tahap</th>
+                        <th className="py-3 px-3 text-center">🧠 Profil Pembelajaran</th>
                         <th className="py-3 px-3 text-center">Sijil</th>
                         <th className="py-3 px-4 text-right">Tindakan</th>
                       </tr>
@@ -805,6 +993,7 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                         const completed = s.progress?.completedChallenges || 0;
                         const tp = calculateStudentTP(stars, completed);
                         const hasCertificate = s.progress?.certificateEarned ?? completed >= 9;
+                        const lProfile = learningProfilesMap[s.id] || learningProfilesMap[s.nama];
 
                         const avgGameScore = s.progress?.gameDetails
                           ? Math.round(
@@ -861,6 +1050,27 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                               </span>
                             </td>
                             <td className="py-3 px-3 text-center">
+                              {lProfile ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border shadow-2xs whitespace-nowrap ${
+                                    lProfile.dominantMode === 'visual'
+                                      ? 'bg-blue-50 text-blue-900 border-blue-300'
+                                      : lProfile.dominantMode === 'kinesthetic'
+                                      ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                                      : lProfile.dominantMode === 'auditory'
+                                      ? 'bg-amber-50 text-amber-900 border-amber-300'
+                                      : lProfile.dominantMode === 'combined'
+                                      ? 'bg-purple-50 text-purple-900 border-purple-300'
+                                      : 'bg-stone-100 text-stone-600 border-stone-200'
+                                  }`}
+                                >
+                                  {lProfile.shortBadge || lProfile.dominantLabel}
+                                </span>
+                              ) : (
+                                <span className="text-stone-400 text-xs">-</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-3 text-center">
                               {hasCertificate ? (
                                 <button
                                   onClick={() => {
@@ -879,7 +1089,24 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
                               )}
                             </td>
                             <td className="py-3 px-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
+                              <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playSfx('click', soundEnabled);
+                                    setSelectedStudentForLearningProfile({
+                                      name: s.nama,
+                                      id: s.id,
+                                      studentClass: s.kelas,
+                                      profile: lProfile || null,
+                                    });
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-600 text-indigo-900 hover:text-white border border-indigo-200 font-extrabold text-[11px] cursor-pointer transition-all shadow-2xs whitespace-nowrap inline-flex items-center gap-1"
+                                  title="Lihat Profil Kecenderungan Pembelajaran"
+                                >
+                                  <span>🧠 Lihat Profil</span>
+                                </button>
+
                                 <button
                                   onClick={() => {
                                     playSfx('click', soundEnabled);
@@ -1257,6 +1484,21 @@ export const TeacherDashboardModal: React.FC<TeacherDashboardModalProps> = ({
           onClose={() => setSelectedStudentForCertificate(null)}
         />
       )}
+
+      {/* STUDENT LEARNING PROFILE MODAL (PROFIL KECENDERUNGAN PEMBELAJARAN) */}
+      <AnimatePresence>
+        {selectedStudentForLearningProfile && (
+          <StudentLearningProfileModal
+            isOpen={!!selectedStudentForLearningProfile}
+            studentName={selectedStudentForLearningProfile.name}
+            studentId={selectedStudentForLearningProfile.id}
+            studentClass={selectedStudentForLearningProfile.studentClass}
+            profile={selectedStudentForLearningProfile.profile}
+            soundEnabled={soundEnabled}
+            onClose={() => setSelectedStudentForLearningProfile(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
