@@ -72,18 +72,38 @@ export interface ChatMessage {
 
 export const PRESET_QUESTIONS = [
   {
+    id: 'q_tambah_berlaku',
+    label: '➕ Bagaimana Penambahan Pecahan Berlaku?',
+    query: 'Bagaimana penambahan pecahan berlaku?',
+  },
+  {
+    id: 'q_tolak_berlaku',
+    label: '➖ Bagaimana Penolakan Pecahan Berlaku?',
+    query: 'Bagaimana penolakan pecahan berlaku?',
+  },
+  {
+    id: 'q_tukar_perpuluhan',
+    label: '🔢 Tukarkan Pecahan Kepada Bentuk Perpuluhan',
+    query: 'Tukarkan pecahan kepada bentuk perpuluhan.',
+  },
+  {
+    id: 'q_perkataan_tambah',
+    label: '🗣️ Soalan Perkataan: Lima per tiga tambah empat per dua',
+    query: 'Lima per tiga tambah empat per dua',
+  },
+  {
     id: 'q_visual_3_4',
-    label: '⚪ Rajah Bulatan: Pecahan 3/4',
+    label: '⚪ Rajah Bulatan Asas: Pecahan 3/4',
     query: 'Tunjukkan rajah bulatan untuk pecahan 3/4.',
   },
   {
     id: 'q_visual_5_8',
-    label: '⚪ Rajah Bulatan: Pecahan 5/8',
+    label: '⚪ Rajah Bulatan Asas: Pecahan 5/8',
     query: 'Tunjukkan rajah bulatan untuk pecahan 5/8.',
   },
   {
     id: 'q_visual_bulatan',
-    label: '⚪ Siri Rajah Bulatan 1 hingga 12',
+    label: '⚪ Siri Rajah Bulatan 1 hingga 12 (Asas Pecahan)',
     query: 'Tunjukkan siri rajah bulatan pecahan 1 hingga 12 bahagian.',
   },
   {
@@ -138,6 +158,77 @@ export const PRESET_QUESTIONS = [
   },
 ];
 
+/**
+ * Menukar soalan pecahan dalam bentuk perkataan bahasa Melayu kepada format angka
+ * Contoh: "lima per tiga tambah empat per dua" -> "5/3 + 4/2"
+ * Contoh: "dua per empat tolak satu per empat" -> "2/4 - 1/4"
+ * Contoh: "tiga per lima" -> "3/5"
+ */
+export function normalizeMalayFractionText(input: string): string {
+  let text = input.trim();
+
+  // Istilah khas pecahan lazim
+  text = text.replace(/\btiga suku\b/gi, '3/4');
+  text = text.replace(/\bseparuh\b/gi, '1/2');
+  text = text.replace(/\bsetengah\b/gi, '1/2');
+  text = text.replace(/\bsuku\b/gi, '1/4');
+  text = text.replace(/\bseperdua belas\b/gi, '1/12');
+  text = text.replace(/\bsebelas per dua belas\b/gi, '11/12');
+  text = text.replace(/\bsepersepuluh\b/gi, '1/10');
+  text = text.replace(/\bsepersembilan\b/gi, '1/9');
+  text = text.replace(/\bseperlapan\b/gi, '1/8');
+  text = text.replace(/\bsepertujuh\b/gi, '1/7');
+  text = text.replace(/\bseperenam\b/gi, '1/6');
+  text = text.replace(/\bseperlima\b/gi, '1/5');
+  text = text.replace(/\bseperempat\b/gi, '1/4');
+  text = text.replace(/\bsepertiga\b/gi, '1/3');
+  text = text.replace(/\bseperdua\b/gi, '1/2');
+
+  const wordMap: Record<string, string> = {
+    'dua puluh satu': '21',
+    'dua puluh': '20',
+    'sembilan belas': '19',
+    'lapan belas': '18',
+    'tujuh belas': '17',
+    'enam belas': '16',
+    'lima belas': '15',
+    'empat belas': '14',
+    'tiga belas': '13',
+    'dua belas': '12',
+    'sebelas': '11',
+    'sepuluh': '10',
+    'sembilan': '9',
+    'lapan': '8',
+    'tujuh': '7',
+    'enam': '6',
+    'lima': '5',
+    'empat': '4',
+    'tiga': '3',
+    'dua': '2',
+    'satu': '1',
+    'sifar': '0',
+    'kosong': '0',
+  };
+
+  const numWords =
+    '(?:dua puluh satu|dua puluh|sembilan belas|lapan belas|tujuh belas|enam belas|lima belas|empat belas|tiga belas|dua belas|sebelas|sepuluh|sembilan|lapan|tujuh|enam|lima|empat|tiga|dua|satu|sifar|kosong|\\d+)';
+  const fracRegex = new RegExp(`(${numWords})\\s+per\\s+(${numWords})`, 'gi');
+
+  text = text.replace(fracRegex, (_, p1, p2) => {
+    const n1 = wordMap[p1.toLowerCase()] || p1;
+    const n2 = wordMap[p2.toLowerCase()] || p2;
+    return `${n1}/${n2}`;
+  });
+
+  // Operasi dalam perkataan
+  text = text.replace(/\bcampur\b/gi, '+');
+  text = text.replace(/\bdijumlahkan dengan\b/gi, '+');
+  text = text.replace(/\bditolak dengan\b/gi, '-');
+  text = text.replace(/\bkurang\b/gi, '-');
+
+  return text;
+}
+
 // Helper: Greatest Common Divisor
 function gcd(a: number, b: number): number {
   let x = Math.abs(a);
@@ -175,11 +266,158 @@ function getEmojiBlocks(shaded: number, total: number): string {
  */
 export function getAlyaResponse(userQuery: string): AlyaAIResult {
   const raw = userQuery.trim();
-  const q = raw.toLowerCase();
+  const normalizedRaw = normalizeMalayFractionText(raw);
+  const q = normalizedRaw.toLowerCase();
+  const originalQ = raw.toLowerCase();
+
+  // =========================================================================
+  // 0A. BAGAIMANA PENAMBAHAN PECAHAN BERLAKU (DSKP 3.1.5)
+  // (Tanpa visual diagram kerana soalan berkaitan penambahan pecahan)
+  // =========================================================================
+  const isHowAdditionWorks =
+    (originalQ.includes('bagaimana') ||
+      originalQ.includes('bagaimanakah') ||
+      originalQ.includes('cara') ||
+      originalQ.includes('macam mana') ||
+      originalQ.includes('terangkan') ||
+      originalQ.includes('apa itu')) &&
+    (originalQ.includes('penambahan') ||
+      (originalQ.includes('tambah') && originalQ.includes('pecahan'))) &&
+    (originalQ.includes('berlaku') ||
+      originalQ.includes('beroperasi') ||
+      originalQ.includes('dilakukan') ||
+      originalQ.includes('konsep') ||
+      originalQ.includes('kaedah') ||
+      !originalQ.match(/\d/));
+
+  if (isHowAdditionWorks) {
+    return {
+      identifiedTopic: 'Konsep Pedagogi: Bagaimana Penambahan Pecahan Berlaku (DSKP 3.1.5)',
+      confidenceTag: 'Kategori: Konsep Operasi Tambah DSKP',
+      pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
+      mathWorkspace: {
+        problemTitle: 'Panduan Lengkap: Cara & Konsep Penambahan Pecahan',
+        category: 'Operasi Tambah Pecahan (DSKP 3.1.5)',
+        problemEquation: '(Pengangka 1 + Pengangka 2) / Penyebut Sama',
+        formulaUsed: '1. Semak Penyebut -> 2. Tambah Pengangka Sahaja -> 3. Penyebut KEKAL -> 4. Permudahkan',
+        pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
+        stepByStep: [
+          'Langkah 1 (Semak Saiz Potongan / Penyebut): Lihat nombor di BAWAH (penyebut). Adakah saiz potongan loyang sama atau berbeza?',
+          'Langkah 2 (Jika Penyebut SAMA - Contoh: 1/5 + 2/5): Kita HANYA menambah nombor di ATAS (pengangka): 1 + 2 = 3. Nombor penyebut 5 di bawah KEKAL sama! Jawapannya ialah 3/5.',
+          'Langkah 3 (Kenapa Nombor Bawah Tak Boleh Ditambah?): Nombor penyebut di bawah melambangkan "nama saiz potongan loyang". Saiz loyang tidak bertambah menjadi 10 petak, yang bertambah hanyalah bilangan kepingan yang kita kumpulkan!',
+          'Langkah 4 (Jika Penyebut BERBEZA - Contoh: 1/2 + 1/4): Kita mesti samakan saiz potongan dahulu menggunakan sifir sepunya: 1/2 ditukar menjadi 2/4. Kemudian barulah ditambah: 2/4 + 1/4 = 3/4.',
+          'Langkah 5 (Semak & Permudahkan): Jika jawapan boleh dibahagikan sama rata (contoh: 2/4), permudahkan kepada bentuk termudah (1/2).',
+        ],
+        finalAnswer: 'Penyebut sama -> Tambah nombor atas sahaja. Nombor bawah kekal sama!',
+        note: 'Prinsip Emas: Jangan sesekali menambah nombor di bawah (penyebut)!',
+        socraticQuestion: 'Cuba adik bayangkan: Jika adik ada 1 keping pizza daripada loyang 6 potong (1/6) dan kawan beri lagi 2 keping (2/6), berapa keping pizza yang adik ada sekarang? Adakah saiz loyang berubah?',
+      },
+      explanationText: `Hai adik! Mari Puan Alya terangkan **bagaimana operasi penambahan pecahan berlaku** dengan sangat mudah difahami 👩‍🍳✨\n\nPenambahan pecahan berlaku melalui **4 prinsip utama** mengikut sukatan Matematik Tahun 3:\n\n1. **Semak Nombor Bawah (Penyebut)**:\n• Nombor bawah menunjukkan **saiz potongan loyang**.\n• Kita mesti pastikan saiz potongannya sama sebelum boleh menambah.\n\n2. **Jika Nombor Bawah SAMA (Paling Kerap Keluar!)**:\n• Kita **HANYA TAMBAH NOMBOR ATAS (Pengangka)** sahaja!\n• **Nombor bawah KEKAL SAMA**, jangan ditambah!\n• *Contoh*: **1/5 + 2/5 = 3/5** *(1 keping + 2 keping = 3 keping daripada loyang 5 petak)*.\n\n3. **Jika Nombor Bawah BERBEZA**:\n• Kita perlu cari sifir sepunya untuk samakan saiz potongan dahulu.\n• *Contoh*: 1/2 + 1/4 -> Tukar 1/2 kepada 2/4, maka **2/4 + 1/4 = 3/4**.\n\n4. **Permudahkan Jawapan**:\n• Jika jawapan boleh dibahagi, permudahkan ke bentuk termudah (contoh: 2/4 = 1/2).\n\nIngat petua Chef Alya: **"Penyebut sama, campur yang atas sahaja!"** 😊`,
+      socraticPrompt: 'Uji diri: Kenapa 1/4 + 2/4 = 3/4 dan BUKAN 3/8? Kerana saiz loyang kekal 4 bahagian!',
+      proTip: 'Prinsip Emas: Anggap nombor bawah seperti nama buah: 1 epal + 2 epal = 3 epal (bukan 3 epal berganda)!',
+    };
+  }
+
+  // =========================================================================
+  // 0B. BAGAIMANA PENOLAKAN PECAHAN BERLAKU (DSKP 3.1.6)
+  // (Tanpa visual diagram kerana soalan berkaitan penolakan pecahan)
+  // =========================================================================
+  const isHowSubtractionWorks =
+    (originalQ.includes('bagaimana') ||
+      originalQ.includes('bagaimanakah') ||
+      originalQ.includes('cara') ||
+      originalQ.includes('macam mana') ||
+      originalQ.includes('terangkan') ||
+      originalQ.includes('apa itu')) &&
+    (originalQ.includes('penolakan') ||
+      (originalQ.includes('tolak') && originalQ.includes('pecahan'))) &&
+    (originalQ.includes('berlaku') ||
+      originalQ.includes('beroperasi') ||
+      originalQ.includes('dilakukan') ||
+      originalQ.includes('konsep') ||
+      originalQ.includes('kaedah') ||
+      !originalQ.match(/\d/));
+
+  if (isHowSubtractionWorks) {
+    return {
+      identifiedTopic: 'Konsep Pedagogi: Bagaimana Penolakan Pecahan Berlaku (DSKP 3.1.6)',
+      confidenceTag: 'Kategori: Konsep Operasi Tolak DSKP',
+      pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
+      mathWorkspace: {
+        problemTitle: 'Panduan Lengkap: Cara & Konsep Penolakan Pecahan',
+        category: 'Operasi Tolak Pecahan (DSKP 3.1.6)',
+        problemEquation: '(Pengangka 1 - Pengangka 2) / Penyebut Sama',
+        formulaUsed: '1. Semak Penyebut -> 2. Tolak Pengangka Sahaja -> 3. Penyebut KEKAL -> 4. Permudahkan',
+        pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
+        stepByStep: [
+          'Langkah 1 (Semak Penyebut): Periksa nombor di BAWAH (penyebut). Pastikan kedua-dua pecahan mempunyai saiz potongan yang sama.',
+          'Langkah 2 (Jika Penyebut SAMA - Contoh: 3/4 - 1/4): Tolakkan nombor di ATAS sahaja: 3 - 1 = 2. Penyebut 4 di bawah KEKAL sama: 2/4.',
+          'Langkah 3 (Permudahkan Bentuk Termudah): 2/4 boleh dibahagi dengan 2 pada atas dan bawah: 2 ÷ 2 = 1, 4 ÷ 2 = 2. Jawapan akhir = 1/2.',
+          'Langkah 4 (Tolak Daripada 1 Objek Penuh - Contoh: 1 - 2/5): Tukarkan nombor bulat 1 kepada pecahan sama penyebut: 1 = 5/5. Kemudian tolakkan pengangka: 5/5 - 2/5 = 3/5.',
+          'Langkah 5 (Semak): Pastikan baki adalah munasabah dan lebih kecil daripada bilangan kepingan awal.',
+        ],
+        finalAnswer: 'Tolak nombor atas sahaja. Nombor penyebut di bawah kekal sama!',
+        note: 'Penolakan pecahan bermaksud mengambil sebahagian potongan daripada jumlah loyang sedia ada.',
+        socraticQuestion: 'Cuba adik bayangkan: Ada 4 potong kek coklat di atas meja (4/5 loyang). Adik makan 1 potong (1/5). Berapakah baki potongan kek yang tinggal di atas meja?',
+      },
+      explanationText: `Jom kita pelajari **bagaimana operasi penolakan pecahan berlaku** langkah demi langkah 👩‍🍳✨\n\nPenolakan pecahan adalah proses mengambil atau menolak sebahagian kepingan daripada jumlah yang ada:\n\n1. **Semak Nombor Bawah (Penyebut)**:\n• Pastikan nombor bawah adalah sama kerana ia mewakili saiz kepingan loyang.\n\n2. **Tolak Nombor Atas Sahaja (Pengangka)**:\n• Apabila nombor bawah sama, kita **HANYA TOLAK NOMBOR ATAS**:\n• **Nombor bawah KEKAL SAMA!**\n• *Contoh*: **3/4 - 1/4 = 2/4** (atau dipermudahkan menjadi **1/2**).\n\n3. **Penolakan Daripada 1 Objek Penuh (Contoh: 1 - 2/5)**:\n• Ingat: 1 loyang penuh boleh ditukar kepada pecahan berpenyebut sama, iaitu **1 = 5/5**.\n• Jadi: **5/5 - 2/5 = 3/5**! Sangat mudah, kan?\n\n4. **Permudahkan Kepada Bentuk Termudah**:\n• Jika nombor atas dan bawah boleh dibahagi nombor sama, kecilkan (contoh: 2/4 = 1/2).\n\nIngat peraturan emas Chef Alya: **"Nombor bawah kekal saiznya, tolak nombor atas yang kita ambil!"** 😊`,
+      socraticPrompt: 'Ingat kunci mudah: Tolak bahagian yang diambil, saiz loyang tidak pernah berkurang!',
+      proTip: 'Situasi Dapur: 7/10 loyang karipap diambil 3/10 oleh pelanggan, baki tinggal 4/10 = 2/5 loyang karipap!',
+    };
+  }
+
+  // =========================================================================
+  // 0C. TUKAR PECAHAN KEPADA BENTUK PERPULUHAN (DSKP 3.2.1 & 3.2.2)
+  // =========================================================================
+  const isConvertToDecimal =
+    (originalQ.includes('tukar') ||
+      originalQ.includes('tukarkan') ||
+      originalQ.includes('bagaimana') ||
+      originalQ.includes('cara') ||
+      originalQ.includes('macam mana')) &&
+    (originalQ.includes('perpuluhan') || originalQ.includes('titik perpuluhan')) &&
+    (originalQ.includes('pecahan') ||
+      originalQ.includes('bentuk') ||
+      originalQ.includes('kepada') ||
+      originalQ.includes('ke'));
+
+  if (isConvertToDecimal) {
+    return {
+      identifiedTopic: 'Penukaran Pecahan Kepada Bentuk Perpuluhan (DSKP 3.2.1 & 3.2.2)',
+      confidenceTag: 'Kategori: Hubungan Pecahan & Perpuluhan DSKP',
+      pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
+      mathWorkspace: {
+        problemTitle: 'Ruang Panduan: Cara Tukar Pecahan Kepada Bentuk Perpuluhan',
+        category: 'Pecahan ke Perpuluhan (Tahun 3)',
+        problemEquation: 'Pecahan (Pengangka / Penyebut) = Pengangka ÷ Penyebut = Nombor Perpuluhan (0._)',
+        formulaUsed: 'Kaedah 1: Jadikan Penyebut 10 atau 100 | Kaedah 2: Operasi Bahagi',
+        pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
+        stepByStep: [
+          'Langkah 1 (Faham Konsep): Titik perpuluhan memisahkan nilai saiz pecahan. Pecahan persepuluh (/10) ditulis dengan 1 tempat perpuluhan (cth: 1/10 = 0.1, 7/10 = 0.7). Pecahan perseratus (/100) ditulis dengan 2 tempat perpuluhan (cth: 25/100 = 0.25).',
+          'Langkah 2 (Kaedah Terpantas - Jadikan Penyebut 10): Jika penyebut ialah 2 atau 5, darabkan nombor atas dan bawah supaya penyebut menjadi 10:',
+          '   • 1/2 = (1 × 5) / (2 × 5) = 5/10 = 0.5 (Separuh)',
+          '   • 3/5 = (3 × 2) / (5 × 2) = 6/10 = 0.6',
+          '   • 4/5 = (4 × 2) / (5 × 2) = 8/10 = 0.8',
+          'Langkah 3 (Jadikan Penyebut 100): Jika penyebut ialah 4, darabkan nombor atas dan bawah dengan 25 supaya penyebut menjadi 100:',
+          '   • 1/4 = (1 × 25) / (4 × 25) = 25/100 = 0.25 (Suku)',
+          '   • 3/4 = (3 × 25) / (4 × 25) = 75/100 = 0.75 (Tiga Suku)',
+          'Langkah 4 (Kaedah Bahagi Terus): Garis palang pecahan bermaksud operasi bahagi. 1/2 = 1 ÷ 2 = 0.5. 1/4 = 1 ÷ 4 = 0.25.',
+          'Langkah 5 (Semak Jadual Pecahan Emas): Hafal pecahan lazim yang kerap diuji dalam peperiksaan Tahun 3.',
+        ],
+        finalAnswer: 'Darabkan penyebut menjadi 10 atau 100, kemudian tukar kepada titik perpuluhan!',
+        note: 'Pecahan Asas: 1/10 = 0.1, 1/2 = 0.5, 1/4 = 0.25, 3/4 = 0.75.',
+        socraticQuestion: 'Cuba adik fikir: Jika 1/10 ialah 0.1, berapakah nilai perpuluhan untuk 8/10? Ya, tepat sekali: 0.8!',
+      },
+      explanationText: `Hai adik! Menukar pecahan kepada nombor perpuluhan adalah kemahiran penting dalam Matematik Tahun 3 👩‍🏫✨\n\nAda **dua cara paling mudah** untuk menukarkannya:\n\n### Kaedah 1: Jadikan Penyebut 10 atau 100 (Paling Digalakkan)\nKita darabkan nombor atas dan nombor bawah dengan angka yang sama supaya penyebut di bawah menjadi **10** atau **100**:\n\n• **Contoh 1 (Penyebut 2)**:\n  1/2 = (1 × 5) / (2 × 5) = 5/10 = **0.5**\n\n• **Contoh 2 (Penyebut 5)**:\n  3/5 = (3 × 2) / (5 × 2) = 6/10 = **0.6**\n  4/5 = (4 × 2) / (5 × 2) = 8/10 = **0.8**\n\n• **Contoh 3 (Penyebut 4)**:\n  1/4 = (1 × 25) / (4 × 25) = 25/100 = **0.25**\n  3/4 = (3 × 25) / (4 × 25) = 75/100 = **0.75**\n\n---\n\n### Kaedah 2: Operasi Bahagi (Pengangka ÷ Penyebut)\nPalang pecahan sebenarnya bermaksud **BAHAGI**:\n• 1/2 = 1 ÷ 2 = **0.5**\n• 1/4 = 1 ÷ 4 = **0.25**\n• 3/4 = 3 ÷ 4 = **0.75**\n\n⭐ **Jadual Rujukan Pantas Murid Cemerlang**:\n• 1/10 = 0.1 | 2/10 = 0.2 | 5/10 = 0.5 | 9/10 = 0.9\n• 1/2 = 0.5 (Separuh)\n• 1/4 = 0.25 (Suku)\n• 3/4 = 0.75 (Tiga Suku)`,
+      socraticPrompt: 'Petua mudah: Ingat duit syiling 50 sen = RM0.50 (1/2 ringgit) dan 25 sen = RM0.25 (1/4 ringgit)!',
+      proTip: 'Hafal 3 Pecahan Emas: 1/2 = 0.5 | 1/4 = 0.25 | 3/4 = 0.75! Ini soalan kegemaran cikgu sekolah.',
+    };
+  }
 
   // =========================================================================
   // 1. STUDENT MISCONCEPTION & ERROR DETECTION (PEMBELAJARAN BERASASKAN KESILAPAN)
   // e.g. "1/2 + 1/3 = 2/5", "1/4 + 2/4 = 3/8", "3/5 + 1/5 = 4/10"
+  // (Tanpa visual diagram kerana soalan berkaitan penambahan pecahan)
   // =========================================================================
   const isMistakeAddingDenom =
     q.includes('2/5') && (q.includes('1/2 + 1/3') || q.includes('1/2+1/3') || q.includes('betul tak 1/2'));
@@ -191,14 +429,6 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
       identifiedTopic: 'Deteksi Kesilapan Murid: Menambah Penyebut di Bawah',
       confidenceTag: 'Kategori: Pembelajaran Berasaskan Kesilapan',
       pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-      visualDiagram: {
-        type: 'bar',
-        title: 'Visual Perbandingan: Kenapa Penyebut Tak Boleh Ditambah',
-        totalParts: 6,
-        shadedParts: 5,
-        emojiBlocks: '🟩 🟩 🟩 🟩 🟩 ⬜',
-        explanation: '1/2 (iaitu 3/6) + 1/3 (iaitu 2/6) = 5/6 bahagian, BUKAN 2/5!',
-      },
       mathWorkspace: {
         problemTitle: 'Ruang Analisis Kesilapan Matematik',
         category: 'Pembetulan Miskonsepsi Pecahan',
@@ -282,18 +512,30 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
 
   // =========================================================================
   // 3. MOD VISUAL / GAMBAR (RAJAH BULATAN PECAHAN DSKP)
-  // e.g. "buat gambar", "tunjukkan gambar", "visualkan", "lukiskan", "bulatan", "rajah"
+  // Hanya diberikan ketika bertanyakan soalan berkaitan asas pecahan
+  // (Jangan beri jika soalan berkaitan penambahan atau penolakan pecahan)
   // =========================================================================
+  const isArithmetic =
+    q.includes('+') ||
+    q.includes('-') ||
+    q.includes('tambah') ||
+    q.includes('tolak') ||
+    q.includes('campur') ||
+    q.includes('minus') ||
+    q.includes('penambahan') ||
+    q.includes('penolakan');
+
   const wantsVisual =
-    q.includes('gambar') ||
-    q.includes('visual') ||
-    q.includes('lukis') ||
-    q.includes('rajah') ||
-    q.includes('diagram') ||
-    q.includes('bentuk') ||
-    q.includes('bulatan') ||
-    q.includes('pizza') ||
-    q.includes('kek');
+    !isArithmetic &&
+    (q.includes('gambar') ||
+      q.includes('visual') ||
+      q.includes('lukis') ||
+      q.includes('rajah') ||
+      q.includes('diagram') ||
+      q.includes('bentuk') ||
+      q.includes('bulatan') ||
+      q.includes('pizza') ||
+      q.includes('kek'));
 
   const fracExtract = q.match(/(\d+)\s*\/\s*(\d+)/);
 
@@ -382,14 +624,6 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
           identifiedTopic: `Penyelesaian Masalah Soalan Cerita (${opName})`,
           confidenceTag: 'Kategori: Soalan Cerita & Masalah Harian DSKP 3.1.8',
           pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-          visualDiagram: {
-            type: 'bar',
-            title: `Visual Situasi: ${isBaki ? 'Baki Kek' : 'Jumlah Kek Dimakan'}`,
-            totalParts: d1,
-            shadedParts: Math.max(0, resNum),
-            emojiBlocks: getEmojiBlocks(Math.max(0, resNum), d1),
-            explanation: `Jumlah keseluruhan loyang ada ${d1} bahagian sama saiz.`,
-          },
           mathWorkspace: {
             problemTitle: 'Ruang Kerja Penyelesaian Soalan Cerita',
             category: 'Aplikasi Harian Matematik',
@@ -617,10 +851,12 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
 
   // =========================================================================
   // 9. TOPIK UTAMA F: OPERASI TAMBAH PECAHAN (SECTION 2F SPEC)
-  // e.g. "1/5 + 2/5", "3/8 + 2/8"
+  // e.g. "1/5 + 2/5", "3/8 + 2/8", "lima per tiga tambah empat per dua"
+  // (Tanpa visual diagram kerana arahan menetapkan tiada visual untuk penambahan)
   // =========================================================================
   const addRegex = /(\d+)\s*\/\s*(\d+)\s*(\+|\btambah\b|\bplus\b)\s*(\d+)\s*\/\s*(\d+)/i;
   const addMatch = q.match(addRegex);
+  const wasWordQuery = /per\s+(?:dua|tiga|empat|lima|enam|tujuh|lapan|sembilan|sepuluh|sebelas|dua belas|\d+)/i.test(raw);
 
   if (addMatch) {
     const num1 = parseInt(addMatch[1], 10);
@@ -636,26 +872,26 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
       const rem = sumNum % den1;
 
       return {
-        identifiedTopic: 'Operasi Penambahan Pecahan (Penyebut Sama)',
+        identifiedTopic: wasWordQuery
+          ? `Penambahan Pecahan (Soalan Perkataan: ${num1}/${den1} + ${num2}/${den2})`
+          : 'Operasi Penambahan Pecahan (Penyebut Sama)',
         confidenceTag: 'Kategori: Operasi Asas DSKP 3.1.5',
         pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-        visualDiagram: {
-          type: 'bar',
-          title: `Visual Penambahan: ${num1}/${den1} + ${num2}/${den2}`,
-          totalParts: den1,
-          shadedParts: sumNum,
-          emojiBlocks: getEmojiBlocks(sumNum, den1),
-          explanation: `${num1} keping hijau dicampur ${num2} keping lagi daripada loyang ${den1} bahagian = ${sumNum}/${den1}!`,
-        },
         mathWorkspace: {
-          problemTitle: 'Ruang Kerja Pengiraan Penambahan Pecahan',
+          problemTitle: wasWordQuery
+            ? `Penyelesaian Soalan Perkataan: "${raw}"`
+            : 'Ruang Kerja Pengiraan Penambahan Pecahan',
           category: 'Operasi Tambah (Penyebut Sama)',
-          problemEquation: `${num1}/${den1} + ${num2}/${den2} = ?`,
+          problemEquation: wasWordQuery
+            ? `${num1}/${den1} + ${num2}/${den2} = ? ("${raw}")`
+            : `${num1}/${den1} + ${num2}/${den2} = ?`,
           formulaUsed: '(Pengangka 1 + Pengangka 2) / Penyebut Sama',
           pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
           stepByStep: [
-            `Langkah 1 (Faham): Perhatikan penyebut (nombor bawah). Kedua-duanya sama iaitu ${den1}. Ini bermakna saiz potongan loyang adalah serupa!`,
-            `Langkah 2 (Visualkan): Bayangkan loyang kek cawan 10 petak. Adik ada ${num1} keping dan kawan beri lagi ${num2} keping.`,
+            ...(wasWordQuery
+              ? [`Langkah 1 (Terjemah Perkataan): Soalan perkataan "${raw}" ditulis dalam bentuk angka pecahan sebagai ${num1}/${den1} + ${num2}/${den2}.`]
+              : [`Langkah 1 (Faham): Perhatikan penyebut (nombor bawah). Kedua-duanya sama iaitu ${den1}. Saiz kepingan loyang adalah serupa.`]),
+            `Langkah 2 (Semak Penyebut): Penyebut ${den1} di bawah adalah sama rata.`,
             `Langkah 3 (Fikir): Perlukah kita tambah nombor bawah? TIDAK! Sebab saiz loyang kek tetap sama iaitu ${den1}. Kita hanya jumlahkan kepingan di atas.`,
             `Langkah 4 (Selesaikan): Tambahkan nombor di atas sahaja: ${num1} + ${num2} = ${sumNum}. Jawapan = ${sumNum}/${den1}.`,
             ...(simp.num !== sumNum && simp.den !== den1
@@ -666,15 +902,21 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
               : []),
           ],
           finalAnswer: `${sumNum}/${den1}${simp.num !== sumNum ? ` = ${simp.num}/${simp.den}` : ''}`,
-          note: 'Penyebut menunjukkan jumlah bahagian yang sama, manakala pembilang menunjukkan berapa bahagian yang diambil.',
+          note: wasWordQuery
+            ? `Soalan perkataan "${raw}" bersamaan dengan ayat matematik ${num1}/${den1} + ${num2}/${den2}.`
+            : 'Penyebut menunjukkan jumlah bahagian yang sama, manakala pembilang menunjukkan berapa bahagian yang diambil.',
           socraticQuestion: `Kenapa nombor ${den1} di bawah tidak berubah menjadi ${den1 + den2}? Cuba terangkan dengan analogi loyang kek!`,
         },
-        explanationText: `Mari kita buat langkah demi langkah 👇\n\n**Soalan:** Berapakah hasil tambah **${num1}/${den1} + ${num2}/${den2}**?\n\n1. **Langkah 1 (Faham & Visualkan):**\nKedua-dua pecahan mempunyai penyebut yang sama iaitu **${den1}**. Ini bermakna saiz potongan loyang kek adalah sama rata!\n\n2. **Langkah 2 (Fikir & Selesaikan):**\nOleh kerana penyebutnya sama, kita **hanya perlu menambah pembilang (nombor di atas)** sahaja:\n**${num1} + ${num2} = ${sumNum}**.\nNombor penyebut ${den1} di bawah kekal sama!\n\n**Jadi, jawapannya ialah:**\n**${sumNum}/${den1}**${simp.num !== sumNum ? ` (dipermudahkan menjadi ${simp.num}/${simp.den})` : ''}! 🍕✨`,
+        explanationText: `${
+          wasWordQuery
+            ? `Adik bertanya dalam bentuk perkataan: **"${raw}"**.\nDalam ayat matematik pecahan, ia ditulis sebagai **${num1}/${den1} + ${num2}/${den2}**! 👏\n\n`
+            : ''
+        }Mari kita buat langkah demi langkah 👇\n\n**Soalan:** Berapakah hasil tambah **${num1}/${den1} + ${num2}/${den2}**?\n\n1. **Langkah 1 (Faham):**\nKedua-dua pecahan mempunyai penyebut yang sama iaitu **${den1}**. Ini bermakna saiz potongan loyang kek adalah sama rata!\n\n2. **Langkah 2 (Fikir & Selesaikan):**\nOleh kerana penyebutnya sama, kita **hanya perlu menambah pembilang (nombor di atas)** sahaja:\n**${num1} + ${num2} = ${sumNum}**.\nNombor penyebut ${den1} di bawah kekal sama!\n\n**Jadi, jawapannya ialah:**\n**${sumNum}/${den1}**${simp.num !== sumNum ? ` (dipermudahkan menjadi ${simp.num}/${simp.den})` : ''}! 🍕✨`,
         socraticPrompt: 'Ingat peraturan emas Chef Alya: Penyebut sama, campur yang atas sahaja!',
         proTip: 'Jangan sesekali menambahkan nombor bawah ya! Saiz potongan loyang tidak bertambah besar.',
       };
     } else if (den1 > 0 && den2 > 0) {
-      // Different denominators
+      // Different denominators (e.g. 5/3 + 4/2)
       const commonDen = (den1 * den2) / gcd(den1, den2);
       const mult1 = commonDen / den1;
       const mult2 = commonDen / den2;
@@ -682,37 +924,69 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
       const newNum2 = num2 * mult2;
       const totalNum = newNum1 + newNum2;
       const simp = simplify(totalNum, commonDen);
+      const isImproper = totalNum > commonDen;
+      const whole = Math.floor(totalNum / commonDen);
+      const rem = totalNum % commonDen;
+      const simpRem = simplify(rem, commonDen);
 
       return {
-        identifiedTopic: 'Penambahan Pecahan Penyebut Berbeza (Samakan Penyebut)',
+        identifiedTopic: wasWordQuery
+          ? `Penambahan Pecahan Penyebut Berbeza (Soalan Perkataan: ${num1}/${den1} + ${num2}/${den2})`
+          : 'Penambahan Pecahan Penyebut Berbeza (Samakan Penyebut)',
         confidenceTag: 'Kategori: Pengiraan Lanjutan DSKP',
         pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-        visualDiagram: {
-          type: 'bar',
-          title: `Visual Samakan Saiz Potongan kepada Penyebut ${commonDen}`,
-          totalParts: commonDen,
-          shadedParts: Math.min(totalNum, commonDen),
-          emojiBlocks: getEmojiBlocks(Math.min(totalNum, commonDen), commonDen),
-          explanation: `Saiz potongan asal berbeza (${den1} dan ${den2}). Kita potong lebih kecil kepada ${commonDen} bahagian sama rata!`,
-        },
         mathWorkspace: {
-          problemTitle: 'Ruang Kerja Tambah Pecahan Penyebut Berbeza',
+          problemTitle: wasWordQuery
+            ? `Penyelesaian Soalan Perkataan: "${raw}"`
+            : 'Ruang Kerja Tambah Pecahan Penyebut Berbeza',
           category: 'Operasi Tambah (Penyebut Berbeza)',
-          problemEquation: `${num1}/${den1} + ${num2}/${den2} = ?`,
+          problemEquation: wasWordQuery
+            ? `${num1}/${den1} + ${num2}/${den2} = ? ("${raw}")`
+            : `${num1}/${den1} + ${num2}/${den2} = ?`,
           formulaUsed: 'Samakan Penyebut Terlebih Dahulu (Gandaan Sepunya)',
           pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
           stepByStep: [
-            `Langkah 1 (Faham): Penyebut ${den1} dan ${den2} tidak sama. Kita tidak boleh terus menambah nombor atas sebab saiz kepingan berbeza!`,
-            `Langkah 2 (Visualkan & Samakan): Cari sifir yang sama untuk ${den1} dan ${den2}, iaitu ${commonDen}.`,
-            `Langkah 3 (Tukar Pecahan 1): (${num1} × ${mult1}) / (${den1} × ${mult1}) = ${newNum1}/${commonDen}.`,
-            `Langkah 4 (Tukar Pecahan 2): (${num2} × ${mult2}) / (${den2} × ${mult2}) = ${newNum2}/${commonDen}.`,
-            `Langkah 5 (Selesaikan & Semak): Tambahkan pengangka: ${newNum1} + ${newNum2} = ${totalNum}/${commonDen}.`,
+            ...(wasWordQuery
+              ? [`Langkah 1 (Terjemah Perkataan): Soalan perkataan "${raw}" ditulis dalam bentuk nombor pecahan sebagai ${num1}/${den1} + ${num2}/${den2}.`]
+              : [`Langkah 1 (Faham): Penyebut ${den1} dan ${den2} tidak sama. Kita tidak boleh terus menambah nombor atas sebab saiz kepingan berbeza.`]),
+            `Langkah 2 (Samakan Penyebut): Cari sifir sepunya untuk ${den1} dan ${den2}, iaitu ${commonDen}.`,
+            `Langkah 3 (Tukar Pecahan Pertama): (${num1} × ${mult1}) / (${den1} × ${mult1}) = ${newNum1}/${commonDen}.`,
+            `Langkah 4 (Tukar Pecahan Kedua): (${num2} × ${mult2}) / (${den2} × ${mult2}) = ${newNum2}/${commonDen}.`,
+            `Langkah 5 (Selesaikan): Tambahkan pengangka sahaja: ${newNum1} + ${newNum2} = ${totalNum}/${commonDen}.`,
+            ...(simp.num !== totalNum && simp.den !== commonDen
+              ? [`Langkah 6 (Permudahkan): Bahagikan dengan sifir ${gcd(totalNum, commonDen)} -> ${simp.num}/${simp.den}.`]
+              : []),
+            ...(isImproper && rem > 0
+              ? [`Langkah 7 (Tukar ke Nombor Bercampur): ${totalNum} ÷ ${commonDen} = ${whole} ${rem}/${commonDen}${simpRem.num !== rem ? ` = ${whole} ${simpRem.num}/${simpRem.den}` : ''}.`]
+              : isImproper && rem === 0
+              ? [`Langkah 7 (Nombor Bulat): ${totalNum} ÷ ${commonDen} = ${whole}.`]
+              : []),
           ],
-          finalAnswer: `${totalNum}/${commonDen}${simp.num !== totalNum ? ` = ${simp.num}/${simp.den}` : ''}`,
-          note: 'Mesti samakan saiz kepingan terlebih dahulu sebelum menambah.',
+          finalAnswer: `${totalNum}/${commonDen}${simp.num !== totalNum ? ` = ${simp.num}/${simp.den}` : ''}${
+            isImproper && rem > 0
+              ? ` (${whole} ${simpRem.num}/${simpRem.den})`
+              : isImproper && rem === 0
+              ? ` (= ${whole})`
+              : ''
+          }`,
+          note: wasWordQuery
+            ? `Soalan perkataan "${raw}" bersamaan dengan ayat matematik ${num1}/${den1} + ${num2}/${den2}.`
+            : 'Mesti samakan saiz kepingan terlebih dahulu sebelum menambah.',
           socraticQuestion: `Kenapa kita tak boleh terus tambah ${num1} + ${num2} atas dan ${den1} + ${den2} bawah?`,
         },
-        explanationText: `Okay, jom kita tengok soalan ni dulu 👀\n\nPenyebutnya berbeza iaitu **${den1}** dan **${den2}**. Kita tak boleh terus tambah sebab saiz potongan berbeza!\n\n1. Kita samakan saiz potongan dengan mencari sifir sepunya iaitu **${commonDen}**.\n2. ${num1}/${den1} menjadi **${newNum1}/${commonDen}**.\n3. ${num2}/${den2} menjadi **${newNum2}/${commonDen}**.\n4. Sekarang bila penyebut dah sama, kita tambah nombor atas: **${newNum1} + ${newNum2} = ${totalNum}**.\n\n**Jadi, jawapannya ialah:**\n**${totalNum}/${commonDen}**${simp.num !== totalNum ? ` (atau ${simp.num}/${simp.den})` : ''}! 💡✨`,
+        explanationText: `${
+          wasWordQuery
+            ? `Adik bertanya dalam perkataan: **"${raw}"**.\nDalam ayat matematik pecahan, ia ditulis sebagai **${num1}/${den1} + ${num2}/${den2}**! 👏\n\n`
+            : ''
+        }Jom kita selesaikan langkah demi langkah 👀\n\nPenyebutnya berbeza iaitu **${den1}** dan **${den2}**. Kita tak boleh terus tambah sebab saiz potongan berbeza!\n\n1. Kita samakan saiz potongan dengan mencari sifir sepunya iaitu **${commonDen}**.\n2. **${num1}/${den1}** ditukar menjadi **${newNum1}/${commonDen}**.\n3. **${num2}/${den2}** ditukar menjadi **${newNum2}/${commonDen}**.\n4. Sekarang bila penyebut dah sama, kita tambah nombor atas:\n**${newNum1} + ${newNum2} = ${totalNum}/${commonDen}**${
+          simp.num !== totalNum ? ` (dipermudahkan kepada **${simp.num}/${simp.den}**)` : ''
+        }${
+          isImproper && rem > 0
+            ? ` atau nombor bercampur **${whole} ${simpRem.num}/${simpRem.den}**`
+            : isImproper && rem === 0
+            ? ` (iaitu **${whole}**)`
+            : ''
+        }! 💡✨`,
         socraticPrompt: 'Nice! Sekarang adik dah faham kenapa saiz potongan mesti disamakan.',
       };
     }
@@ -721,6 +995,7 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
   // =========================================================================
   // 10. TOPIK UTAMA G: OPERASI TOLAK PECAHAN (SECTION 2G SPEC)
   // e.g. "3/4 - 1/4", "7/10 - 3/10", "1 - 1/4"
+  // (Tanpa visual diagram kerana arahan menetapkan tiada visual untuk penolakan)
   // =========================================================================
   const subOneRegex = /(?:1|satu)\s*(-|\btolak\b|\bminus\b)\s*(\d+)\s*\/\s*(\d+)/i;
   const subOneMatch = q.match(subOneRegex);
@@ -734,14 +1009,6 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
       identifiedTopic: 'Operasi Penolakan Pecahan daripada 1 Objek Penuh',
       confidenceTag: 'Kategori: Operasi Tolak DSKP 3.1.6',
       pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-      visualDiagram: {
-        type: 'pizza',
-        title: `Visual: 1 Penuh Tolak ${num}/${den}`,
-        totalParts: den,
-        shadedParts: remNum,
-        emojiBlocks: getEmojiBlocks(remNum, den),
-        explanation: `1 loyang penuh (${den}/${den}) dipotong dan dimakan ${num} keping. Baki yang tinggal ialah ${remNum}/${den}!`,
-      },
       mathWorkspace: {
         problemTitle: 'Ruang Kerja Tolak Daripada 1 Objek Penuh',
         category: 'Operasi Tolak (1 - Pecahan)',
@@ -750,7 +1017,7 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
         pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
         stepByStep: [
           `Langkah 1 (Faham): Nombor 1 bermaksud 1 biji objek penuh (contohnya 1 biji pizza penuh atau 1 kek penuh).`,
-          `Langkah 2 (Visualkan): Oleh kerana kita nak tolak bahagian per-${den}, kita potong 1 kek penuh itu kepada ${den} keping: 1 = ${den}/${den}.`,
+          `Langkah 2 (Tukar 1 Penuh): Oleh kerana kita nak tolak bahagian per-${den}, kita potong 1 kek penuh itu kepada ${den} keping: 1 = ${den}/${den}.`,
           `Langkah 3 (Fikir): Sekarang ayat matematiknya menjadi: ${den}/${den} - ${num}/${den}.`,
           `Langkah 4 (Selesaikan): Tolakkan pengangka sahaja: ${den} - ${num} = ${remNum}. Kekalkan penyebut ${den}.`,
           `Langkah 5 (Semak): Hasilnya ialah ${remNum}/${den}${simp.num !== remNum ? ` = ${simp.num}/${simp.den}` : ''}.`,
@@ -778,26 +1045,26 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
       const simp = simplify(Math.abs(diffNum), den1);
 
       return {
-        identifiedTopic: 'Operasi Penolakan Pecahan Wajar (Penyebut Sama)',
+        identifiedTopic: wasWordQuery
+          ? `Penolakan Pecahan (Soalan Perkataan: ${num1}/${den1} - ${num2}/${den2})`
+          : 'Operasi Penolakan Pecahan Wajar (Penyebut Sama)',
         confidenceTag: 'Kategori: Operasi Tolak DSKP 3.1.6',
         pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
-        visualDiagram: {
-          type: 'bar',
-          title: `Visual Penolakan: ${num1}/${den1} - ${num2}/${den2}`,
-          totalParts: den1,
-          shadedParts: Math.max(0, diffNum),
-          emojiBlocks: getEmojiBlocks(Math.max(0, diffNum), den1),
-          explanation: `Ada ${num1} keping, diambil/dimakan ${num2} keping. Baki yang tinggal ialah ${diffNum}/${den1}!`,
-        },
         mathWorkspace: {
-          problemTitle: 'Ruang Kerja Pengiraan Penolakan Pecahan',
+          problemTitle: wasWordQuery
+            ? `Penyelesaian Soalan Perkataan: "${raw}"`
+            : 'Ruang Kerja Pengiraan Penolakan Pecahan',
           category: 'Operasi Tolak (Penyebut Sama)',
-          problemEquation: `${num1}/${den1} - ${num2}/${den2} = ?`,
+          problemEquation: wasWordQuery
+            ? `${num1}/${den1} - ${num2}/${den2} = ? ("${raw}")`
+            : `${num1}/${den1} - ${num2}/${den2} = ?`,
           formulaUsed: '(Pengangka 1 - Pengangka 2) / Penyebut Sama',
           pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
           stepByStep: [
-            `Langkah 1 (Faham): Kedua-dua pecahan mempunyai penyebut yang sama iaitu ${den1}.`,
-            `Langkah 2 (Visualkan): Bayangkan ada ${num1} keping kek di atas meja daripada loyang ${den1} keping. Adik beri ${num2} keping kepada kawan.`,
+            ...(wasWordQuery
+              ? [`Langkah 1 (Terjemah Perkataan): Soalan perkataan "${raw}" ditulis dalam bentuk angka pecahan sebagai ${num1}/${den1} - ${num2}/${den2}.`]
+              : [`Langkah 1 (Faham): Kedua-dua pecahan mempunyai penyebut yang sama iaitu ${den1}.`]),
+            `Langkah 2 (Periksa Penyebut): Nombor bawah (${den1}) adalah serupa.`,
             `Langkah 3 (Fikir): Kita hanya tolak bilangan kepingan di atas. Penyebut di bawah tidak boleh ditolak!`,
             `Langkah 4 (Selesaikan): Tolakkan nombor di atas sahaja: ${num1} - ${num2} = ${diffNum}. Jawapan = ${diffNum}/${den1}.`,
             ...(simp.num !== diffNum && diffNum > 0
@@ -805,12 +1072,70 @@ export function getAlyaResponse(userQuery: string): AlyaAIResult {
               : [`Langkah 5 (Semak): Pengiraan tepat secara matematik.`]),
           ],
           finalAnswer: `${diffNum}/${den1}${simp.num !== diffNum && diffNum > 0 ? ` = ${simp.num}/${simp.den}` : ''}`,
-          note: 'Proses penolakan menunjukkan mengambil sebahagian daripada keseluruhan yang ada.',
+          note: wasWordQuery
+            ? `Soalan perkataan "${raw}" bersamaan dengan ayat matematik ${num1}/${den1} - ${num2}/${den2}.`
+            : 'Proses penolakan menunjukkan mengambil sebahagian daripada keseluruhan yang ada.',
           socraticQuestion: `Adakah penyebut di bawah menjadi ${den1 - den2}? Kenapa tidak boleh tolak nombor bawah?`,
         },
-        explanationText: `Mari kita buat langkah demi langkah 👇\n\n**Soalan:** Berapakah **${num1}/${den1} - ${num2}/${den2}**?\n\n1. **Perhatikan Penyebut:**\nKedua-dua pecahan mempunyai penyebut yang sama iaitu **${den1}**.\n\n2. **Tolak Pembilang (Atas) Sahaja:**\nKita tolak kepingan yang diambil: **${num1} - ${num2} = ${diffNum}**.\nNombor bawah kekal ${den1}!\n\n**Jadi, jawapannya ialah:**\n**${diffNum}/${den1}**${simp.num !== diffNum && diffNum > 0 ? ` (dipermudahkan kepada ${simp.num}/${simp.den})` : ''}! 🍰✨`,
+        explanationText: `${
+          wasWordQuery
+            ? `Adik bertanya dalam perkataan: **"${raw}"**.\nDalam ayat matematik pecahan, ia ditulis sebagai **${num1}/${den1} - ${num2}/${den2}**! 👏\n\n`
+            : ''
+        }Mari kita buat langkah demi langkah 👇\n\n**Soalan:** Berapakah **${num1}/${den1} - ${num2}/${den2}**?\n\n1. **Perhatikan Penyebut:**\nKedua-dua pecahan mempunyai penyebut yang sama iaitu **${den1}**.\n\n2. **Tolak Pembilang (Atas) Sahaja:**\nKita tolak kepingan yang diambil: **${num1} - ${num2} = ${diffNum}**.\nNombor bawah kekal ${den1}!\n\n**Jadi, jawapannya ialah:**\n**${diffNum}/${den1}**${simp.num !== diffNum && diffNum > 0 ? ` (dipermudahkan kepada ${simp.num}/${simp.den})` : ''}! 🍰✨`,
         socraticPrompt: 'Ingat konsep: Ambil sebahagian kepingan, saiz loyang tidak pernah berubah!',
         proTip: 'Contoh Dapur: 3/4 loyang kek dimakan 1/4, baki tinggal 2/4 = 1/2 loyang kek!',
+      };
+    } else if (den1 > 0 && den2 > 0) {
+      // Different denominators subtraction
+      const commonDen = (den1 * den2) / gcd(den1, den2);
+      const mult1 = commonDen / den1;
+      const mult2 = commonDen / den2;
+      const newNum1 = num1 * mult1;
+      const newNum2 = num2 * mult2;
+      const diffNum = newNum1 - newNum2;
+      const simp = simplify(Math.abs(diffNum), commonDen);
+
+      return {
+        identifiedTopic: wasWordQuery
+          ? `Penolakan Pecahan Penyebut Berbeza (Soalan Perkataan: ${num1}/${den1} - ${num2}/${den2})`
+          : 'Operasi Penolakan Pecahan Penyebut Berbeza',
+        confidenceTag: 'Kategori: Pengiraan Lanjutan DSKP 3.1.6',
+        pedagogicalStageTag: 'FAHAM → VISUALKAN → FIKIR → SELESAIKAN → SEMAK',
+        mathWorkspace: {
+          problemTitle: wasWordQuery
+            ? `Penyelesaian Soalan Perkataan: "${raw}"`
+            : 'Ruang Kerja Tolak Pecahan Penyebut Berbeza',
+          category: 'Operasi Tolak (Penyebut Berbeza)',
+          problemEquation: wasWordQuery
+            ? `${num1}/${den1} - ${num2}/${den2} = ? ("${raw}")`
+            : `${num1}/${den1} - ${num2}/${den2} = ?`,
+          formulaUsed: 'Samakan Penyebut Terlebih Dahulu (Gandaan Sepunya)',
+          pedagogicalStage: 'FAHAM -> VISUALKAN -> FIKIR -> SELESAIKAN -> SEMAK',
+          stepByStep: [
+            ...(wasWordQuery
+              ? [`Langkah 1 (Terjemah Perkataan): Soalan perkataan "${raw}" ditulis dalam bentuk angka pecahan sebagai ${num1}/${den1} - ${num2}/${den2}.`]
+              : [`Langkah 1 (Faham): Penyebut ${den1} dan ${den2} tidak sama. Kita tidak boleh terus menolak nombor atas kerana saiz kepingan berbeza.`]),
+            `Langkah 2 (Samakan Penyebut): Cari sifir sepunya untuk ${den1} dan ${den2}, iaitu ${commonDen}.`,
+            `Langkah 3 (Tukar Pecahan 1): (${num1} × ${mult1}) / (${den1} × ${mult1}) = ${newNum1}/${commonDen}.`,
+            `Langkah 4 (Tukar Pecahan 2): (${num2} × ${mult2}) / (${den2} × ${mult2}) = ${newNum2}/${commonDen}.`,
+            `Langkah 5 (Selesaikan): Tolakkan pengangka: ${newNum1} - ${newNum2} = ${diffNum}/${commonDen}.`,
+            ...(simp.num !== Math.abs(diffNum) && diffNum > 0
+              ? [`Langkah 6 (Semak & Bentuk Termudah): Permudahkan kepada ${simp.num}/${simp.den}.`]
+              : [`Langkah 6 (Semak): Pengiraan telah disemak secara tepat.`]),
+          ],
+          finalAnswer: `${diffNum}/${commonDen}${simp.num !== Math.abs(diffNum) && diffNum > 0 ? ` = ${simp.num}/${simp.den}` : ''}`,
+          note: wasWordQuery
+            ? `Soalan perkataan "${raw}" bersamaan dengan ayat matematik ${num1}/${den1} - ${num2}/${den2}.`
+            : 'Mesti samakan saiz kepingan terlebih dahulu sebelum menolak.',
+          socraticQuestion: `Kenapa kita tidak boleh menolak ${num1} - ${num2} dan ${den1} - ${den2}?`,
+        },
+        explanationText: `${
+          wasWordQuery
+            ? `Adik bertanya dalam perkataan: **"${raw}"**.\nDalam ayat matematik pecahan, ia ditulis sebagai **${num1}/${den1} - ${num2}/${den2}**! 👏\n\n`
+            : ''
+        }Penyebut pecahan ini berbeza (${den1} dan ${den2})! 🧐\n\n1. Kita samakan penyebut kepada **${commonDen}**.\n2. **${num1}/${den1}** menjadi **${newNum1}/${commonDen}**.\n3. **${num2}/${den2}** menjadi **${newNum2}/${commonDen}**.\n4. Sekarang tolakkan nombor atas: **${newNum1} - ${newNum2} = ${diffNum}**.\n\n**Jawapannya ialah:** **${diffNum}/${commonDen}**${simp.num !== Math.abs(diffNum) && diffNum > 0 ? ` (${simp.num}/${simp.den})` : ''}! ✨`,
+        socraticPrompt: 'Kunci: Samakan penyebut, tolak pengangka sahaja!',
+        proTip: 'Gunakan sifir darab untuk mencari gandaan sepunya terkecil!',
       };
     }
   }

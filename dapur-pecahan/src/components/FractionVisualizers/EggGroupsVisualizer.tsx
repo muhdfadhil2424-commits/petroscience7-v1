@@ -5,7 +5,7 @@ import { sounds } from '../../utils/audio';
 interface EggGroupsVisualizerProps {
   totalEggs: number; // 15
   groupSize: number; // 3
-  requiredGroups: number; // 3
+  requiredGroups?: number; // 4
   selectedGroupIndices: number[];
   onToggleGroup: (groupIndex: number) => void;
 }
@@ -13,7 +13,7 @@ interface EggGroupsVisualizerProps {
 export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
   totalEggs,
   groupSize,
-  requiredGroups,
+  requiredGroups = 4,
   selectedGroupIndices,
   onToggleGroup,
 }) => {
@@ -33,7 +33,7 @@ export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
           DSKP 3.1.1: Pecahan Daripada Suatu Kumpulan (15 Biji Telur)
         </span>
         <h4 className="text-lg font-bold text-[#3A3A30]">
-          Ambil <span className="text-[#A67C52] underline decoration-[#A67C52] decoration-2">3 per 5 (3/5)</span> daripada 15 biji telur!
+          Ambil <span className="text-[#A67C52] underline decoration-[#A67C52] decoration-2">{requiredGroups} per 5 ({requiredGroups}/5)</span> daripada 15 biji telur!
         </h4>
         <p className="text-xs text-[#5A5A50] mt-1">
           15 biji telur ini telah dibahagikan kepada <span className="font-bold">5 sarang kumpulan</span> (setiap sarang mengandungi 3 biji telur).
