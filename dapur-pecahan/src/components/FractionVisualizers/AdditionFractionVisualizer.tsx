@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { sounds } from '../../utils/audio';
 import { FractionBenchmarkBadge } from '../FractionBenchmarkBadge';
@@ -26,6 +26,111 @@ export const AdditionFractionVisualizer: React.FC<AdditionFractionVisualizerProp
   const [step, setStep] = useState<'add' | 'completed'>('add');
 
   const correctSecondVal = targetSum - firstVal;
+
+  // Helper to shuffle options ensuring different position on each visit / session
+  const [shuffledOptions, setShuffledOptions] = useState<number[]>(() => {
+    const correctVal = targetSum - firstVal;
+    const baseOptions = options.includes(correctVal) ? [...options] : [...options, correctVal];
+    const storageKey = `alya_ans_pos_${firstVal}_${targetSum}_${denominator}`;
+
+    let lastIndex = -1;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== null) {
+        lastIndex = parseInt(stored, 10);
+      }
+    } catch {
+      // ignore storage access error
+    }
+
+    const len = baseOptions.length;
+    const candidateIndices = [];
+    for (let i = 0; i < len; i++) {
+      if (i !== lastIndex) {
+        candidateIndices.push(i);
+      }
+    }
+
+    const targetIndex = candidateIndices.length > 0
+      ? candidateIndices[Math.floor(Math.random() * candidateIndices.length)]
+      : Math.floor(Math.random() * len);
+
+    const distractors = baseOptions.filter((v) => v !== correctVal);
+    for (let i = distractors.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
+    }
+
+    const result: number[] = [];
+    let dIdx = 0;
+    for (let i = 0; i < len; i++) {
+      if (i === targetIndex) {
+        result.push(correctVal);
+      } else {
+        result.push(distractors[dIdx++]);
+      }
+    }
+
+    try {
+      localStorage.setItem(storageKey, targetIndex.toString());
+    } catch {
+      // ignore
+    }
+
+    return result;
+  });
+
+  useEffect(() => {
+    const correctVal = targetSum - firstVal;
+    const baseOptions = options.includes(correctVal) ? [...options] : [...options, correctVal];
+    const storageKey = `alya_ans_pos_${firstVal}_${targetSum}_${denominator}`;
+
+    let lastIndex = -1;
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== null) {
+        lastIndex = parseInt(stored, 10);
+      }
+    } catch {
+      // ignore
+    }
+
+    const len = baseOptions.length;
+    const candidateIndices = [];
+    for (let i = 0; i < len; i++) {
+      if (i !== lastIndex) {
+        candidateIndices.push(i);
+      }
+    }
+
+    const targetIndex = candidateIndices.length > 0
+      ? candidateIndices[Math.floor(Math.random() * candidateIndices.length)]
+      : Math.floor(Math.random() * len);
+
+    const distractors = baseOptions.filter((v) => v !== correctVal);
+    for (let i = distractors.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
+    }
+
+    const result: number[] = [];
+    let dIdx = 0;
+    for (let i = 0; i < len; i++) {
+      if (i === targetIndex) {
+        result.push(correctVal);
+      } else {
+        result.push(distractors[dIdx++]);
+      }
+    }
+
+    try {
+      localStorage.setItem(storageKey, targetIndex.toString());
+    } catch {
+      // ignore
+    }
+
+    setShuffledOptions(result);
+  }, [firstVal, targetSum, denominator, options]);
 
   const handleSelectOption = (value: number) => {
     sounds.playPop();
@@ -120,12 +225,12 @@ export const AdditionFractionVisualizer: React.FC<AdditionFractionVisualizerProp
             Pilih pecahan peha ayam yang betul untuk melengkapkan pesanan di atas:
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {options.map((num) => {
+            {shuffledOptions.map((num, idx) => {
               const isChosen = secondVal === num;
               const isCorrect = num === correctSecondVal;
               return (
                 <motion.button
-                  key={num}
+                  key={`${num}-${idx}`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleSelectOption(num)}

@@ -176,7 +176,7 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
             }
             unitLabel={
               task.visualType === 'egg-groups'
-                ? 'kumpulan sarang'
+                ? (dish.id === 'ayam-crispy' || task.id === 'ayam-4' ? 'bakul kepak ayam' : 'sarang telur')
                 : task.visualType === 'liquid-gauge'
                 ? 'aras tolok'
                 : task.unit || 'bahagian'
@@ -229,9 +229,13 @@ export const IngredientTaskScreen: React.FC<IngredientTaskScreenProps> = ({
               <EggGroupsVisualizer
                 totalEggs={task.totalItems || 15}
                 groupSize={task.groupSize || 3}
-                requiredGroups={task.numerator}
+                requiredGroups={task.numerator || 4}
                 selectedGroupIndices={selectedEggGroupIndices}
                 onToggleGroup={handleToggleEggGroup}
+                itemName={dish.id === 'ayam-crispy' || task.id === 'ayam-4' ? 'kepak ayam' : 'telur'}
+                itemIcon={dish.id === 'ayam-crispy' || task.id === 'ayam-4' ? '🍗' : '🥚'}
+                unitName={dish.id === 'ayam-crispy' || task.id === 'ayam-4' ? 'ketul' : 'biji'}
+                containerName={dish.id === 'ayam-crispy' || task.id === 'ayam-4' ? 'bakul' : 'sarang'}
               />
             )}
 

@@ -3,40 +3,50 @@ import { motion } from 'motion/react';
 import { sounds } from '../../utils/audio';
 
 interface EggGroupsVisualizerProps {
-  totalEggs: number; // 15
-  groupSize: number; // 3
+  totalEggs?: number; // 15
+  groupSize?: number; // 3
   requiredGroups?: number; // 4
   selectedGroupIndices: number[];
   onToggleGroup: (groupIndex: number) => void;
+  itemName?: string; // 'kepak ayam' | 'telur'
+  itemIcon?: string; // '🍗' | '🥚'
+  unitName?: string; // 'ketul' | 'biji'
+  containerName?: string; // 'bakul' | 'sarang'
 }
 
 export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
-  totalEggs,
-  groupSize,
+  totalEggs = 15,
+  groupSize = 3,
   requiredGroups = 4,
   selectedGroupIndices,
   onToggleGroup,
+  itemName = 'kepak ayam',
+  itemIcon = '🍗',
+  unitName = 'ketul',
+  containerName = 'bakul',
 }) => {
   const totalGroups = totalEggs / groupSize; // 5
   const currentGroupCount = selectedGroupIndices.length;
-  const currentEggCount = currentGroupCount * groupSize;
+  const currentItemCount = currentGroupCount * groupSize;
 
   const handleGroupClick = (idx: number) => {
     sounds.playPop();
     onToggleGroup(idx);
   };
 
+  const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
   return (
     <div className="flex flex-col items-center w-full max-w-xl mx-auto bg-[#F7F3ED] rounded-2xl p-5 shadow-lg border-2 border-[#D6CEBE]">
       <div className="text-center mb-3">
         <span className="inline-block px-3 py-1 bg-[#EFEAE1] text-[#5A5A40] rounded-full text-xs font-bold mb-1 border border-[#D6CEBE]">
-          DSKP 3.1.1: Pecahan Daripada Suatu Kumpulan (15 Biji Telur)
+          DSKP 3.1.1: Pecahan Daripada Suatu Kumpulan ({totalEggs} {capitalize(unitName)} {capitalize(itemName)})
         </span>
         <h4 className="text-lg font-bold text-[#3A3A30]">
-          Ambil <span className="text-[#A67C52] underline decoration-[#A67C52] decoration-2">{requiredGroups} per 5 ({requiredGroups}/5)</span> daripada 15 biji telur!
+          Ambil <span className="text-[#A67C52] underline decoration-[#A67C52] decoration-2">{requiredGroups} per {totalGroups} ({requiredGroups}/{totalGroups})</span> daripada {totalEggs} {unitName} {itemName}!
         </h4>
         <p className="text-xs text-[#5A5A50] mt-1">
-          15 biji telur ini telah dibahagikan kepada <span className="font-bold">5 sarang kumpulan</span> (setiap sarang mengandungi 3 biji telur).
+          {totalEggs} {unitName} {itemName} ini telah dibahagikan kepada <span className="font-bold">{totalGroups} {containerName} kumpulan</span> (setiap {containerName} mengandungi {groupSize} {unitName} {itemName}).
         </p>
       </div>
 
@@ -60,14 +70,14 @@ export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
                 Kumpulan #{groupIdx + 1}
               </div>
               <div className="bg-[#F7F3ED] rounded-lg p-1.5 flex flex-wrap justify-center gap-1 w-full border border-[#D6CEBE]">
-                {Array.from({ length: groupSize }).map((_, eggIdx) => (
-                  <span key={eggIdx} className="text-lg filter drop-shadow-sm">
-                    🥚
+                {Array.from({ length: groupSize }).map((_, itemIdx) => (
+                  <span key={itemIdx} className="text-lg filter drop-shadow-sm">
+                    {itemIcon}
                   </span>
                 ))}
               </div>
               <span className={`text-[11px] font-bold mt-1.5 px-2 py-0.5 rounded-full ${isSelected ? 'bg-[#5A5A40] text-white' : 'bg-[#EFEAE1] text-[#3A3A30]'}`}>
-                {isSelected ? '✓ 3 Biji' : '3 Biji'}
+                {isSelected ? `✓ ${groupSize} ${capitalize(unitName)}` : `${groupSize} ${capitalize(unitName)}`}
               </span>
             </motion.button>
           );
@@ -79,10 +89,10 @@ export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
           <div>
             <div className="font-bold text-[#3A3A30]">
-              Kumpulan Dipilih: <span className="text-[#A67C52] text-base">{currentGroupCount} / 5</span> kumpulan
+              Kumpulan Dipilih: <span className="text-[#A67C52] text-base">{currentGroupCount} / {totalGroups}</span> kumpulan
             </div>
             <div className="text-[#5A5A50] font-medium">
-              Jumlah Biji Telur = {currentGroupCount} × 3 = <span className="text-[#A67C52] font-bold">{currentEggCount} biji</span>
+              Jumlah {capitalize(itemName)} = {currentGroupCount} × {groupSize} = <span className="text-[#A67C52] font-bold">{currentItemCount} {unitName}</span>
             </div>
           </div>
 
@@ -91,10 +101,10 @@ export const EggGroupsVisualizer: React.FC<EggGroupsVisualizerProps> = ({
             <div className="flex flex-col items-center font-extrabold text-lg leading-none text-[#5A5A40]">
               <span>{currentGroupCount}</span>
               <div className="w-5 h-[2px] bg-[#5A5A40] my-[1px]" />
-              <span>5</span>
+              <span>{totalGroups}</span>
             </div>
             <span className="text-[#7A7A70] font-bold mx-1">=</span>
-            <span className="font-bold text-[#A67C52]">{currentEggCount} / 15</span>
+            <span className="font-bold text-[#A67C52]">{currentItemCount} / {totalEggs}</span>
           </div>
         </div>
       </div>
