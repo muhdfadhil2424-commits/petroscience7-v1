@@ -12,15 +12,16 @@ import {
 } from '../types/learningProfile';
 import { StudentProfile } from '../types';
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
-import { getStoredDemoSessionAnswers } from '../data/demoClass3AsahSession';
+import { CLASS_5_PIRUZ_STUDENTS } from '../data/class5PiruzData';
+import { getStoredDemoSessionAnswers5Piruz } from '../data/demoClass5PiruzSession';
 
 const LEARNING_PROFILES_STORAGE_KEY = 'kembara_learning_profiles_v1';
 const AUDIO_LOGS_STORAGE_KEY = 'kembara_audio_interaction_logs_v1';
 const KINESTHETIC_LOGS_STORAGE_KEY = 'kembara_kinesthetic_interaction_logs_v1';
 
-// Seed raw student game details map for Class 3 Asah
+// Seed raw student game details map for Class 5 Piruz and 3 Asah
 const STUDENT_GAME_MAP: Record<string, StudentProfile['progress']> = {};
-CLASS_3_ASAH_STUDENTS.forEach((sp) => {
+[...CLASS_5_PIRUZ_STUDENTS, ...CLASS_3_ASAH_STUDENTS].forEach((sp) => {
   // sp.id is e.g. "MURID-3A001" or "MURID-3A034"
   const rawNum = sp.id.replace('MURID-3A', '').replace('MURID-', '');
   const pad = rawNum.padStart(3, '0');
@@ -519,7 +520,7 @@ export function analyzeClassLearningProfiles(
   }
 
   const summary: ClassLearningProfileSummary = {
-    className: students[0]?.class || '3 Asah',
+    className: students[0]?.class || '5 Piruz',
     totalStudents: students.length,
     visualCount,
     auditoryCount,
@@ -555,27 +556,27 @@ export function loadCachedLearningProfiles(): Record<string, LearningProfile> {
 }
 
 /**
- * Get or compute default class profiles for Class 3 Asah
+ * Get or compute default class profiles for Class 5 Piruz
  */
 export function getOrComputeDefaultClassProfiles(): {
   profiles: LearningProfile[];
   profilesMap: Record<string, LearningProfile>;
   summary: ClassLearningProfileSummary;
 } {
-  const interactiveStudents: InteractiveClassStudent[] = CLASS_3_ASAH_STUDENTS.map((sp) => {
+  const interactiveStudents: InteractiveClassStudent[] = CLASS_5_PIRUZ_STUDENTS.map((sp) => {
     const rawNum = sp.id.replace('MURID-3A', '').replace('MURID-', '');
     const kpId = `KP-${rawNum.padStart(3, '0')}`;
     return {
       studentId: kpId,
       studentName: sp.nama,
-      class: sp.kelas || '3 Asah',
+      class: '5 Piruz',
       cardId: kpId,
       cardStatus: 'active',
       createdAt: new Date().toISOString(),
     };
   });
 
-  const allAnswers = getStoredDemoSessionAnswers();
+  const allAnswers = getStoredDemoSessionAnswers5Piruz();
   return analyzeClassLearningProfiles(interactiveStudents, allAnswers, INTERACTIVE_CLASS_15_QUESTIONS);
 }
 

@@ -36,7 +36,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
   onLogout,
 }) => {
   const [nama, setNama] = useState('');
-  const [kelas, setKelas] = useState('3 Asah');
+  const [kelas, setKelas] = useState('5 Piruz');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSelectExistingMode, setIsSelectExistingMode] = useState(false);
   const [selectedExistingStudentId, setSelectedExistingStudentId] = useState('');
@@ -279,7 +279,7 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                     setKelas(e.target.value);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  placeholder="Contoh: 3 Asah"
+                  placeholder="Contoh: 5 Piruz"
                   className="w-full px-4 py-2.5 rounded-2xl bg-white border-2 border-amber-200 focus:border-[#D98262] focus:outline-none font-bold text-sm text-[#4A3728] placeholder-gray-400 transition-all shadow-inner"
                 />
 

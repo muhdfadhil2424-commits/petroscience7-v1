@@ -7,7 +7,7 @@ import {
   loadAllSessionAnswers,
   saveAllSessionAnswers,
 } from './interactiveSessionManager';
-import { buildDemo600Responses } from '../data/demoClass3AsahSession';
+import { buildDemo600Responses5Piruz } from '../data/demoClass5PiruzSession';
 import { LearningProfile } from '../types/learningProfile';
 import { calculateStudentLearningProfile } from './learningProfileManager';
 
@@ -908,6 +908,6 @@ export function seedRealisticSessionData(
   students: InteractiveClassStudent[],
   questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS
 ) {
-  const { nestedAnswers } = buildDemo600Responses();
+  const { nestedAnswers } = buildDemo600Responses5Piruz();
   saveAllSessionAnswers(nestedAnswers);
 }

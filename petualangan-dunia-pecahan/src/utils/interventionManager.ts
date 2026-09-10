@@ -2,7 +2,7 @@ import { InteractiveClassQuestion, INTERACTIVE_CLASS_15_QUESTIONS } from '../dat
 import { ScannedStudentAnswer } from '../types/interactiveClass';
 import { LearningProfile } from '../types/learningProfile';
 import { StudentInterventionPlan, LaunchableActivityInfo, InterventionPhase, DskpMasteryItem } from '../types/intervention';
-import { getStoredDemoSessionAnswers } from '../data/demoClass3AsahSession';
+import { getStoredDemoSessionAnswers5Piruz } from '../data/demoClass5PiruzSession';
 
 export const DSKP_INFO_MAP: Record<string, { title: string; shortDesc: string }> = {
   '3.1.1': {
@@ -49,7 +49,7 @@ export function getStudentDetailedAnswers(
   totalCount: number;
   wrongQuestionIds: string[];
 } {
-  const dataset = allAnswers || getStoredDemoSessionAnswers();
+  const dataset = allAnswers || getStoredDemoSessionAnswers5Piruz();
   const answersMap: Record<string, ScannedStudentAnswer> = {};
   let correctCount = 0;
   const wrongQuestionIds: string[] = [];
@@ -87,7 +87,7 @@ export function getStudentDetailedAnswers(
 export function generateStudentInterventionPlan(
   studentName: string,
   studentId: string = 'KP-001',
-  studentClass: string = '3 Asah',
+  studentClass: string = '5 Piruz',
   profile: LearningProfile | null,
   questions: InteractiveClassQuestion[] = INTERACTIVE_CLASS_15_QUESTIONS,
   customAnswers?: Record<string, Record<string, ScannedStudentAnswer>>

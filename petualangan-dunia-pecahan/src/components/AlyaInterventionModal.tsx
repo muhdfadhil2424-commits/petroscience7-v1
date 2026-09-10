@@ -37,7 +37,7 @@ export const AlyaInterventionModal: React.FC<AlyaInterventionModalProps> = ({
   onClose,
   studentName,
   studentId = 'KP-001',
-  studentClass = '3 Asah',
+  studentClass = '5 Piruz',
   profile,
   soundEnabled = true,
   onLaunchFullGame,

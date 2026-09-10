@@ -1,6 +1,7 @@
 import { InteractiveClassStudent } from '../types/interactiveClass';
 import { ALL_CLASSES } from './studentSessionManager';
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
+import { CLASS_5_PIRUZ_STUDENTS } from '../data/class5PiruzData';
 import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
 
 const INTERACTIVE_STUDENTS_KEY = 'kembara_kelas_interaktif_murid_v1';
@@ -35,13 +36,27 @@ export function parseStudentIdIndex(studentId: string): number {
 }
 
 /**
- * Generates the default initial seed of students for 3 Asah and 3 Berkelah
+ * Generates the default initial seed of students for 5 Piruz and 3 Berkelah
+ * (3 Asah remains as a class option in the selector with 0 students)
  */
 function buildInitialSeed(): InteractiveClassStudent[] {
   const now = new Date().toISOString();
   const seedList: InteractiveClassStudent[] = [];
 
-  // Seed 3 Asah with KP-001 to KP-025
+  // Seed 5 Piruz with KP-001 to KP-040
+  CLASS_5_PIRUZ_STUDENTS.forEach((st, idx) => {
+    const studentId = formatStudentId(idx + 1);
+    seedList.push({
+      studentId,
+      studentName: st.nama,
+      class: '5 Piruz',
+      cardId: studentId,
+      cardStatus: 'active',
+      createdAt: now,
+    });
+  });
+
+  // 3 Asah has 0 students
   CLASS_3_ASAH_STUDENTS.forEach((st, idx) => {
     const studentId = formatStudentId(idx + 1);
     seedList.push({
@@ -86,8 +101,53 @@ export function getAllInteractiveStudents(): InteractiveClassStudent[] {
       storage.setItem(INTERACTIVE_STUDENTS_KEY, JSON.stringify(initial));
       return initial;
     }
-    const parsed = JSON.parse(raw);
+    let parsed: InteractiveClassStudent[] = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
+      let needsSave = false;
+
+      // Migrate any 3 Asah students to 5 Piruz
+      const has3Asah = parsed.some((s) => s.class === '3 Asah');
+      const piruzStudents = parsed.filter((s) => s.class === '5 Piruz');
+
+      if (has3Asah) {
+        parsed = parsed.map((s) => {
+          if (s.class === '3 Asah') {
+            needsSave = true;
+            return { ...s, class: '5 Piruz' };
+          }
+          return s;
+        });
+      }
+
+      // Ensure 5 Piruz has all 40 students
+      if (piruzStudents.length < 40) {
+        CLASS_5_PIRUZ_STUDENTS.forEach((st, idx) => {
+          const studentId = formatStudentId(idx + 1);
+          if (!parsed.some((s) => s.studentId === studentId && s.class === '5 Piruz')) {
+            parsed.push({
+              studentId,
+              studentName: st.nama,
+              class: '5 Piruz',
+              cardId: studentId,
+              cardStatus: 'active',
+              createdAt: new Date().toISOString(),
+            });
+            needsSave = true;
+          }
+        });
+      }
+
+      // LANGKAH 3: Delete students from 3 Asah (0 students in 3 Asah)
+      const cleaned = parsed.filter((s) => s.class !== '3 Asah');
+      if (cleaned.length !== parsed.length) {
+        parsed = cleaned;
+        needsSave = true;
+      }
+
+      if (needsSave) {
+        storage.setItem(INTERACTIVE_STUDENTS_KEY, JSON.stringify(parsed));
+      }
+
       return parsed;
     }
     const initial = buildInitialSeed();
@@ -146,7 +206,7 @@ export function addInteractiveStudent(
   customNotes?: string
 ): InteractiveClassStudent {
   const trimmedName = studentName.trim();
-  const trimmedClass = className.trim() || '3 Asah';
+  const trimmedClass = className.trim() || '5 Piruz';
   const newStudentId = generateNextStudentIdForClass(trimmedClass);
 
   const newStudent: InteractiveClassStudent = {
@@ -244,8 +304,8 @@ export function regenerateCardsForClass(className: string): InteractiveClassStud
  */
 export function getSavedSelectedClass(): string {
   const storage = getSafeStorage();
-  if (!storage) return '3 Asah';
-  return storage.getItem(INTERACTIVE_SELECTED_CLASS_KEY) || '3 Asah';
+  if (!storage) return '5 Piruz';
+  return storage.getItem(INTERACTIVE_SELECTED_CLASS_KEY) || '5 Piruz';
 }
 
 export function saveSelectedClass(className: string): void {

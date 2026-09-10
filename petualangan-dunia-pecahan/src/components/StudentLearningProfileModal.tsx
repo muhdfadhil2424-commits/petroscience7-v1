@@ -24,7 +24,7 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
   onClose,
   studentName,
   studentId = 'KP-001',
-  studentClass = '3 Asah',
+  studentClass = '5 Piruz',
   performanceScore,
   totalQuestions = 15,
   profile,

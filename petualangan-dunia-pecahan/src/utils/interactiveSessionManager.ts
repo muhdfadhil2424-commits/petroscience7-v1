@@ -2,17 +2,16 @@ import { ScannedStudentAnswer, AnswerOption } from '../types/interactiveClass';
 import {
   DEMO_SESSION_STORAGE_KEY,
   DEMO_MODE_STORAGE_KEY,
-  getStoredDemoSessionAnswers,
-  resetDemoSessionStorage,
-  clearDemoSessionStorage,
-} from '../data/demoClass3AsahSession';
+  getStoredDemoSessionAnswers5Piruz,
+  resetDemoSessionStorage5Piruz,
+} from '../data/demoClass5PiruzSession';
 
 const STORAGE_SESSION_KEY = 'kembara_interactive_session_v1';
 
 export type SessionDataMode = 'demo' | 'live';
 
 /**
- * Gets currently active session data mode (defaults to 'demo' for 3 Asah initial state)
+ * Gets currently active session data mode (defaults to 'demo' for 5 Piruz initial state)
  */
 export function getSessionDataMode(): SessionDataMode {
   if (typeof window === 'undefined' || !window.localStorage) {
@@ -74,13 +73,19 @@ export interface ClassroomQuestionStats {
 }
 
 /**
- * Loads answers according to active mode ('demo' or 'live')
+ * Loads answers according to active mode ('demo' or 'live') and target class
  */
 export function loadAnswersForDashboard(
-  mode: SessionDataMode = getSessionDataMode()
+  mode: SessionDataMode = getSessionDataMode(),
+  className?: string
 ): Record<string, Record<string, ScannedStudentAnswer>> {
+  if (className && className.toLowerCase() === '3 asah') {
+    // 3 Asah has 0 students and 0 responses
+    return {};
+  }
+
   if (mode === 'demo') {
-    return getStoredDemoSessionAnswers();
+    return getStoredDemoSessionAnswers5Piruz();
   }
   return loadAllSessionAnswers();
 }
@@ -89,14 +94,16 @@ export function loadAnswersForDashboard(
  * Reset Demo session data strictly without touching real data
  */
 export function resetDemoSessionData(): Record<string, Record<string, ScannedStudentAnswer>> {
-  return resetDemoSessionStorage();
+  return resetDemoSessionStorage5Piruz();
 }
 
 /**
  * Clear Demo session data strictly without touching real data
  */
 export function clearDemoSessionData(): void {
-  clearDemoSessionStorage();
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.removeItem(DEMO_SESSION_STORAGE_KEY);
+  }
 }
 
 /**

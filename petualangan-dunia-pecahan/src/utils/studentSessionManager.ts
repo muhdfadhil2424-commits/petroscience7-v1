@@ -1,5 +1,6 @@
 import { StudentProfile, GameSession, TeacherAuth, UserProgress, AttemptRecord } from '../types';
 import { CLASS_3_ASAH_STUDENTS } from '../data/class3AsahData';
+import { CLASS_5_PIRUZ_STUDENTS } from '../data/class5PiruzData';
 import { CLASS_3_BERKELAH_STUDENTS } from '../data/class3BerkelahData';
 
 const STUDENTS_STORAGE_KEY = 'wira_pecahan_students_v14';
@@ -63,6 +64,7 @@ export const ALL_CLASSES = [
   '4 Berkelah',
   '5 Asah',
   '5 Berkelah',
+  '5 Piruz',
   '6 Asah',
   '6 Berkelah',
   '6 Chamang',
@@ -70,6 +72,7 @@ export const ALL_CLASSES = [
 
 // INITIAL SEED DATA FOR PROTOTYPE DEMO
 const DEMO_STUDENTS: StudentProfile[] = [
+  ...CLASS_5_PIRUZ_STUDENTS,
   ...CLASS_3_ASAH_STUDENTS,
   ...CLASS_3_BERKELAH_STUDENTS,
   // 4 Asah
@@ -332,13 +335,38 @@ export function initializeStorageWithSeed(): void {
       localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
       localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
     } else {
-      const parsed: StudentProfile[] = JSON.parse(existing);
-      const class3Asah = parsed.filter((s) => s.kelas === '3 Asah');
-      const is3AsahComplete = class3Asah.length === 40 && class3Asah.every((s) => (s.progress?.completedChallenges || 0) === 9);
-      
-      if (!is3AsahComplete) {
-        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(DEMO_STUDENTS));
-        localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(DEMO_SESSIONS));
+      let parsed: StudentProfile[] = JSON.parse(existing);
+      let modified = false;
+
+      // Migrate any 3 Asah students to 5 Piruz
+      parsed = parsed.map((s) => {
+        if (s.kelas === '3 Asah') {
+          modified = true;
+          return { ...s, kelas: '5 Piruz' };
+        }
+        return s;
+      });
+
+      // Ensure 5 Piruz has all 40 students
+      const class5Piruz = parsed.filter((s) => s.kelas === '5 Piruz');
+      if (class5Piruz.length < 40) {
+        CLASS_5_PIRUZ_STUDENTS.forEach((newS) => {
+          if (!parsed.some((ex) => ex.id === newS.id && ex.kelas === '5 Piruz')) {
+            parsed.push(newS);
+            modified = true;
+          }
+        });
+      }
+
+      // Step 3: Remove any leftover students in 3 Asah so 3 Asah has 0 students
+      const non3Asah = parsed.filter((s) => s.kelas !== '3 Asah');
+      if (non3Asah.length !== parsed.length) {
+        parsed = non3Asah;
+        modified = true;
+      }
+
+      if (modified) {
+        localStorage.setItem(STUDENTS_STORAGE_KEY, JSON.stringify(parsed));
       }
     }
   } catch (err) {
