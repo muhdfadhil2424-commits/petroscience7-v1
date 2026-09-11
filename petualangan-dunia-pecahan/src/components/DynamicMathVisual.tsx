@@ -601,6 +601,64 @@ export const DynamicMathVisual: React.FC<DynamicMathVisualProps> = ({
     );
   }
 
+  // Render Number Line (Garis Nombor)
+  if (visualType === 'number_line') {
+    const denominator = data.denominator || 4;
+    const numerator = data.numerator || 3;
+    const label = data.label || `${numerator}/${denominator}`;
+
+    return (
+      <div className={`flex flex-col items-center gap-3 p-4 bg-white/95 rounded-2xl border-2 border-indigo-200 shadow-sm w-full max-w-md ${className}`}>
+        <span className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+          Garis Nombor Pecahan:
+        </span>
+
+        <div className="w-full px-6 py-6">
+          <div className="relative w-full h-12 flex items-center">
+            {/* Base line */}
+            <div className="absolute left-0 right-0 h-2 bg-stone-200 rounded-full" />
+            <div
+              className="absolute left-0 h-2 bg-indigo-600 rounded-full transition-all duration-700"
+              style={{ width: `${(numerator / denominator) * 100}%` }}
+            />
+
+            {/* Ticks from 0 to denominator */}
+            {Array.from({ length: denominator + 1 }).map((_, i) => {
+              const percent = (i / denominator) * 100;
+              const isTarget = i === numerator;
+              return (
+                <div
+                  key={i}
+                  className="absolute flex flex-col items-center -translate-x-1/2"
+                  style={{ left: `${percent}%` }}
+                >
+                  <div
+                    className={`rounded-full transition-all ${
+                      isTarget ? 'h-7 bg-indigo-700 w-2 ring-2 ring-indigo-300' : 'h-4 bg-stone-400 w-1'
+                    }`}
+                  />
+                  <span
+                    className={`mt-2 font-mono font-black text-xs ${
+                      isTarget
+                        ? 'text-indigo-950 bg-indigo-100 px-2 py-0.5 rounded-md border border-indigo-300 shadow-xs'
+                        : 'text-stone-500'
+                    }`}
+                  >
+                    {i === 0 ? '0' : i === denominator ? '1' : `${i}/${denominator}`}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs font-black px-3.5 py-1 bg-indigo-100 text-indigo-950 rounded-full border border-indigo-300">
+          <span>Kedudukan {label} pada Garis Nombor ({numerator} daripada {denominator} langkah)</span>
+        </div>
+      </div>
+    );
+  }
+
   // Fallback generic fraction bar
   return (
     <div className={`p-3 bg-white rounded-xl border border-stone-200 text-center text-xs font-bold text-stone-700 ${className}`}>

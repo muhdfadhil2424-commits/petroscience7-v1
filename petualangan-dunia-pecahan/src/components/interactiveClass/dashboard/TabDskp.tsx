@@ -49,18 +49,20 @@ export const TabDskp: React.FC<TabDskpProps> = ({
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Header Info Banner */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-amber-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-white via-amber-50/40 to-white rounded-3xl p-5 sm:p-6 border-2 border-amber-300 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h2 className="font-serif-title text-base sm:text-lg font-bold text-[#4A3728] flex items-center gap-2">
-              <Target className="w-5 h-5 text-amber-600" />
+            <h2 className="font-serif-title text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                🎯
+              </div>
               <span>Standard Kandungan 3.1: Pecahan (DSKP Matematik Tahun 3)</span>
             </h2>
-            <span className="bg-[#3c4233] text-amber-300 font-mono text-xs font-bold px-2.5 py-0.5 rounded-full">
+            <span className="bg-gradient-to-r from-stone-900 to-indigo-950 text-amber-300 font-mono text-xs font-black px-3 py-1 rounded-full shadow-2xs">
               KSSR Semakan
             </span>
           </div>
-          <p className="text-xs text-stone-500 font-medium mt-1">
+          <p className="text-xs text-stone-600 font-medium mt-1.5">
             Analisis tahap penguasaan 7 standard pembelajaran, peratusan ketepatan kelas dan cadangan intervensi guru
           </p>
         </div>
@@ -68,9 +70,9 @@ export const TabDskp: React.FC<TabDskpProps> = ({
         <button
           type="button"
           onClick={() => setShowHeatmap(!showHeatmap)}
-          className="px-3.5 py-2 rounded-2xl bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all self-start md:self-auto"
+          className="px-4 py-2 rounded-2xl bg-white hover:bg-amber-50 text-amber-950 border-2 border-amber-300 text-xs font-black shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all self-start md:self-auto hover:scale-102"
         >
-          <Grid className="w-3.5 h-3.5" />
+          <Grid className="w-3.5 h-3.5 text-amber-600" />
           <span>{showHeatmap ? 'Sembunyikan Heatmap DSKP' : 'Tunjukkan Heatmap DSKP'}</span>
         </button>
       </div>
@@ -85,51 +87,55 @@ export const TabDskp: React.FC<TabDskpProps> = ({
           return (
             <div
               key={std.code}
-              className={`p-5 rounded-3xl border-2 space-y-3 flex flex-col justify-between bg-white transition-all shadow-2xs ${
+              className={`p-5 rounded-3xl border-2 space-y-3 flex flex-col justify-between transition-all shadow-xs hover:shadow-md ${
                 isMastered
-                  ? 'border-emerald-200 hover:border-emerald-300'
+                  ? 'border-emerald-400 hover:border-emerald-500 bg-gradient-to-b from-emerald-100/40 via-emerald-50/20 to-white'
                   : isProgress
-                  ? 'border-amber-200 hover:border-amber-300'
-                  : 'border-rose-200 hover:border-rose-300'
+                  ? 'border-amber-400 hover:border-amber-500 bg-gradient-to-b from-amber-100/40 via-amber-50/20 to-white'
+                  : 'border-rose-400 hover:border-rose-500 bg-gradient-to-b from-rose-100/40 via-rose-50/20 to-white'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-[#3c4233] text-amber-300">
+                  <span className="font-mono text-xs font-black px-2.5 py-1 rounded-xl bg-gradient-to-r from-stone-900 to-indigo-950 text-amber-300 shadow-2xs">
                     Standard {std.code}
                   </span>
                   <span
-                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    className={`text-xs font-black px-3 py-1 rounded-full border-2 shadow-2xs ${
                       isMastered
-                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                        ? 'bg-emerald-100 text-emerald-950 border-emerald-400'
                         : isProgress
-                        ? 'bg-amber-100 text-amber-900 border-amber-300'
-                        : 'bg-rose-100 text-rose-900 border-rose-300'
+                        ? 'bg-amber-100 text-amber-950 border-amber-400'
+                        : 'bg-rose-100 text-rose-950 border-rose-400'
                     }`}
                   >
                     {isMastered ? '🟢 Menguasai' : isProgress ? '🟡 Sedang' : '🔴 Bimbingan'}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-sm text-[#4A3728] leading-snug">
+                <h3 className="font-bold text-sm text-stone-900 leading-snug">
                   {std.name}
                 </h3>
 
                 {/* Progress bar */}
                 <div className="mt-3 space-y-1">
-                  <div className="flex justify-between text-xs font-bold text-stone-600">
+                  <div className="flex justify-between text-xs font-black text-stone-900">
                     <span>Tahap Penguasaan</span>
-                    <span className="font-mono font-black text-sm text-[#4A3728]">{std.percentage}%</span>
+                    <span className="font-mono font-black text-sm text-stone-900">{std.percentage}%</span>
                   </div>
-                  <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isMastered ? 'bg-emerald-500' : isProgress ? 'bg-amber-400' : 'bg-rose-500'
+                      className={`h-full rounded-full transition-all duration-500 shadow-xs ${
+                        isMastered
+                          ? 'bg-emerald-600'
+                          : isProgress
+                          ? 'bg-amber-500'
+                          : 'bg-rose-600'
                       }`}
                       style={{ width: `${std.percentage}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-[11px] text-stone-400 pt-0.5">
+                  <div className="flex justify-between text-[11px] text-stone-600 font-bold pt-0.5">
                     <span>{std.correctResponses} / {std.totalResponses} jawapan betul</span>
                     <span>{std.totalQuestions} soalan dinilai</span>
                   </div>
@@ -137,12 +143,12 @@ export const TabDskp: React.FC<TabDskpProps> = ({
               </div>
 
               {/* Cadangan Alya */}
-              <div className="bg-amber-50/80 p-3 rounded-2xl border border-amber-200 text-xs text-stone-800 space-y-1">
-                <span className="font-bold text-amber-950 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <div className="bg-gradient-to-r from-purple-100/90 via-indigo-50 to-white p-3.5 rounded-2xl border-2 border-purple-300 text-xs text-purple-950 space-y-1.5 shadow-2xs">
+                <span className="font-black text-purple-950 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" />
                   <span>🤖 Cadangan Pedagogi Alya:</span>
                 </span>
-                <p className="text-[11px] leading-relaxed font-medium text-stone-700">
+                <p className="text-[11px] leading-relaxed font-semibold text-purple-950">
                   {alyaTip}
                 </p>
               </div>
@@ -153,35 +159,35 @@ export const TabDskp: React.FC<TabDskpProps> = ({
 
       {/* Heatmap DSKP Murid */}
       {showHeatmap && (
-        <section className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-amber-200 shadow-sm space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-stone-100 flex-wrap gap-2">
+        <section className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-amber-300 shadow-md space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-stone-200 flex-wrap gap-2">
             <div>
-              <h3 className="font-serif-title text-base font-bold text-[#4A3728] flex items-center gap-2">
+              <h3 className="font-serif-title text-base font-black text-stone-900 flex items-center gap-2">
                 <Grid className="w-5 h-5 text-indigo-600" />
                 <span>Heatmap Penguasaan Standard Murid (3.1.1 — 3.1.7)</span>
               </h3>
-              <p className="text-xs text-stone-500 font-medium">
-                Hijau (🟢 Baik) • Kuning (🟡 Sedang) • Merah (🔴 Perlu Bimbingan) • Klik nama untuk lihat profil
+              <p className="text-xs text-stone-600 font-bold mt-0.5">
+                Hijau (🟢 Baik) • Kuning (🟡 Sedang) • Merah (🔴 Lemah) • Klik nama murid untuk lihat profil
               </p>
             </div>
-            <span className="text-xs font-bold text-stone-500">
+            <span className="text-xs font-black text-stone-800 bg-amber-100 px-3 py-1 rounded-full border-2 border-amber-300">
               {students.length} Orang Murid
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-stone-200">
+          <div className="overflow-x-auto rounded-2xl border-2 border-stone-200 shadow-2xs">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#3c4233] text-white">
-                  <th className="py-3 px-3.5 font-bold">Nama Murid</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.1</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.2</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.3</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.4</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.5</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.6</th>
-                  <th className="py-3 px-2 text-center font-bold">3.1.7</th>
-                  <th className="py-3 px-2 text-center font-bold">Skor</th>
+                <tr className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-amber-300">
+                  <th className="py-3 px-3.5 font-black">Nama Murid</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.1</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.2</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.3</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.4</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.5</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.6</th>
+                  <th className="py-3 px-2 text-center font-black">3.1.7</th>
+                  <th className="py-3 px-2 text-center font-black">Skor</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
@@ -191,7 +197,7 @@ export const TabDskp: React.FC<TabDskpProps> = ({
                     className="hover:bg-amber-50/70 transition-colors cursor-pointer"
                     onClick={() => onSelectStudent(s.studentId)}
                   >
-                    <td className="py-2.5 px-3.5 font-bold text-[#4A3728]">
+                    <td className="py-2.5 px-3.5 font-black text-stone-900">
                       {getDisplayName(s.studentName, s.studentId)}
                     </td>
 
@@ -204,15 +210,15 @@ export const TabDskp: React.FC<TabDskpProps> = ({
                           {s.totalAnswered === 0 ? (
                             <span className="text-stone-300 text-xs">⚪</span>
                           ) : isStrong ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px] shadow-2xs">
                               🟢 Baik
                             </span>
                           ) : isWeak ? (
-                            <span className="inline-block px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[10px]">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-black text-[10px] shadow-2xs">
                               🔴 Lemah
                             </span>
                           ) : (
-                            <span className="inline-block px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full bg-amber-500 text-white font-black text-[10px] shadow-2xs">
                               🟡 Sedang
                             </span>
                           )}
@@ -220,7 +226,7 @@ export const TabDskp: React.FC<TabDskpProps> = ({
                       );
                     })}
 
-                    <td className="py-2.5 px-2 text-center font-mono font-bold text-[#4A3728]">
+                    <td className="py-2.5 px-2 text-center font-mono font-black text-stone-900">
                       {s.correctCount}/15
                     </td>
                   </tr>

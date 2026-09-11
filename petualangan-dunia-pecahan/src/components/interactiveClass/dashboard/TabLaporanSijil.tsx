@@ -43,8 +43,8 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
     return `Murid #${id}`;
   };
 
-  // Students eligible for Certificate: mastered (percentage >= 70% or suggestedTP >= 4)
-  const eligibleStudents = students.filter((s) => s.percentage >= 70 || s.suggestedTP >= 4);
+  // Students eligible for Certificate: mastered (percentage >= 70% or effectiveTP >= 4)
+  const eligibleStudents = students.filter((s) => s.percentage >= 70 || (s.effectiveTP ?? s.suggestedTP) >= 4);
 
   const filteredList = students.filter((s) => {
     const name = getDisplayName(s.studentName, s.studentId).toLowerCase();
@@ -57,26 +57,26 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
       {/* Action Banners */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Document 1: Laporan Rasmi Pentaksiran PBD */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-900 shadow-sm space-y-4 flex flex-col justify-between">
+        <section className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-5 sm:p-6 border-2 border-indigo-400 shadow-lg space-y-4 flex flex-col justify-between text-white">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-slate-900 text-amber-300 flex items-center justify-center font-bold text-lg shadow-xs">
+              <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-lg shadow-xs">
                 📄
               </div>
-              <span className="text-xs font-bold bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-full border border-slate-200">
+              <span className="text-xs font-black bg-amber-400 text-slate-950 px-3 py-1 rounded-full shadow-2xs">
                 PBD Formatif Rasmi
               </span>
             </div>
-            <h3 className="font-serif-title text-base sm:text-lg font-black text-slate-900">
+            <h3 className="font-serif-title text-base sm:text-lg font-black text-amber-300">
               Dokumen Pentaksiran Bilik Darjah (PBD)
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-medium">
+            <p className="text-xs text-indigo-100 leading-relaxed font-medium">
               Cetak atau simpan ke PDF dokumen laporan rasmi yang mengandungi perincian skor, cadangan Tahap Penguasaan (TP), standard DSKP 3.1, dan ruangan tanda tangan guru serta pentadbir.
             </p>
           </div>
 
-          <div className="pt-3 border-t border-stone-200 flex items-center justify-between flex-wrap gap-2">
-            <span className="text-xs text-stone-500 font-bold">
+          <div className="pt-3 border-t border-indigo-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs text-indigo-200 font-bold">
               Format: Siap Cetak (A4 / PDF)
             </span>
             <button
@@ -85,7 +85,7 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
                 playSfx('click', soundEnabled);
                 onOpenPrintModal();
               }}
-              className="px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-amber-300 text-xs font-bold shadow-md cursor-pointer flex items-center gap-2 transition-transform hover:scale-102"
+              className="px-5 py-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-md cursor-pointer flex items-center gap-2 transition-transform hover:scale-105"
             >
               <Printer className="w-4 h-4" />
               <span>Pra-Tonton & Cetak Laporan</span>
@@ -94,26 +94,26 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
         </section>
 
         {/* Document 2: Eksport Rekod CSV (Excel) */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 border-2 border-emerald-300 shadow-sm space-y-4 flex flex-col justify-between">
+        <section className="bg-gradient-to-br from-emerald-950 via-teal-950 to-emerald-900 rounded-3xl p-5 sm:p-6 border-2 border-emerald-400 shadow-lg space-y-4 flex flex-col justify-between text-white">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-bold text-lg shadow-xs">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-400 text-emerald-950 flex items-center justify-center font-bold text-lg shadow-xs">
                 📥
               </div>
-              <span className="text-xs font-bold bg-emerald-100 text-emerald-900 px-2.5 py-0.5 rounded-full border border-emerald-300">
+              <span className="text-xs font-black bg-emerald-400 text-emerald-950 px-3 py-1 rounded-full shadow-2xs">
                 Data Lengkap Excel
               </span>
             </div>
-            <h3 className="font-serif-title text-base sm:text-lg font-black text-emerald-950">
+            <h3 className="font-serif-title text-base sm:text-lg font-black text-emerald-300">
               Eksport Fail CSV / Spreadsheet
             </h3>
-            <p className="text-xs text-stone-600 leading-relaxed font-medium">
+            <p className="text-xs text-emerald-100 leading-relaxed font-medium">
               Muat turun rekod data mentah 40 murid, skor pecahan, status TP, kecenderungan pembelajaran, dan rekod respons untuk rujukan fail panitia dan pentaksiran luar talian.
             </p>
           </div>
 
-          <div className="pt-3 border-t border-emerald-100 flex items-center justify-between flex-wrap gap-2">
-            <span className="text-xs text-emerald-800 font-bold">
+          <div className="pt-3 border-t border-emerald-800/80 flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs text-emerald-200 font-bold">
               Fail: rekod_sesi_{selectedClass}.csv
             </span>
             <button
@@ -122,7 +122,7 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
                 playSfx('click', soundEnabled);
                 onExportCSV();
               }}
-              className="px-4 py-2 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-md cursor-pointer flex items-center gap-2 transition-transform hover:scale-102"
+              className="px-5 py-2.5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 text-xs font-black shadow-md cursor-pointer flex items-center gap-2 transition-transform hover:scale-105"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>Muat Turun Fail CSV</span>
@@ -136,15 +136,15 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-100">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-serif-title text-base sm:text-lg font-black text-[#4A3728] flex items-center gap-2">
+              <h3 className="font-serif-title text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
                 <Award className="w-5 h-5 text-amber-500" />
                 <span>📜 Sijil Pencapaian Master Pecahan Murid</span>
               </h3>
-              <span className="bg-amber-100 text-amber-950 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
+              <span className="bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-full shadow-2xs">
                 {eligibleStudents.length} / {students.length} Murid Layak
               </span>
             </div>
-            <p className="text-xs text-stone-500 font-medium mt-0.5">
+            <p className="text-xs text-stone-600 font-bold mt-1">
               Jana dan cetak Sijil Pencapaian bergrafik rasmi bagi murid yang menunjukkan penguasaan cemerlang
             </p>
           </div>
@@ -157,7 +157,7 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
               placeholder="Cari murid untuk sijil..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-stone-200 text-xs font-semibold focus:border-amber-400 focus:outline-none bg-stone-50"
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl border-2 border-stone-200 text-xs font-semibold focus:border-amber-400 focus:outline-none bg-stone-50"
             />
           </div>
         </div>
@@ -170,41 +170,50 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
             return (
               <div
                 key={student.studentId}
-                className={`p-3.5 rounded-2xl border-2 space-y-2.5 transition-all flex flex-col justify-between ${
+                className={`p-4 rounded-2xl border-2 space-y-2.5 transition-all flex flex-col justify-between ${
                   isEligible
-                    ? 'bg-gradient-to-br from-amber-50/70 to-white border-amber-300 shadow-2xs'
-                    : 'bg-stone-50 border-stone-200 opacity-80'
+                    ? 'bg-gradient-to-br from-amber-100/80 via-amber-50/40 to-white border-amber-400 shadow-xs'
+                    : 'bg-stone-50 border-stone-200'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-black text-[#4A3728]">
+                    <h4 className="text-xs font-black text-stone-900">
                       {getDisplayName(student.studentName, student.studentId)}
                     </h4>
-                    <span className="font-mono text-[11px] text-stone-500">{student.studentId}</span>
+                    <span className="font-mono text-[11px] text-stone-500 font-bold">{student.studentId}</span>
                   </div>
 
                   <div className="text-right">
                     <span
                       className={`text-xs font-mono font-black ${
-                        isEligible ? 'text-emerald-800' : 'text-stone-600'
+                        isEligible ? 'text-emerald-700' : 'text-stone-700'
                       }`}
                     >
                       {student.correctCount}/15
                     </span>
-                    <span className="text-[10px] text-stone-400 block">({student.percentage}%)</span>
+                    <span className="text-[10px] text-stone-500 font-bold block">({student.percentage}%)</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-1 text-[11px]">
                   <span
-                    className={`font-bold px-2 py-0.5 rounded-full ${
+                    className={`font-black px-2.5 py-0.5 rounded-full shadow-2xs flex items-center gap-1 ${
                       isEligible
-                        ? 'bg-emerald-100 text-emerald-950 border border-emerald-200'
-                        : 'bg-stone-200 text-stone-600'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-amber-100 text-amber-950 border border-amber-300'
                     }`}
                   >
-                    {isEligible ? '🏆 Layak Sijil (TP ' + student.suggestedTP + ')' : '⏳ Perlu Pengukuhan'}
+                    <span>
+                      {isEligible
+                        ? `🏆 Layak Sijil (TP ${student.effectiveTP ?? student.suggestedTP})`
+                        : '⏳ Perlu Pengukuhan'}
+                    </span>
+                    {student.isTeacherOverride && (
+                      <span className="text-[9px] bg-amber-200 text-amber-950 px-1 py-0.2 rounded font-black border border-amber-400">
+                        Guru
+                      </span>
+                    )}
                   </span>
 
                   <button
@@ -213,10 +222,10 @@ export const TabLaporanSijil: React.FC<TabLaporanSijilProps> = ({
                       playSfx('click', soundEnabled);
                       onOpenCertificate(student);
                     }}
-                    className={`px-3 py-1 rounded-xl text-xs font-black shadow-2xs flex items-center gap-1 cursor-pointer transition-all ${
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black shadow-2xs flex items-center gap-1 cursor-pointer transition-all ${
                       isEligible
-                        ? 'bg-amber-500 hover:bg-amber-600 text-amber-950 hover:text-white'
-                        : 'bg-stone-200 hover:bg-stone-300 text-stone-700'
+                        ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 hover:text-white shadow-md hover:scale-105'
+                        : 'bg-stone-200 hover:bg-stone-300 text-stone-800'
                     }`}
                   >
                     <span>📜 Buka Sijil</span>

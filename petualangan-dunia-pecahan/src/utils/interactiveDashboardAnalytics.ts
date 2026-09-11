@@ -10,6 +10,7 @@ import {
 import { buildDemo600Responses5Piruz } from '../data/demoClass5PiruzSession';
 import { LearningProfile } from '../types/learningProfile';
 import { calculateStudentLearningProfile } from './learningProfileManager';
+import { getTeacherTPOverride } from './teacherTpOverrideManager';
 
 export interface StudentAnalysisResult {
   studentId: string;
@@ -19,7 +20,13 @@ export interface StudentAnalysisResult {
   correctCount: number;
   wrongCount: number;
   percentage: number;
-  suggestedTP: number; // 1 to 6
+  suggestedTP: number; // Effective TP (1 to 6) - kept for backward compatibility
+  systemTP: number; // AI suggested TP based on data (1 to 6)
+  teacherTP: number | null; // Teacher overridden TP (1 to 6) or null if not overridden
+  effectiveTP: number; // teacherTP ?? systemTP
+  isTeacherOverride: boolean;
+  teacherTPReason?: string;
+  teacherTPUpdatedAt?: string;
   tpConfidence: 'Tinggi' | 'Sederhana' | 'Rendah';
   tpReason: string;
   strongStandards: string[];
@@ -363,9 +370,16 @@ export function analyzeAllStudents(
       }
     });
 
-    const { tp, confidence, reason } = calculateStudentTP(correctCount, answeredCount, standardsMap);
+    const { tp: systemTP, confidence, reason } = calculateStudentTP(correctCount, answeredCount, standardsMap);
+    const override = getTeacherTPOverride(student.studentId);
+    const teacherTP = override && typeof override.teacherTP === 'number' ? override.teacherTP : null;
+    const effectiveTP = teacherTP ?? systemTP;
+    const isTeacherOverride = teacherTP !== null;
+    const teacherTPReason = override?.teacherTPReason;
+    const teacherTPUpdatedAt = override?.teacherTPUpdatedAt;
+
     const intervention = generateInterventionRecommendation(weakStandards, percentage);
-    const enrichment = generateEnrichmentRecommendation(percentage, tp);
+    const enrichment = generateEnrichmentRecommendation(percentage, effectiveTP);
     const learningProfile = calculateStudentLearningProfile(student, answersRecord, questions);
 
     return {
@@ -376,7 +390,13 @@ export function analyzeAllStudents(
       correctCount,
       wrongCount,
       percentage,
-      suggestedTP: tp,
+      suggestedTP: effectiveTP, // Set suggestedTP to effectiveTP for seamless backward compatibility
+      systemTP,
+      teacherTP,
+      effectiveTP,
+      isTeacherOverride,
+      teacherTPReason,
+      teacherTPUpdatedAt,
       tpConfidence: confidence,
       tpReason: reason,
       strongStandards,
@@ -762,12 +782,16 @@ export function generateSmartClassInsights(
   dskpAnalysis: DskpStandardAnalysis[],
   studentsAnalysis: StudentAnalysisResult[]
 ): ClassSmartInsights {
-  const masteredCount = studentsAnalysis.filter((s) => s.totalAnswered > 0 && s.percentage >= 80).length;
+  // Mastery based on effectiveTP (teacherTP ?? systemTP)
+  // TP 4-6: Menguasai, TP 3: Sedang Menguasai, TP 1-2: Perlu Bimbingan
+  const masteredCount = studentsAnalysis.filter(
+    (s) => s.totalAnswered > 0 && s.effectiveTP >= 4
+  ).length;
   const inProgressCount = studentsAnalysis.filter(
-    (s) => s.totalAnswered > 0 && s.percentage >= 60 && s.percentage < 80
+    (s) => s.totalAnswered > 0 && s.effectiveTP === 3
   ).length;
   const needGuidanceCount = studentsAnalysis.filter(
-    (s) => s.totalAnswered > 0 && s.percentage < 60
+    (s) => s.totalAnswered > 0 && s.effectiveTP <= 2
   ).length;
   const unansweredCount = studentsAnalysis.filter((s) => s.totalAnswered === 0).length;
 
@@ -842,8 +866,13 @@ export function exportClassReportCSV(
     'Jumlah Betul (/15)',
     'Jumlah Salah (/15)',
     'Peratus (%)',
-    'Cadangan TP',
-    'Tahap Keyakinan TP',
+    'TP Efektif (Semasa)',
+    'Status Penetapan TP',
+    'TP Sistem/AI',
+    'TP Guru',
+    'Catatan / Alasan Guru',
+    'Tarikh Kemaskini TP Guru',
+    'Tahap Keyakinan TP AI',
     'Kecenderungan Pembelajaran',
     'Skor Visual (%)',
     'Skor Kinestetik (%)',
@@ -872,7 +901,12 @@ export function exportClassReportCSV(
       s.correctCount,
       s.wrongCount,
       `${s.percentage}%`,
-      `TP ${s.suggestedTP}`,
+      `TP ${s.effectiveTP}`,
+      s.isTeacherOverride ? '"Ditetapkan Guru"' : '"Cadangan Sistem/AI"',
+      `TP ${s.systemTP}`,
+      s.teacherTP ? `TP ${s.teacherTP}` : '"-"',
+      `"${(s.teacherTPReason || '-').replace(/"/g, '""')}"`,
+      `"${s.teacherTPUpdatedAt ? new Date(s.teacherTPUpdatedAt).toLocaleDateString('ms-MY') : '-'}"`,
       s.tpConfidence,
       `"${lp ? lp.dominantLabel : '-'}"`,
       lp ? lp.visualScore : 0,

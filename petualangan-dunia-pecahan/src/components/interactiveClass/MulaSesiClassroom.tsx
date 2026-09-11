@@ -53,6 +53,7 @@ import {
 import { CameraScannerOverlay } from './CameraScannerOverlay';
 import { ScannerTestModal } from './ScannerTestModal';
 import { playSfx } from '../../utils/audio';
+import { stopAlyaSpeech } from '../../utils/speech';
 
 interface MulaSesiClassroomProps {
   selectedClass: string;
@@ -136,6 +137,7 @@ export const MulaSesiClassroom: React.FC<MulaSesiClassroomProps> = ({
 
   useEffect(() => {
     reloadQuestionAnswers();
+    stopAlyaSpeech();
     setIsAnswerRevealed(false);
     setIsAlyaModalOpen(false);
     setIsQuestionLocked(false);
@@ -275,6 +277,7 @@ export const MulaSesiClassroom: React.FC<MulaSesiClassroomProps> = ({
 
   // Advance to next question or complete session
   const handleNextQuestion = () => {
+    stopAlyaSpeech();
     setIsAlyaModalOpen(false);
     setIsCameraFullScreen(false);
     setIsCameraActive(false);
@@ -732,75 +735,85 @@ export const MulaSesiClassroom: React.FC<MulaSesiClassroomProps> = ({
               })}
             </div>
 
-            {/* Answer Reveal & Explanation Box */}
+            {/* ======================================================== */}
+            {/* 1. PAPARAN JAWAPAN BETUL (HIJAU, SANGAT JELAS) */}
+            {/* ======================================================== */}
             {isAnswerRevealed && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-5 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-xs text-emerald-950 space-y-2 shadow-inner"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-50 via-[#F0FDF4] to-teal-50 border-3 border-emerald-500 shadow-sm text-emerald-950"
               >
-                <div className="font-bold flex items-center justify-between gap-2 text-emerald-800 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                    <span>
-                      Jawapan Sebenar: <strong>Pilihan [{correctAnswerLetter}] — {currentQuestion.correctAnswer}</strong>
-                    </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-600 text-white font-black text-2xl flex items-center justify-center shadow-md shrink-0 font-mono">
+                      {correctAnswerLetter}
+                    </div>
+                    <div>
+                      <span className="text-xs sm:text-sm font-black text-emerald-800 uppercase tracking-wider block">
+                        🎉 JAWAPAN BETUL:
+                      </span>
+                      <div className="text-2xl sm:text-3xl font-black text-emerald-950 font-mono">
+                        Pilihan [{correctAnswerLetter}] — {currentQuestion.correctAnswer}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Live Score Counter */}
+                  {/* Live Class Score Counter */}
                   <div className="flex items-center gap-2 font-mono text-xs">
-                    <span className="bg-emerald-200 text-emerald-900 px-2.5 py-1 rounded-lg border border-emerald-400 font-black">
+                    <span className="bg-emerald-200 text-emerald-950 px-3 py-1.5 rounded-xl border border-emerald-400 font-black">
                       ✓ {stats.correctCount} Betul
                     </span>
-                    <span className="bg-rose-100 text-rose-900 px-2.5 py-1 rounded-lg border border-rose-300 font-black">
+                    <span className="bg-rose-100 text-rose-950 px-3 py-1.5 rounded-xl border border-rose-300 font-black">
                       ✗ {stats.wrongCount} Perlu Bimbingan
                     </span>
                   </div>
                 </div>
 
-                <p className="text-stone-700 font-medium leading-relaxed bg-white/80 p-2.5 rounded-xl border border-emerald-200">
-                  <strong>Penerangan:</strong> {currentQuestion.explanation}
-                </p>
+                {/* Dialog Alya: "Bagus! Sekarang mari kita lihat mengapa jawapan ini ialah..." */}
+                <div className="mt-3.5 pt-3 border-t border-emerald-200 text-sm sm:text-base font-semibold text-emerald-900 flex items-start gap-2">
+                  <span className="font-black text-emerald-950 shrink-0">🤖 Alya:</span>
+                  <span className="italic">
+                    “Bagus! Sekarang mari kita lihat mengapa jawapan ini ialah {currentQuestion.correctAnswer}.”
+                  </span>
+                </div>
               </motion.div>
             )}
 
             {/* ======================================================== */}
-            {/* 💡 NAK TAHU CARANYA? (ALYA PROMPT CARD) */}
-            {/* Muncul serta-merta SELEPAS jawapan sebenar direveal */}
+            {/* 2. 🤖 JOM BELAJAR BERSAMA ALYA! (PROMPT CARD) */}
+            {/* Muncul serta-merta SELEPAS jawapan didedahkan */}
             {/* ======================================================== */}
             {isAnswerRevealed && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                initial={{ opacity: 0, scale: 0.96, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className="mt-5 p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#FFF0F3] via-[#FFF8F8] to-[#FFF0E8] border-3 border-[#F6A5B8] shadow-md text-center relative overflow-hidden"
+                transition={{ duration: 0.35, delay: 0.08, ease: 'easeOut' }}
+                className="mt-4 p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-indigo-50/80 via-white to-purple-50/70 border-3 border-indigo-200 shadow-md text-center relative overflow-hidden"
               >
-                {/* Decorative Background Glows */}
-                <div className="absolute -top-6 -right-6 w-28 h-28 bg-pink-200/50 rounded-full blur-xl pointer-events-none" />
-                <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-amber-200/50 rounded-full blur-xl pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col items-center max-w-md mx-auto">
-                  {/* 💗 ALYA Avatar Badge */}
-                  <div className="flex flex-col items-center mb-1.5">
-                    <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-xs border-2 border-pink-200 flex items-center justify-center">
+                <div className="relative z-10 flex flex-col items-center max-w-lg mx-auto">
+                  {/* 🤖 ALYA Avatar Badge */}
+                  <div className="flex flex-col items-center mb-2">
+                    <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-sm border-2 border-indigo-200 flex items-center justify-center">
                       <AlyaCharacter mood="encouraging" size="md" />
                     </div>
-                    <span className="mt-1.5 px-3 py-0.5 rounded-full bg-rose-500 text-white text-[11px] font-black uppercase tracking-wider shadow-xs">
-                      💗 ALYA
+                    <span className="mt-1.5 px-3 py-0.5 rounded-full bg-indigo-600 text-white text-[11px] font-black uppercase tracking-wider shadow-xs">
+                      🤖 GURU KECIL
                     </span>
                   </div>
 
-                  {/* 💡 Nak tahu caranya? */}
-                  <h4 className="text-xl sm:text-2xl font-black text-[#4A3728] mt-1 font-serif-title">
-                    💡 Nak tahu caranya?
+                  {/* 🤖 JOM BELAJAR BERSAMA ALYA! */}
+                  <h4 className="text-xl sm:text-2xl font-black text-indigo-950 mt-1 font-sans">
+                    🤖 JOM BELAJAR BERSAMA ALYA!
                   </h4>
 
-                  {/* Jom tengok cara jawab bersama Alya! 🌟 */}
-                  <p className="text-sm sm:text-base font-bold text-stone-600 mt-1 mb-5">
-                    Jom tengok cara jawab bersama Alya! 🌟
+                  {/* “Nak tahu bagaimana kita dapat jawapan ini?” */}
+                  <p className="text-sm sm:text-base font-bold text-indigo-900/80 mt-1 mb-5">
+                    “Nak tahu bagaimana kita dapat jawapan ini?”
                   </p>
 
-                  {/* Dua Pilihan: [ 💗 Terangkan ] & [ ➡️ Teruskan ] */}
+                  {/* Dua Pilihan: [ 💗 TERANGKAN DENGAN ALYA ] & [ ➡️ TERUSKAN ] */}
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
                     <button
                       type="button"
@@ -809,18 +822,19 @@ export const MulaSesiClassroom: React.FC<MulaSesiClassroomProps> = ({
                         setIsAlyaModalOpen(true);
                       }}
                       id="btn-alya-terangkan"
-                      className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black text-sm sm:text-base shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-102 active:scale-98"
+                      className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 hover:from-indigo-700 hover:to-purple-800 text-white font-black text-sm sm:text-base shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-102 active:scale-98"
                     >
-                      <span>💗 Terangkan</span>
+                      <span>💗 TERANGKAN DENGAN ALYA</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={handleNextQuestion}
                       id="btn-alya-teruskan"
-                      className="w-full sm:w-auto px-7 py-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border-2 border-stone-300 font-black text-sm sm:text-base shadow-xs hover:shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-102 active:scale-98"
+                      className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border-2 border-stone-300 font-black text-sm sm:text-base shadow-xs hover:shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-102 active:scale-98"
+                      title="Langkau penerangan dan terus ke soalan seterusnya"
                     >
-                      <span>➡️ Teruskan</span>
+                      <span>➡️ TERUSKAN</span>
                     </button>
                   </div>
                 </div>
@@ -1242,6 +1256,7 @@ export const MulaSesiClassroom: React.FC<MulaSesiClassroomProps> = ({
         soundEnabled={soundEnabled}
         onNextQuestion={handleNextQuestion}
         isLastQuestion={currentQuestionIndex === questions.length - 1}
+        classStats={stats}
       />
 
       {/* Test Mode Simulation Modal */}

@@ -45,17 +45,17 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
   const percentage = Math.round((rawScore / totalQuestions) * 100);
 
   // Status mapping matching Malaysian PBD guidelines
-  let statusBadge = '🟢 Menguasai';
-  let statusBg = 'bg-emerald-100 text-emerald-950 border-emerald-300';
+  let statusBadge = 'Belum Ada Data';
+  let statusBg = 'bg-stone-100 text-stone-600 border-stone-300';
   if (percentage >= 80) {
     statusBadge = '🟢 Menguasai';
-    statusBg = 'bg-emerald-100 text-emerald-950 border-emerald-300';
+    statusBg = 'bg-emerald-600 text-white border-emerald-400 shadow-2xs';
   } else if (percentage >= 60) {
     statusBadge = '🟡 Sedang Menguasai';
-    statusBg = 'bg-amber-100 text-amber-950 border-amber-300';
+    statusBg = 'bg-amber-400 text-amber-950 border-amber-300 shadow-2xs';
   } else {
     statusBadge = '🔴 Perlu Bimbingan';
-    statusBg = 'bg-rose-100 text-rose-950 border-rose-300';
+    statusBg = 'bg-rose-600 text-white border-rose-400 shadow-2xs';
   }
 
   const dominantLabel = profile?.dominantLabel || 'Data Belum Mencukupi';
@@ -77,12 +77,12 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="bg-[#FFF8E8] text-[#4A3728] rounded-3xl p-5 sm:p-7 border-4 border-[#F4C95D] shadow-2xl max-w-xl w-full my-auto space-y-4 max-h-[90vh] overflow-y-auto relative"
+            className="bg-[#FFFDF7] text-[#4A3728] rounded-3xl p-5 sm:p-7 border-4 border-[#F4C95D] shadow-2xl max-w-xl w-full my-auto space-y-4 max-h-[90vh] overflow-y-auto relative"
           >
             {/* Header */}
             <div className="flex items-start justify-between pb-3 border-b-2 border-stone-200">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-xs">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 text-white flex items-center justify-center font-bold text-xl shadow-xs">
                   🧠
                 </div>
                 <div>
@@ -90,7 +90,7 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
                     PROFIL KECENDERUNGAN PEMBELAJARAN
                   </h3>
                   <p className="text-xs text-stone-600 font-medium">
-                    Analisis Berpandukan Interaksi Murid
+                    Analisis Berpandukan Interaksi & Respons Murid
                   </p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
                 </div>
               </div>
 
-              {/* BUTANG 👩‍🏫 CADANGAN INTERVENSI */}
+              {/* BUTANG 👩‍🏫 CADANGAN INTERVENSI - VIBRANT PURPLE/INDIGO */}
               <div className="pt-1">
                 <button
                   type="button"
@@ -145,17 +145,17 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
                     playSfx('click', soundEnabled);
                     setIsInterventionOpen(true);
                   }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-xs cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white font-black text-xs cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <span className="text-base">👩‍🏫</span>
-                  <span>Cadangan Intervensi</span>
+                  <span>Buka Cadangan Intervensi Alya</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </button>
               </div>
             </div>
 
-            {/* 2. PROFIL KECENDERUNGAN & VISUAL SKOR */}
-            <div className="bg-white p-4.5 rounded-2xl border-2 border-indigo-200 shadow-2xs space-y-4">
+            {/* 2. PROFIL KECENDERUNGAN & VISUAL SKOR (COLOR-CODED) */}
+            <div className="bg-white p-4.5 rounded-2xl border-2 border-indigo-200 shadow-2xs space-y-3.5">
               <div className="flex items-center justify-between pb-2 border-b border-indigo-100">
                 <span className="text-xs font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
                   <Brain className="w-4 h-4 text-indigo-600" />
@@ -163,64 +163,64 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
                 </span>
 
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-indigo-100 text-indigo-900 border border-indigo-200">
-                  🧠 Tahap keyakinan: {confidence}%
+                  Tahap keyakinan: {confidence}%
                 </span>
               </div>
 
-              {/* Visual Progress Bars for 3 Modes */}
-              <div className="space-y-3">
-                {/* Visual Bar */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold text-stone-800">
+              {/* Visual Progress Bars for 3 Modes: Visual=Purple, Kinesthetic=Orange, Auditory=Blue */}
+              <div className="space-y-2.5">
+                {/* Visual Bar - 🟣 Purple */}
+                <div className="p-2.5 rounded-xl bg-purple-50/80 border border-purple-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-purple-950">
                     <span className="flex items-center gap-1.5">
                       <span className="text-base">👀</span>
-                      <span>Visual</span>
+                      <span>Visual (Gambar, Carta, Bar Pecahan)</span>
                     </span>
-                    <span className="font-mono font-black text-blue-700 text-sm">
+                    <span className="font-mono font-black text-purple-900 text-sm">
                       {visualScore}%
                     </span>
                   </div>
-                  <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 border border-stone-200/80">
+                  <div className="w-full h-2.5 bg-purple-100 rounded-full overflow-hidden p-0.5 border border-purple-200">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-500 shadow-2xs"
+                      className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500 shadow-2xs"
                       style={{ width: `${visualScore}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Kinestetik Bar */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold text-stone-800">
+                {/* Kinestetik Bar - 🟠 Orange/Amber */}
+                <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-amber-950">
                     <span className="flex items-center gap-1.5">
                       <span className="text-base">🖐️</span>
-                      <span>Kinestetik</span>
+                      <span>Kinestetik (Hands-on, Lipatan, Manipulatif)</span>
                     </span>
-                    <span className="font-mono font-black text-emerald-700 text-sm">
+                    <span className="font-mono font-black text-amber-950 text-sm">
                       {kinestheticScore}%
                     </span>
                   </div>
-                  <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 border border-stone-200/80">
+                  <div className="w-full h-2.5 bg-amber-100 rounded-full overflow-hidden p-0.5 border border-amber-200">
                     <div
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-500 shadow-2xs"
+                      className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500 shadow-2xs"
                       style={{ width: `${kinestheticScore}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Auditori Bar */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold text-stone-800">
+                {/* Auditori Bar - 🔵 Blue/Cyan */}
+                <div className="p-2.5 rounded-xl bg-sky-50/80 border border-sky-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-sky-950">
                     <span className="flex items-center gap-1.5">
                       <span className="text-base">🎧</span>
-                      <span>Auditori</span>
+                      <span>Auditori (Penerangan, Nyanyian & Soal Jawab)</span>
                     </span>
-                    <span className="font-mono font-black text-amber-700 text-sm">
+                    <span className="font-mono font-black text-sky-950 text-sm">
                       {auditoryScore}%
                     </span>
                   </div>
-                  <div className="w-full h-3 bg-stone-100 rounded-full overflow-hidden p-0.5 border border-stone-200/80">
+                  <div className="w-full h-2.5 bg-sky-100 rounded-full overflow-hidden p-0.5 border border-sky-200">
                     <div
-                      className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500 shadow-2xs"
+                      className="h-full bg-gradient-to-r from-sky-400 to-blue-600 rounded-full transition-all duration-500 shadow-2xs"
                       style={{ width: `${auditoryScore}%` }}
                     />
                   </div>
@@ -228,12 +228,22 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
               </div>
 
               {/* ⭐ Kecenderungan utama */}
-              <div className="bg-indigo-50/80 p-3 rounded-xl border border-indigo-200 flex items-center justify-between flex-wrap gap-2">
+              <div className="bg-gradient-to-r from-purple-50 via-indigo-50 to-amber-50 p-3 rounded-xl border border-indigo-200 flex items-center justify-between flex-wrap gap-2">
                 <span className="text-xs font-bold text-indigo-950 flex items-center gap-1">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>⭐ Kecenderungan utama:</span>
                 </span>
-                <span className="px-3 py-1 rounded-full text-xs font-black bg-white text-indigo-950 border border-indigo-300 shadow-2xs">
+                <span className={`px-3 py-1 rounded-full text-xs font-black shadow-2xs ${
+                  dominantMode === 'visual'
+                    ? 'bg-purple-600 text-white'
+                    : dominantMode === 'kinesthetic'
+                    ? 'bg-amber-500 text-white'
+                    : dominantMode === 'auditory'
+                    ? 'bg-blue-600 text-white'
+                    : dominantMode === 'combined'
+                    ? 'bg-gradient-to-r from-purple-600 to-amber-500 text-white'
+                    : 'bg-white text-indigo-950 border border-indigo-300'
+                }`}>
                   {dominantLabel}
                 </span>
               </div>
@@ -241,15 +251,15 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
 
             {/* 3. BAHAGIAN KEKUATAN & PERLU PENGUKUHAN */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {/* 💪 KEKUATAN */}
-              <div className="bg-white p-3 rounded-2xl border-2 border-emerald-200 shadow-2xs space-y-1.5">
-                <span className="text-xs font-black uppercase tracking-wider text-emerald-900 flex items-center gap-1">
+              {/* 💪 KEKUATAN - 🟢 Emerald */}
+              <div className="bg-gradient-to-br from-emerald-50/80 via-teal-50/30 to-white p-3.5 rounded-2xl border-2 border-emerald-300 shadow-2xs space-y-2">
+                <span className="text-xs font-black uppercase tracking-wider text-emerald-950 flex items-center gap-1">
                   <span>💪</span>
                   <span>KEKUATAN</span>
                 </span>
                 <ul className="space-y-1 text-[11px] text-stone-700">
                   {plan.strengths.slice(0, 3).map((str, idx) => (
-                    <li key={idx} className="flex items-start gap-1 bg-emerald-50/60 p-1.5 rounded-lg border border-emerald-100">
+                    <li key={idx} className="flex items-start gap-1.5 bg-white p-2 rounded-xl border border-emerald-200 shadow-2xs">
                       <span className="text-emerald-600 font-black shrink-0">✓</span>
                       <span className="font-medium">{str}</span>
                     </li>
@@ -257,16 +267,16 @@ export const StudentLearningProfileModal: React.FC<StudentLearningProfileModalPr
                 </ul>
               </div>
 
-              {/* 🔎 PERLU PENGUKUHAN */}
-              <div className="bg-white p-3 rounded-2xl border-2 border-rose-200 shadow-2xs space-y-1.5">
-                <span className="text-xs font-black uppercase tracking-wider text-rose-900 flex items-center gap-1">
+              {/* 🔎 PERLU PENGUKUHAN - 🟡 Warm Amber */}
+              <div className="bg-gradient-to-br from-amber-50/80 via-yellow-50/30 to-white p-3.5 rounded-2xl border-2 border-amber-300 shadow-2xs space-y-2">
+                <span className="text-xs font-black uppercase tracking-wider text-amber-950 flex items-center gap-1">
                   <span>🔎</span>
                   <span>PERLU PENGUKUHAN</span>
                 </span>
                 <ul className="space-y-1 text-[11px] text-stone-700">
                   {plan.weaknesses.slice(0, 3).map((wk, idx) => (
-                    <li key={idx} className="flex items-start gap-1 bg-rose-50/60 p-1.5 rounded-lg border border-rose-100">
-                      <span className="text-rose-500 font-black shrink-0">•</span>
+                    <li key={idx} className="flex items-start gap-1.5 bg-white p-2 rounded-xl border border-amber-200 shadow-2xs">
+                      <span className="text-amber-500 font-black shrink-0">!</span>
                       <span className="font-medium">{wk}</span>
                     </li>
                   ))}

@@ -32,7 +32,16 @@ import {
   Calendar,
   Layers,
   Trash2,
+  Edit3,
+  UserCheck,
+  FileText,
 } from 'lucide-react';
+import { TeacherTPOverrideModal } from './TeacherTPOverrideModal';
+import {
+  resetTeacherTPOverride,
+  subscribeToTeacherTPUpdates,
+  TeacherTPRecord,
+} from '../../utils/teacherTpOverrideManager';
 import { InteractiveClassStudent } from '../../types/interactiveClass';
 import {
   INTERACTIVE_CLASS_15_QUESTIONS,
@@ -125,7 +134,54 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
     profile: any;
   } | null>(null);
 
-  // Active data source: 'demo' (deterministic 600 records for 3 Asah) or 'live' (real scanning records)
+  // Teacher TP Override state
+  const [isTeacherTPEditModalOpen, setIsTeacherTPEditModalOpen] = useState(false);
+  const [studentForTPEdit, setStudentForTPEdit] = useState<StudentAnalysisResult | null>(null);
+  const [confirmResetStudentId, setConfirmResetStudentId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Subscribe to changes in teacher TP overrides
+  useEffect(() => {
+    const unsubscribe = subscribeToTeacherTPUpdates(() => {
+      setDataVersion((v) => v + 1);
+    });
+    return unsubscribe;
+  }, []);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
+
+  const handleOpenEditTP = (student: StudentAnalysisResult) => {
+    playSfx('click', soundEnabled);
+    setStudentForTPEdit(student);
+    setIsTeacherTPEditModalOpen(true);
+  };
+
+  const handleTeacherTPSaved = (record: TeacherTPRecord) => {
+    setDataVersion((v) => v + 1);
+    showToast(`Ketetapan TP Guru berjaya disimpan: TP ${record.teacherTP} untuk ${studentForTPEdit?.studentName || 'murid'}.`);
+  };
+
+  const handleRequestResetTP = (studentId: string) => {
+    playSfx('click', soundEnabled);
+    setConfirmResetStudentId(studentId);
+  };
+
+  const handleConfirmResetTP = () => {
+    if (!confirmResetStudentId) return;
+    playSfx('chime', soundEnabled);
+    resetTeacherTPOverride(confirmResetStudentId);
+    setDataVersion((v) => v + 1);
+    const targetStudent = studentsAnalysis.find((s) => s.studentId === confirmResetStudentId);
+    setConfirmResetStudentId(null);
+    showToast(`Ketetapan guru dipadam. ${targetStudent?.studentName || 'Murid'} kini kembali kepada cadangan sistem (TP ${targetStudent?.systemTP ?? 3}).`);
+  };
+
+  // Active data source: 'demo' (deterministic 600 records for 5 Piruz) or 'live' (real scanning records)
   const [sessionMode, setSessionMode] = useState<SessionDataMode>(() => {
     return getSessionDataMode();
   });
@@ -150,7 +206,7 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
   // Compute Core Analytics
   const studentsAnalysis: StudentAnalysisResult[] = useMemo(() => {
     return analyzeAllStudents(students, questions, allAnswers);
-  }, [students, questions, allAnswers]);
+  }, [students, questions, allAnswers, dataVersion]);
 
   const dskpAnalysis: DskpStandardAnalysis[] = useMemo(() => {
     return analyzeDskpStandards(questions, allAnswers);
@@ -621,23 +677,23 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#FFF8E8] text-[#4A3728] rounded-3xl p-5 sm:p-7 border-4 border-[#F4C95D] shadow-2xl max-w-2xl w-full my-auto space-y-4.5 max-h-[90vh] overflow-y-auto"
+              className="bg-gradient-to-b from-white via-amber-50/40 to-white text-stone-900 rounded-3xl p-5 sm:p-7 border-4 border-amber-400 shadow-2xl max-w-2xl w-full my-auto space-y-4.5 max-h-[90vh] overflow-y-auto"
             >
               {/* Modal Header */}
               <div className="flex items-start justify-between pb-3 border-b-2 border-stone-200">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-serif-title text-xl font-black text-[#4A3728]">
+                    <h3 className="font-serif-title text-xl font-black text-stone-900">
                       {getDisplayName(activeStudentModal.studentName, activeStudentModal.studentId)}
                     </h3>
-                    <span className="bg-[#3c4233] text-amber-300 font-mono text-xs font-black px-2.5 py-0.5 rounded-full">
+                    <span className="bg-stone-900 text-amber-300 font-mono text-xs font-black px-2.5 py-0.5 rounded-full shadow-2xs">
                       {activeStudentModal.studentId}
                     </span>
-                    <span className="bg-amber-100 text-amber-950 font-bold text-xs px-2.5 py-0.5 rounded-full border border-amber-300">
+                    <span className="bg-amber-100 text-amber-950 font-black text-xs px-2.5 py-0.5 rounded-full border-2 border-amber-300">
                       Kelas: {activeStudentModal.class}
                     </span>
                   </div>
-                  <p className="text-xs text-stone-500 font-medium mt-0.5">
+                  <p className="text-xs text-stone-600 font-bold mt-1">
                     Analisis Penguasaan Pecahan Matematik Tahun 3 (DSKP 3.1)
                   </p>
                 </div>
@@ -653,43 +709,43 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
 
               {/* High-level score cards */}
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-white p-3 rounded-2xl border-2 border-amber-200">
-                  <span className="text-[11px] text-stone-500 font-bold block">Skor</span>
-                  <span className="text-2xl font-black text-[#4A3728] font-mono">
+                <div className="bg-white p-3 rounded-2xl border-2 border-stone-200 shadow-xs">
+                  <span className="text-[11px] text-stone-600 font-bold block">Skor</span>
+                  <span className="text-2xl font-black text-stone-900 font-mono">
                     {activeStudentModal.correctCount} / 15
                   </span>
-                  <span className="text-[10px] text-stone-400 block">Soalan Betul</span>
+                  <span className="text-[10px] text-stone-500 font-bold block">Soalan Betul</span>
                 </div>
 
-                <div className="bg-white p-3 rounded-2xl border-2 border-amber-200">
-                  <span className="text-[11px] text-stone-500 font-bold block">Peratus</span>
-                  <span className="text-2xl font-black text-emerald-800 font-mono">
+                <div className="bg-white p-3 rounded-2xl border-2 border-stone-200 shadow-xs">
+                  <span className="text-[11px] text-stone-600 font-bold block">Peratus</span>
+                  <span className="text-2xl font-black text-emerald-700 font-mono">
                     {activeStudentModal.percentage}%
                   </span>
-                  <span className="text-[10px] text-stone-400 block">Ketepatan Imbasan</span>
+                  <span className="text-[10px] text-stone-500 font-bold block">Ketepatan Imbasan</span>
                 </div>
 
-                <div className="bg-amber-100/90 p-3 rounded-2xl border-2 border-amber-300">
-                  <span className="text-[11px] text-amber-900 font-bold block">CADANGAN TP</span>
+                <div className="bg-gradient-to-br from-amber-100 via-amber-50 to-white p-3 rounded-2xl border-2 border-amber-400 shadow-xs">
+                  <span className="text-[11px] text-amber-950 font-black block">CADANGAN TP</span>
                   <span className="text-2xl font-black text-amber-950 font-mono">
                     TP {activeStudentModal.suggestedTP}
                   </span>
-                  <span className="text-[10px] text-amber-800 font-bold block">
+                  <span className="text-[10px] text-amber-900 font-bold block">
                     Keyakinan: {activeStudentModal.tpConfidence}
                   </span>
                 </div>
               </div>
 
               {/* Justifikasi Cadangan TP */}
-              <div className="bg-white p-4 rounded-2xl border-2 border-amber-200 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-[#4A3728]">
+              <div className="bg-white p-4 rounded-2xl border-2 border-amber-300 space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-xs font-black text-stone-900">
                   <span className="flex items-center gap-1.5">
                     <Award className="w-4 h-4 text-amber-600" />
                     <span>Justifikasi Cadangan TP (Tahap Penguasaan {activeStudentModal.suggestedTP}):</span>
                   </span>
-                  <span className="text-[10px] text-stone-400">PBD Formatif</span>
+                  <span className="text-[10px] text-stone-500 font-bold">PBD Formatif</span>
                 </div>
-                <p className="text-xs text-stone-700 leading-relaxed bg-stone-50 p-2.5 rounded-xl border border-stone-200 font-medium">
+                <p className="text-xs text-stone-800 leading-relaxed bg-amber-50/50 p-2.5 rounded-xl border border-amber-200 font-medium">
                   {activeStudentModal.tpReason}
                 </p>
                 <p className="text-[10px] text-stone-500 italic">
@@ -700,9 +756,9 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
               {/* Kekuatan & Kelemahan Murid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Kekuatan */}
-                <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-300 space-y-1.5">
-                  <span className="text-xs font-bold text-emerald-900 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="bg-emerald-100/90 p-3.5 rounded-2xl border-2 border-emerald-400 space-y-1.5 shadow-2xs">
+                  <span className="text-xs font-black text-emerald-950 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                     <span>💪 KEKUATAN:</span>
                   </span>
                   {(activeStudentModal.strongStandards || []).length > 0 ? (
@@ -710,21 +766,21 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                       {(activeStudentModal.strongStandards || []).map((code) => (
                         <span
                           key={code}
-                          className="px-2 py-0.5 rounded-lg bg-emerald-200 text-emerald-950 font-mono font-bold text-[11px]"
+                          className="px-2.5 py-0.5 rounded-lg bg-emerald-600 text-white font-mono font-black text-[11px] shadow-2xs"
                         >
                           ✓ {code} ({DSKP_STANDARDS_INFO[code]?.name || 'DSKP'})
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-stone-500">Perlu pengukuhan berterusan.</span>
+                    <span className="text-xs text-stone-600 font-bold">Perlu pengukuhan berterusan.</span>
                   )}
                 </div>
 
                 {/* Perlu Bimbingan */}
-                <div className="bg-rose-50 p-3.5 rounded-2xl border border-rose-300 space-y-1.5">
-                  <span className="text-xs font-bold text-rose-900 flex items-center gap-1">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                <div className="bg-rose-100/90 p-3.5 rounded-2xl border-2 border-rose-400 space-y-1.5 shadow-2xs">
+                  <span className="text-xs font-black text-rose-950 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4 text-rose-700" />
                     <span>🔎 PERLU BIMBINGAN:</span>
                   </span>
                   {(activeStudentModal.weakStandards || []).length > 0 ? (
@@ -732,37 +788,37 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                       {(activeStudentModal.weakStandards || []).map((code) => (
                         <span
                           key={code}
-                          className="px-2 py-0.5 rounded-lg bg-rose-200 text-rose-950 font-mono font-bold text-[11px]"
+                          className="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white font-mono font-black text-[11px] shadow-2xs"
                         >
                           ⚠️ {code} ({DSKP_STANDARDS_INFO[code]?.name || 'DSKP'})
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <span className="text-xs text-emerald-700 font-bold">Tiada kelemahan ketara!</span>
+                    <span className="text-xs text-emerald-800 font-black">Tiada kelemahan ketara!</span>
                   )}
                 </div>
               </div>
 
               {/* Cadangan Intervensi */}
-              <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-300 space-y-1">
-                <span className="text-xs font-bold text-amber-900 flex items-center gap-1">
-                  <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+              <div className="bg-amber-100/90 p-3.5 rounded-2xl border-2 border-amber-400 space-y-1 shadow-2xs">
+                <span className="text-xs font-black text-amber-950 flex items-center gap-1">
+                  <Lightbulb className="w-4 h-4 text-amber-700" />
                   <span>💡 Cadangan Intervensi:</span>
                 </span>
-                <p className="text-xs text-stone-800 font-medium">
+                <p className="text-xs text-stone-900 font-semibold leading-relaxed">
                   "{activeStudentModal.intervention}"
                 </p>
               </div>
 
               {/* Cadangan Pengayaan (if high performer) */}
               {activeStudentModal.suggestedTP >= 5 && activeStudentModal.enrichment && (
-                <div className="bg-emerald-50 p-3.5 rounded-2xl border border-emerald-300 space-y-1">
-                  <span className="text-xs font-bold text-emerald-900 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="bg-emerald-100/90 p-3.5 rounded-2xl border-2 border-emerald-400 space-y-1 shadow-2xs">
+                  <span className="text-xs font-black text-emerald-950 flex items-center gap-1">
+                    <Sparkles className="w-4 h-4 text-emerald-700" />
                     <span>🌟 Cadangan Pengayaan:</span>
                   </span>
-                  <p className="text-xs text-stone-800 font-medium">
+                  <p className="text-xs text-stone-900 font-semibold leading-relaxed">
                     "{activeStudentModal.enrichment}"
                   </p>
                 </div>
@@ -772,8 +828,8 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
               {/* 🧠 PROFIL KECENDERUNGAN PEMBELAJARAN (ANALISIS DATA) */}
               {/* ======================================================== */}
               {activeStudentModal.learningProfile && (
-                <div className="bg-gradient-to-br from-indigo-50/90 via-purple-50/60 to-amber-50/80 p-4 sm:p-5 rounded-2xl border-2 border-indigo-200 shadow-2xs space-y-3">
-                  <div className="flex items-start justify-between flex-wrap gap-2 pb-2 border-b border-indigo-100">
+                <div className="bg-gradient-to-br from-indigo-100/90 via-purple-50/80 to-amber-50/80 p-4 sm:p-5 rounded-2xl border-2 border-indigo-300 shadow-2xs space-y-3">
+                  <div className="flex items-start justify-between flex-wrap gap-2 pb-2 border-b border-indigo-200">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-xs">
                         🧠
@@ -782,15 +838,15 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                         <h4 className="font-serif-title font-black text-sm text-indigo-950">
                           PROFIL KECENDERUNGAN PEMBELAJARAN
                         </h4>
-                        <p className="text-[10px] text-stone-500 font-medium">
+                        <p className="text-[10px] text-stone-600 font-bold">
                           Analisis kecenderungan penerimaan maklumat berpandukan data interaksi murid
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-black shadow-xs border bg-white text-indigo-900 border-indigo-300">
-                        ⭐ Kecenderungan utama: {
+                      <span className="px-3 py-1 rounded-full text-xs font-black shadow-xs bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                        ⭐ {
                           activeStudentModal.learningProfile.dominantMode === 'visual'
                             ? 'Visual'
                             : activeStudentModal.learningProfile.dominantMode === 'kinesthetic'
@@ -806,8 +862,8 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                             : 'Data Belum Mencukupi'
                         }
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-950 border border-indigo-200">
-                        🧠 Tahap keyakinan: {activeStudentModal.learningProfile.confidence}%
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-950 border border-indigo-300">
+                        Keyakinan: {activeStudentModal.learningProfile.confidence}%
                       </span>
                     </div>
                   </div>
@@ -815,7 +871,7 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                   {/* Profil Kecenderungan 3 Skor: Visual, Kinestetik, Auditori */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     {/* Visual */}
-                    <div className="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs space-y-1.5">
+                    <div className="bg-white p-3 rounded-xl border-2 border-blue-200 shadow-2xs space-y-1.5">
                       <div className="flex items-center justify-between text-xs font-bold text-stone-700">
                         <span className="flex items-center gap-1">
                           <span>👀</span>
@@ -825,17 +881,17 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                           {activeStudentModal.learningProfile.visualScore}%
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
                         <div
-                          className="h-full bg-blue-500 rounded-full transition-all"
+                          className="h-full bg-blue-600 rounded-full transition-all"
                           style={{ width: `${activeStudentModal.learningProfile.visualScore}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-stone-400 block">Rajah objek, fraction bar & grid</span>
+                      <span className="text-[9px] text-stone-500 font-medium block">Rajah objek, fraction bar & grid</span>
                     </div>
 
                     {/* Kinestetik */}
-                    <div className="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs space-y-1.5">
+                    <div className="bg-white p-3 rounded-xl border-2 border-emerald-200 shadow-2xs space-y-1.5">
                       <div className="flex items-center justify-between text-xs font-bold text-stone-700">
                         <span className="flex items-center gap-1">
                           <span>🖐️</span>
@@ -845,17 +901,17 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                           {activeStudentModal.learningProfile.kinestheticScore}%
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
                         <div
-                          className="h-full bg-emerald-500 rounded-full transition-all"
+                          className="h-full bg-emerald-600 rounded-full transition-all"
                           style={{ width: `${activeStudentModal.learningProfile.kinestheticScore}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-stone-400 block">Manipulasi hands-on (Dapur & Pixel)</span>
+                      <span className="text-[9px] text-stone-500 font-medium block">Manipulasi hands-on (Dapur & Pixel)</span>
                     </div>
 
                     {/* Auditori */}
-                    <div className="bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs space-y-1.5">
+                    <div className="bg-white p-3 rounded-xl border-2 border-amber-200 shadow-2xs space-y-1.5">
                       <div className="flex items-center justify-between text-xs font-bold text-stone-700">
                         <span className="flex items-center gap-1">
                           <span>🎧</span>
@@ -865,33 +921,33 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                           {activeStudentModal.learningProfile.auditoryScore}%
                         </span>
                       </div>
-                      <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden border border-stone-200">
                         <div
                           className="h-full bg-amber-500 rounded-full transition-all"
                           style={{ width: `${activeStudentModal.learningProfile.auditoryScore}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-stone-400 block">Penerangan berstruktur & bimbingan suara</span>
+                      <span className="text-[9px] text-stone-500 font-medium block">Penerangan berstruktur & suara</span>
                     </div>
                   </div>
 
                   {/* Penerangan Objektif */}
-                  <div className="bg-white/90 p-3 rounded-xl border border-indigo-100 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-900 block">
+                  <div className="bg-white p-3 rounded-xl border border-indigo-200 space-y-1">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-indigo-950 block">
                       Penerangan Kecenderungan:
                     </span>
-                    <p className="text-xs text-stone-800 font-medium leading-relaxed">
+                    <p className="text-xs text-stone-900 font-semibold leading-relaxed">
                       "{activeStudentModal.learningProfile.description}"
                     </p>
                   </div>
 
                   {/* Bukti Ringkas daripada Data */}
                   {(activeStudentModal.learningProfile.evidence || []).length > 0 && (
-                    <div className="bg-white/70 p-3 rounded-xl border border-indigo-100/70 space-y-1">
-                      <span className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
+                    <div className="bg-white/80 p-3 rounded-xl border border-indigo-200 space-y-1">
+                      <span className="text-[11px] font-black text-indigo-950 flex items-center gap-1">
                         <span>🔍</span> Bukti Ringkas daripada Data:
                       </span>
-                      <ul className="text-[11px] text-stone-600 space-y-0.5 list-disc list-inside">
+                      <ul className="text-[11px] text-stone-700 font-medium space-y-0.5 list-disc list-inside">
                         {(activeStudentModal.learningProfile.evidence || []).map((ev, idx) => (
                           <li key={idx}>{ev}</li>
                         ))}
@@ -908,10 +964,10 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
 
               {/* Peta Respons Soalan (Q1 - Q15) */}
               <div className="space-y-1.5">
-                <span className="text-xs font-bold text-stone-600 block">
+                <span className="text-xs font-black text-stone-800 block">
                   Peta Jawapan Imbasan Murid (15 Soalan):
                 </span>
-                <div className="grid grid-cols-5 sm:grid-cols-15 gap-1 bg-white p-2.5 rounded-2xl border border-stone-200">
+                <div className="grid grid-cols-5 sm:grid-cols-15 gap-1 bg-white p-2.5 rounded-2xl border-2 border-stone-200 shadow-2xs">
                   {questions.map((q, qIdx) => {
                     const ans = activeStudentModal.answers[q.questionId];
                     const hasAns = !!ans;
@@ -920,19 +976,19 @@ export const InteractiveClassDashboard: React.FC<InteractiveClassDashboardProps>
                     return (
                       <div
                         key={q.questionId}
-                        className={`p-1 rounded-lg text-center font-mono text-[10px] font-bold ${
+                        className={`p-1.5 rounded-xl text-center font-mono text-[10px] font-bold ${
                           hasAns
                             ? isCorrect
-                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                              : 'bg-rose-100 text-rose-900 border border-rose-300'
+                              ? 'bg-emerald-600 text-white shadow-2xs'
+                              : 'bg-rose-600 text-white shadow-2xs'
                             : 'bg-stone-100 text-stone-400'
                         }`}
                         title={`Q${qIdx + 1} (${q.dskpCode}): ${
                           hasAns ? (isCorrect ? `Betul (${ans.letter})` : `Salah (${ans.letter})`) : 'Tiada respons'
                         }`}
                       >
-                        <span>Q{qIdx + 1}</span>
-                        <div className="text-[11px] font-black">
+                        <span className="block text-[9px] opacity-80">Q{qIdx + 1}</span>
+                        <div className="text-[12px] font-black">
                           {hasAns ? (isCorrect ? '✓' : ans.letter) : '-'}
                         </div>
                       </div>

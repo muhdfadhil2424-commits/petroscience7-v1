@@ -46,26 +46,28 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Filter and Overview Bar */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-gradient-to-r from-white via-amber-50/50 to-white rounded-3xl p-4 sm:p-5 border-2 border-amber-300 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="font-serif-title text-base sm:text-lg font-bold text-[#4A3728] flex items-center gap-2">
-            <BarChart2 className="w-5 h-5 text-blue-600" />
-            <span>📋 Analisis Ketepatan 15 Soalan (DSKP 3.1)</span>
+          <h2 className="font-serif-title text-base sm:text-lg font-black text-stone-900 flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+              📋
+            </div>
+            <span>Analisis Ketepatan 15 Soalan (DSKP 3.1)</span>
           </h2>
-          <p className="text-xs text-stone-500 font-medium mt-0.5">
+          <p className="text-xs text-stone-600 font-bold mt-1">
             Ketepatan jawapan murid, pilihan distractors (A/B/C/D), dan salah faham konsep
           </p>
         </div>
 
         {/* Difficulty Filter Pills */}
-        <div className="flex items-center gap-1.5 bg-stone-100 p-1 rounded-2xl border border-stone-200 text-xs font-bold">
+        <div className="flex items-center gap-1.5 bg-stone-100 p-1.5 rounded-2xl border border-stone-200 text-xs font-black shadow-2xs">
           <button
             type="button"
             onClick={() => setFilterDifficulty('all')}
             className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
               filterDifficulty === 'all'
-                ? 'bg-stone-800 text-white shadow-2xs'
-                : 'text-stone-600 hover:text-stone-900'
+                ? 'bg-stone-900 text-amber-300 shadow-xs'
+                : 'text-stone-700 hover:text-stone-950'
             }`}
           >
             Semua ({questionsAnalysis.length})
@@ -75,8 +77,8 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
             onClick={() => setFilterDifficulty('easy')}
             className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
               filterDifficulty === 'easy'
-                ? 'bg-emerald-600 text-white shadow-2xs'
-                : 'text-emerald-800 hover:text-emerald-950'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-emerald-950 hover:bg-emerald-100/60'
             }`}
           >
             🟢 Mudah ({easyCount})
@@ -86,8 +88,8 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
             onClick={() => setFilterDifficulty('medium')}
             className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
               filterDifficulty === 'medium'
-                ? 'bg-amber-500 text-white shadow-2xs'
-                : 'text-amber-800 hover:text-amber-950'
+                ? 'bg-amber-500 text-white shadow-xs'
+                : 'text-amber-950 hover:bg-amber-100/60'
             }`}
           >
             🟡 Sederhana ({mediumCount})
@@ -97,8 +99,8 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
             onClick={() => setFilterDifficulty('hard')}
             className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
               filterDifficulty === 'hard'
-                ? 'bg-rose-600 text-white shadow-2xs'
-                : 'text-rose-800 hover:text-rose-950'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'text-rose-950 hover:bg-rose-100/60'
             }`}
           >
             🔴 Mencabar ({hardCount})
@@ -116,9 +118,13 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
           return (
             <div
               key={q.questionId}
-              className={`bg-white rounded-3xl border-2 transition-all shadow-2xs ${
-                isExpanded ? 'border-[#D98262] ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-300'
-              }`}
+              className={`rounded-3xl border-2 transition-all shadow-xs hover:shadow-sm ${
+                diffCat === 'easy'
+                  ? 'bg-gradient-to-r from-emerald-50/30 via-white to-white border-emerald-300'
+                  : diffCat === 'medium'
+                  ? 'bg-gradient-to-r from-amber-50/30 via-white to-white border-amber-300'
+                  : 'bg-gradient-to-r from-rose-50/40 via-white to-white border-rose-300'
+              } ${isExpanded ? 'ring-2 ring-amber-300' : ''}`}
             >
               {/* Question Row Header */}
               <div
@@ -127,12 +133,12 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-9 h-9 rounded-2xl font-mono font-black flex items-center justify-center text-sm shrink-0 ${
+                    className={`w-9 h-9 rounded-2xl font-mono font-black flex items-center justify-center text-sm shrink-0 shadow-2xs ${
                       diffCat === 'easy'
-                        ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        ? 'bg-emerald-100 text-emerald-950 border-2 border-emerald-400'
                         : diffCat === 'medium'
-                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                        : 'bg-rose-100 text-rose-900 border border-rose-300'
+                        ? 'bg-amber-100 text-amber-950 border-2 border-amber-400'
+                        : 'bg-rose-100 text-rose-950 border-2 border-rose-400'
                     }`}
                   >
                     Q{q.questionNumber}
@@ -144,18 +150,18 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
                         DSKP {q.dskpCode}
                       </span>
                       <span
-                        className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                        className={`text-[11px] font-black px-3 py-0.5 rounded-full border-2 shadow-2xs ${
                           diffCat === 'easy'
-                            ? 'bg-emerald-50 text-emerald-800'
+                            ? 'bg-emerald-100 text-emerald-950 border-emerald-400'
                             : diffCat === 'medium'
-                            ? 'bg-amber-50 text-amber-800'
-                            : 'bg-rose-50 text-rose-800'
+                            ? 'bg-amber-100 text-amber-950 border-amber-400'
+                            : 'bg-rose-100 text-rose-950 border-rose-400'
                         }`}
                       >
                         {diffCat === 'easy' ? '🟢 Mudah' : diffCat === 'medium' ? '🟡 Sederhana' : '🔴 Mencabar'}
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm font-bold text-[#4A3728] mt-1 line-clamp-1">
+                    <p className="text-xs sm:text-sm font-black text-stone-900 mt-1 line-clamp-1">
                       {q.question}
                     </p>
                   </div>
@@ -164,19 +170,19 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
                 {/* Score Stats & Progress */}
                 <div className="flex items-center gap-4 shrink-0 justify-between md:justify-end">
                   <div className="text-right">
-                    <div className="flex items-center gap-2 text-xs font-bold">
-                      <span className="text-emerald-800 font-mono">✓ {q.correctCount} Betul</span>
+                    <div className="flex items-center gap-2 text-xs font-black">
+                      <span className="text-emerald-700 font-mono">✓ {q.correctCount} Betul</span>
                       <span className="text-stone-300">•</span>
-                      <span className="text-rose-700 font-mono">✗ {q.wrongCount} Salah</span>
+                      <span className="text-rose-600 font-mono">✗ {q.wrongCount} Salah</span>
                     </div>
-                    <div className="w-28 sm:w-36 h-2.5 bg-stone-100 rounded-full overflow-hidden mt-1 ml-auto">
+                    <div className="w-28 sm:w-36 h-3 bg-stone-100 rounded-full overflow-hidden mt-1 ml-auto border border-stone-200">
                       <div
                         className={`h-full rounded-full transition-all ${
                           diffCat === 'easy'
-                            ? 'bg-emerald-500'
+                            ? 'bg-emerald-600'
                             : diffCat === 'medium'
-                            ? 'bg-amber-400'
-                            : 'bg-rose-500'
+                            ? 'bg-amber-500'
+                            : 'bg-rose-600'
                         }`}
                         style={{ width: `${q.accuracy}%` }}
                       />
@@ -184,15 +190,15 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
                   </div>
 
                   <div className="text-center min-w-[50px]">
-                    <span className="text-base sm:text-lg font-black font-mono text-[#4A3728]">
+                    <span className="text-base sm:text-lg font-black font-mono text-stone-900">
                       {q.accuracy}%
                     </span>
-                    <span className="text-[10px] text-stone-400 block">Ketepatan</span>
+                    <span className="text-[10px] text-stone-600 font-black block">Ketepatan</span>
                   </div>
 
                   <button
                     type="button"
-                    className="p-1.5 rounded-xl bg-stone-100 text-stone-600 hover:bg-stone-200 transition-colors"
+                    className="p-1.5 rounded-xl bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors"
                   >
                     {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
@@ -201,16 +207,16 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
 
               {/* Accordion Detail Body */}
               {isExpanded && (
-                <div className="px-4 sm:px-5 pb-5 pt-1 border-t border-amber-100 space-y-4 animate-fadeIn">
+                <div className="px-4 sm:px-5 pb-5 pt-1 border-t-2 border-stone-100 space-y-4 animate-fadeIn">
                   {/* Full Question Text */}
-                  <div className="bg-stone-50 p-3.5 rounded-2xl border border-stone-200 text-xs text-stone-800 font-medium">
-                    <span className="font-bold text-stone-900 block mb-1">Teks Lengkap Soalan:</span>
-                    <p className="text-sm font-semibold text-[#4A3728]">"{q.question}"</p>
+                  <div className="bg-white p-3.5 rounded-2xl border-2 border-stone-200 text-xs text-stone-800 font-medium">
+                    <span className="font-black text-stone-900 block mb-1">Teks Lengkap Soalan:</span>
+                    <p className="text-sm font-bold text-stone-900">"{q.question}"</p>
                   </div>
 
                   {/* Options Distribution Grid (A, B, C, D) */}
                   <div>
-                    <span className="text-xs font-bold text-stone-700 block mb-2">
+                    <span className="text-xs font-black text-stone-900 block mb-2">
                       Taburan Pilihan Jawapan Murid (A / B / C / D):
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
@@ -226,20 +232,20 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
                             key={letter}
                             className={`p-3 rounded-2xl border-2 space-y-1 ${
                               isCorrectLetter
-                                ? 'bg-emerald-50/90 border-emerald-400 text-emerald-950'
+                                ? 'bg-emerald-100/90 border-emerald-500 text-emerald-950 shadow-2xs'
                                 : count > 0
-                                ? 'bg-stone-50 border-stone-300 text-stone-800'
-                                : 'bg-stone-50/50 border-stone-200 text-stone-400'
+                                ? 'bg-white border-stone-300 text-stone-900 font-bold'
+                                : 'bg-stone-50 border-stone-200 text-stone-400'
                             }`}
                           >
                             <div className="flex items-center justify-between text-xs font-black">
                               <span className="flex items-center gap-1.5">
                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center font-mono ${
-                                  isCorrectLetter ? 'bg-emerald-600 text-white' : 'bg-stone-200 text-stone-700'
+                                  isCorrectLetter ? 'bg-emerald-600 text-white' : 'bg-stone-300 text-stone-800'
                                 }`}>
                                   {letter}
                                 </span>
-                                {isCorrectLetter && <span>(Jawapan Betul)</span>}
+                                {isCorrectLetter && <span className="text-emerald-900">(Betul)</span>}
                               </span>
                               <span className="font-mono">{count} murid ({optPercent}%)</span>
                             </div>
@@ -253,21 +259,21 @@ export const TabAnalisisSoalan: React.FC<TabAnalisisSoalanProps> = ({
                   {/* Pedagogical Tip & Misconception Alert */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {q.misconceptionAlert && (
-                      <div className="bg-rose-50 p-3.5 rounded-2xl border border-rose-200 text-xs text-rose-950 space-y-1">
-                        <span className="font-bold flex items-center gap-1.5 text-rose-900">
+                      <div className="bg-rose-100/90 p-3.5 rounded-2xl border-2 border-rose-300 text-xs text-rose-950 space-y-1 shadow-2xs">
+                        <span className="font-black flex items-center gap-1.5 text-rose-950">
                           <AlertTriangle className="w-4 h-4 text-rose-600" />
                           <span>Punca Salah Faham Konsep:</span>
                         </span>
-                        <p className="leading-relaxed font-medium">{q.misconceptionAlert}</p>
+                        <p className="leading-relaxed font-semibold text-rose-950">{q.misconceptionAlert}</p>
                       </div>
                     )}
 
-                    <div className="bg-amber-50 p-3.5 rounded-2xl border border-amber-200 text-xs text-amber-950 space-y-1">
-                      <span className="font-bold flex items-center gap-1.5 text-amber-900">
+                    <div className="bg-amber-100/90 p-3.5 rounded-2xl border-2 border-amber-300 text-xs text-amber-950 space-y-1 shadow-2xs">
+                      <span className="font-black flex items-center gap-1.5 text-amber-950">
                         <Lightbulb className="w-4 h-4 text-amber-600" />
                         <span>Petua Pedagogi Guru:</span>
                       </span>
-                      <p className="leading-relaxed font-medium">{q.pedagogicalTip}</p>
+                      <p className="leading-relaxed font-semibold text-amber-950">{q.pedagogicalTip}</p>
                     </div>
                   </div>
                 </div>

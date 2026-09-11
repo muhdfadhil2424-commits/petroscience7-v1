@@ -1,24 +1,28 @@
+// Modal Interaktif Pedagogi: Penerangan Alya (Guru Kecil)
+// Memaparkan panduan visual dinamik, audio sebutan ms-MY, dan manipulasi konsep interaktif "Cuba Sendiri"
+// Layout: 1. Alya -> 2. Soalan -> 3. Visual -> 4. Langkah 1, 2, 3 -> 5. Ingat! -> 6. Dengar Penjelasan & Cuba Sendiri -> 7. Navigasi
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
+  X,
+  Sparkles,
   Volume2,
-  VolumeX,
   Pause,
   Play,
   Square,
-  ArrowRight,
-  CheckCircle2,
-  X,
-  Lightbulb,
-  Trophy,
-  BookOpen,
-  RotateCcw,
-  Sparkles,
   ChevronRight,
+  CheckCircle2,
+  Lightbulb,
+  Star,
+  RotateCcw,
+  Gamepad2,
+  ArrowLeft,
+  Users,
 } from 'lucide-react';
 import { InteractiveClassQuestion } from '../../data/interactiveClass30Questions';
-import { AlyaCharacter } from '../AlyaCharacter';
 import { DynamicMathVisual } from '../DynamicMathVisual';
+import { AlyaInteractiveTryIt } from './AlyaInteractiveTryIt';
 import {
   speakAlyaExplanation,
   pauseAlyaSpeech,
@@ -31,6 +35,7 @@ import {
   getAlyaQuestionExplanation,
   AlyaQuestionExplanation,
 } from '../../data/alyaClassroomExplanations';
+import { ClassroomQuestionStats } from '../../utils/interactiveSessionManager';
 
 interface AlyaClassroomExplanationModalProps {
   isOpen: boolean;
@@ -41,6 +46,7 @@ interface AlyaClassroomExplanationModalProps {
   soundEnabled?: boolean;
   onNextQuestion: () => void;
   isLastQuestion: boolean;
+  classStats?: ClassroomQuestionStats;
 }
 
 type AudioPlayStatus = 'stopped' | 'playing' | 'paused';
@@ -54,21 +60,27 @@ export const AlyaClassroomExplanationModal: React.FC<AlyaClassroomExplanationMod
   soundEnabled = true,
   onNextQuestion,
   isLastQuestion,
+  classStats,
 }) => {
   const [audioStatus, setAudioStatus] = useState<AudioPlayStatus>('stopped');
-  const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
+  const [showTryIt, setShowTryIt] = useState<boolean>(false);
+  const [tryItCompleted, setTryItCompleted] = useState<boolean>(false);
+  const [visualKey, setVisualKey] = useState<number>(0);
+
   const speechSupported = useMemo(() => isSpeechSynthesisSupported(), []);
 
-  // Fetch specialized Year 3 explanation tailored specifically to this question
+  // Jana penerangan berstruktur berasaskan soalan sebenar dan data kelas
   const explanationData: AlyaQuestionExplanation = useMemo(() => {
-    return getAlyaQuestionExplanation(question);
-  }, [question]);
+    return getAlyaQuestionExplanation(question, classStats);
+  }, [question, classStats]);
 
-  // Reset audio & active step when modal opens or question changes
+  // Hentikan suara dan reset aktiviti interaktif apabila soalan bertukar
   useEffect(() => {
-    setActiveStepIndex(null);
     setAudioStatus('stopped');
     stopAlyaSpeech();
+    setShowTryIt(false);
+    setTryItCompleted(false);
+    setVisualKey((prev) => prev + 1);
 
     return () => {
       stopAlyaSpeech();
@@ -78,7 +90,7 @@ export const AlyaClassroomExplanationModal: React.FC<AlyaClassroomExplanationMod
 
   if (!isOpen) return null;
 
-  // Audio Control Handlers
+  // Kawalan Audio (Bahasa Melayu ms-MY Standard)
   const handlePlayAudio = () => {
     if (!speechSupported) return;
     playSfx('click', soundEnabled);
@@ -115,7 +127,7 @@ export const AlyaClassroomExplanationModal: React.FC<AlyaClassroomExplanationMod
     setAudioStatus('stopped');
   };
 
-  // Close and navigate handlers
+  // Navigasi & Tutup
   const handleClose = () => {
     stopAlyaSpeech();
     setAudioStatus('stopped');
@@ -129,360 +141,413 @@ export const AlyaClassroomExplanationModal: React.FC<AlyaClassroomExplanationMod
     onNextQuestion();
   };
 
+  const handleReplayVisual = () => {
+    playSfx('click', soundEnabled);
+    setVisualKey((prev) => prev + 1);
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-xs overflow-y-auto animate-fadeIn"
+      aria-labelledby="alya-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-xs overflow-y-auto"
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: 15 }}
+        initial={{ opacity: 0, scale: 0.96, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.94, y: 15 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 320 }}
-        className="relative w-full max-w-3xl bg-gradient-to-b from-[#FFFDF9] via-[#FFF8F3] to-[#FFF4ED] rounded-3xl border-4 border-[#F6C7A8] shadow-2xl overflow-hidden my-auto"
+        exit={{ opacity: 0, scale: 0.96, y: 15 }}
+        transition={{ type: 'spring', damping: 26, stiffness: 320 }}
+        className="relative w-full max-w-4xl bg-white rounded-3xl border-4 border-indigo-200 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]"
       >
         {/* ======================================================== */}
-        {/* TOP HEADER BANNER */}
+        {/* 🤖 1. HEADER ALYA: “Jom kita lihat caranya!” */}
         {/* ======================================================== */}
-        <div className="bg-gradient-to-r from-[#F6C7A8] via-[#FFD7BA] to-[#F6C7A8] px-4 py-3.5 sm:px-6 sm:py-4 border-b-2 border-amber-200 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3 sm:gap-3.5">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white p-1 shadow-sm flex items-center justify-center border-2 border-pink-200 shrink-0">
-              <AlyaCharacter mood="encouraging" size="md" />
+        <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-700 px-5 py-4 sm:px-7 sm:py-4.5 border-b-2 border-indigo-500/40 flex items-center justify-between text-white shrink-0 shadow-sm">
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            {/* Avatar Alya */}
+            <div className="relative">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 backdrop-blur-xs border-2 border-white/40 flex items-center justify-center shadow-md text-2xl sm:text-3xl">
+                🤖
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-400 border-2 border-indigo-900 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-indigo-950" />
+              </div>
             </div>
+
             <div>
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <span className="text-[11px] sm:text-xs font-black px-2.5 py-0.5 rounded-full bg-rose-500 text-white uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                  <span>💗</span>
-                  <span>ALYA TERANGKAN</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-white/20 text-indigo-100 border border-white/30">
+                  GURU KECIL MATEMATIK
                 </span>
-                <span className="text-[11px] sm:text-xs font-black text-amber-950 bg-white/80 px-2.5 py-0.5 rounded-full border border-amber-300">
-                  Soalan {questionIndex + 1} / {totalQuestions}
-                </span>
-                <span className="text-[10px] sm:text-[11px] font-bold text-stone-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                  DSKP {question.dskpCode}
+                <span className="text-xs font-bold text-indigo-200">
+                  DSKP {explanationData.dskpCode} • {explanationData.topicTitle}
                 </span>
               </div>
-              <h3 className="text-base sm:text-xl font-black text-[#4A3728] mt-0.5 font-serif-title">
-                Cara Jawab Bersama Alya 🌟
-              </h3>
+              <h2
+                id="alya-modal-title"
+                className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2 mt-0.5"
+              >
+                <span>Penerangan Alya</span>
+                <span className="text-xs sm:text-sm font-semibold text-indigo-200 font-sans hidden sm:inline">
+                  — “Jom kita lihat caranya! 🌟”
+                </span>
+              </h2>
             </div>
           </div>
 
+          {/* Close button */}
           <button
             type="button"
             onClick={handleClose}
-            id="btn-close-alya-modal"
-            className="w-10 h-10 rounded-2xl bg-white/85 hover:bg-white text-stone-600 hover:text-stone-900 flex items-center justify-center cursor-pointer transition-all shadow-xs hover:scale-105 active:scale-95"
-            title="Tutup Penerangan"
+            id="btn-tutup-alya-modal"
+            aria-label="Tutup Penerangan Alya"
+            className="w-10 h-10 rounded-2xl bg-white/15 hover:bg-white/30 active:bg-white/40 text-white flex items-center justify-center transition-all cursor-pointer border border-white/25"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* ======================================================== */}
-        {/* MODAL BODY (SCROLLABLE) */}
+        {/* MODAL BODY (SCROLLABLE CONTENT) */}
         {/* ======================================================== */}
-        <div className="p-4 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-          {/* 1. KAD SOALAN SEMASA */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border-2 border-amber-200/90 shadow-xs">
-            <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-amber-100">
-              <span className="text-xs font-black text-amber-900 bg-amber-100 px-3 py-1 rounded-full flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-amber-700" />
-                <span>Soalan Sebenar #{questionIndex + 1}</span>
+        <div className="p-4 sm:p-6 sm:px-8 overflow-y-auto space-y-5 flex-1 bg-stone-50/60">
+          {/* Dialog Mesra Guru Kecil Alya */}
+          <div className="p-3.5 rounded-2xl bg-indigo-50 border-2 border-indigo-200 text-sm sm:text-base font-medium text-indigo-950 flex items-start gap-2.5 shadow-2xs">
+            <span className="text-xl shrink-0">🤖</span>
+            <div className="leading-relaxed">
+              <strong className="text-indigo-950 font-black">Alya: </strong>
+              <span className="italic">
+                “Tak apa kalau tadi tersilap. Mari kita semak semula langkahnya bersama-sama! Kita belajar konsep pecahan ini dengan mudah.”
+              </span>
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* 📝 2. SOALAN & JAWAPAN BETUL */}
+          {/* ======================================================== */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border-2 border-stone-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2 border-b border-stone-100 pb-2.5">
+              <span className="text-xs font-black text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📝</span> Soalan {questionIndex + 1} daripada {totalQuestions}
               </span>
               <span className="text-xs font-bold text-stone-500">
                 Pilihan Jawapan: A, B, C, D
               </span>
             </div>
-            <p className="text-base sm:text-lg font-extrabold text-[#4A3728] leading-relaxed whitespace-pre-line">
+
+            {/* Soalan Sebenar */}
+            <p className="text-base sm:text-lg font-bold text-stone-900 leading-relaxed whitespace-pre-line">
               {question.question}
             </p>
+
+            {/* Banner Jawapan Betul */}
+            <div className="mt-3 p-3.5 sm:p-4 rounded-xl bg-gradient-to-r from-emerald-50 via-[#F0FDF4] to-teal-50 border-2 border-emerald-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-emerald-600 text-white font-mono font-black text-xl flex items-center justify-center shadow-xs shrink-0">
+                  {explanationData.correctAnswerLetter}
+                </div>
+                <div>
+                  <span className="text-xs font-black text-emerald-800 uppercase tracking-wider block">
+                    Jawapan Betul:
+                  </span>
+                  <div className="text-xl sm:text-2xl font-mono font-black text-emerald-950">
+                    Pilihan [{explanationData.correctAnswerLetter}] — {explanationData.correctAnswerValue}
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 shadow-2xs flex items-center gap-2 self-start sm:self-auto text-xs sm:text-sm font-bold text-emerald-900">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{explanationData.correctAnswerBanner}</span>
+              </div>
+            </div>
+
+            {/* Ringkasan Kehendak Soalan */}
+            <div className="pt-2 text-sm sm:text-base font-normal text-stone-700 leading-relaxed">
+              <strong className="text-indigo-900 font-bold">💡 Kita faham soalan: </strong>
+              {explanationData.understandQuestion}
+            </div>
           </div>
 
-          {/* 2. VISUAL MATEMATIK DINAMIK (DIBINA DARIPADA visualData) */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-full flex justify-center">
+          {/* ======================================================== */}
+          {/* 🎨 3. VISUAL PECAHAN DINAMIK */}
+          {/* ======================================================== */}
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border-2 border-indigo-200 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-base sm:text-lg font-black text-indigo-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <span>🎨</span> Visual Pecahan
+                </span>
+                <span className="text-xs font-semibold text-stone-500 hidden sm:inline">
+                  (Berdasarkan data soalan sebenar)
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleReplayVisual}
+                className="text-xs font-bold text-indigo-700 hover:text-indigo-950 px-3 py-1 rounded-lg bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                title="Ulang paparan visual pecahan"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Ulang Animasi Visual</span>
+              </button>
+            </div>
+
+            {/* Paparan Visual Matematik Dinamik */}
+            <div key={visualKey} className="flex justify-center p-2 sm:p-3 bg-stone-50/80 rounded-xl border border-stone-200">
               <DynamicMathVisual
                 visualType={question.visualType}
                 visualData={question.visualData}
                 hideResult={false}
-                className="w-full max-w-xl shadow-md border-3 border-amber-300/80 bg-white"
+                className="w-full max-w-lg shadow-2xs bg-white border-2 border-indigo-100"
               />
             </div>
-            <p className="text-[11px] font-bold text-stone-500 text-center">
-              💡 Visual matematik dibina secara tepat mengikut data soalan ({question.visualType})
+          </div>
+
+          {/* ======================================================== */}
+          {/* 💡 4. LANGKAH DEMI LANGKAH (CARA BERFIKIR) */}
+          {/* ======================================================== */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-black text-indigo-950 flex items-center gap-2 uppercase tracking-wide">
+                <Lightbulb className="w-5 h-5 text-indigo-600 shrink-0" />
+                <span>Langkah Demi Langkah:</span>
+              </h3>
+              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-0.5 rounded-full border border-indigo-200">
+                {explanationData.steps.length} Langkah Jelas
+              </span>
+            </div>
+
+            <div
+              className={`grid grid-cols-1 ${
+                explanationData.steps.length === 2
+                  ? 'md:grid-cols-2'
+                  : explanationData.steps.length === 3
+                  ? 'md:grid-cols-3'
+                  : 'md:grid-cols-2 lg:grid-cols-4'
+              } gap-3 sm:gap-4`}
+            >
+              {explanationData.steps.map((step) => (
+                <div
+                  key={step.stepNumber}
+                  className="bg-white p-4 rounded-2xl border-2 border-indigo-200/90 shadow-xs flex flex-col justify-between hover:border-indigo-400 transition-colors"
+                >
+                  <div>
+                    {/* Step Header Badge & Number */}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-indigo-600 text-white uppercase tracking-wide">
+                        {step.label}
+                      </span>
+                      <span className="w-5 h-5 rounded-full bg-indigo-50 text-indigo-900 text-xs font-black flex items-center justify-center border border-indigo-200">
+                        #{step.stepNumber}
+                      </span>
+                    </div>
+
+                    {/* Soalan Kecil Bimbingan Alya */}
+                    {step.questionGuide && (
+                      <div className="mb-2 p-2 rounded-lg bg-indigo-50 border border-indigo-100 text-xs sm:text-sm font-semibold text-indigo-900 italic flex items-center gap-1.5">
+                        <span className="shrink-0 text-indigo-600">❓</span>
+                        <span>{step.questionGuide}</span>
+                      </div>
+                    )}
+
+                    {/* Tajuk Langkah (Bold) */}
+                    <h4 className="text-sm sm:text-base font-black text-indigo-950 mb-1 leading-snug">
+                      {step.title}
+                    </h4>
+
+                    {/* Penerangan Biasa (Regular weight, font-normal) */}
+                    <p className="text-sm sm:text-base font-normal text-stone-700 leading-relaxed">
+                      {step.detail}
+                    </p>
+                  </div>
+
+                  {/* Math Expression Box (20-24px, font-mono, bold) */}
+                  {step.mathExpression && (
+                    <div className="mt-3 pt-2.5 border-t border-indigo-100">
+                      <span className="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-950 font-mono font-black text-lg sm:text-xl tracking-wide">
+                        {step.mathExpression}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ======================================================== */}
+          {/* ⭐ 5. INGAT! (KONSEP UTAMA) */}
+          {/* ======================================================== */}
+          <div className="bg-amber-50 border-3 border-amber-400 rounded-2xl p-4 sm:p-5 shadow-xs">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Star className="w-5 h-5 text-amber-600 fill-amber-500 shrink-0" />
+              <h3 className="text-sm sm:text-base font-black text-amber-950 uppercase tracking-wide">
+                ⭐ INGAT! (KONSEP UTAMA)
+              </h3>
+            </div>
+            <p className="text-base sm:text-lg font-bold text-amber-950 leading-relaxed">
+              {explanationData.keyConceptRemember}
             </p>
           </div>
 
-          {/* 3. ALYA INTRO & TIP PANTAS */}
-          <div className="bg-gradient-to-r from-rose-50 via-[#FFF5F7] to-amber-50 rounded-2xl p-4 sm:p-4.5 border-2 border-rose-200 flex items-start gap-3.5 shadow-xs">
-            <div className="w-11 h-11 rounded-2xl bg-white p-1 border-2 border-rose-200 shrink-0 flex items-center justify-center shadow-xs">
-              <AlyaCharacter mood="happy" size="sm" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
-                <span className="text-sm font-black text-rose-800 flex items-center gap-1">
-                  <span>💗 Alya:</span>
-                  <span className="text-rose-950 font-black">"{explanationData.intro}"</span>
-                </span>
-                <span className="text-[11px] font-bold text-rose-700 bg-white px-2.5 py-0.5 rounded-full border border-rose-200 shadow-2xs">
-                  Konsep Mudah 🌟
-                </span>
+          {/* Adaptif Mengikut Kesalahan Kelas (Jika Ada) */}
+          {explanationData.adaptiveClassInsight?.hasSignificantMistake && (
+            <div className="bg-amber-500/10 border-2 border-amber-500 rounded-2xl p-4 sm:p-5 shadow-xs">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Users className="w-5 h-5 text-amber-700 shrink-0" />
+                <h3 className="text-sm sm:text-base font-black text-amber-950 uppercase tracking-wide">
+                  Perhatian Bimbingan Kelas:
+                </h3>
               </div>
-              <p className="text-xs sm:text-sm font-semibold text-stone-700 leading-relaxed">
-                {explanationData.conceptNote}
+              <p className="text-sm sm:text-base font-semibold text-amber-950 leading-relaxed">
+                <strong className="font-bold text-amber-900">Ulasan Guru Kecil Alya: </strong>
+                {explanationData.adaptiveClassInsight.misconceptionExplanation}
               </p>
             </div>
-          </div>
+          )}
 
-          {/* 4. LANGKAH-LANGKAH PENYELESAIAN (3-4 LANGKAH JELAS TAHUN 3) */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs sm:text-sm font-black text-[#4A3728] flex items-center gap-1.5 uppercase tracking-wide">
-                <Lightbulb className="w-4 h-4 text-amber-600" />
-                <span>Langkah Penyelesaian Mudah (Tahun 3):</span>
-              </h4>
-              <span className="text-[11px] font-bold text-stone-500">
-                {explanationData.steps.length} Langkah Teratur
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {explanationData.steps.map((step, idx) => {
-                const isSelected = activeStepIndex === idx;
-                return (
-                  <motion.div
-                    key={step.stepNumber}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.12, duration: 0.3 }}
-                    onClick={() => {
-                      playSfx('click', soundEnabled);
-                      setActiveStepIndex(isSelected ? null : idx);
-                    }}
-                    className={`p-3.5 sm:p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                      isSelected
-                        ? 'bg-rose-50/90 border-rose-400 ring-2 ring-rose-300 shadow-md scale-102'
-                        : 'bg-white hover:bg-stone-50/90 border-amber-200 shadow-xs hover:border-amber-300'
-                    }`}
-                  >
-                    <div>
-                      {/* Step Header Badge */}
-                      <div className="flex items-center justify-between mb-2">
-                        <span
-                          className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
-                            step.badgeColor || 'bg-amber-100 text-amber-900 border-amber-300'
-                          }`}
-                        >
-                          {step.label}
-                        </span>
-                        <span className="w-5 h-5 rounded-full bg-stone-100 text-stone-500 text-[10px] font-black flex items-center justify-center">
-                          #{step.stepNumber}
-                        </span>
-                      </div>
-
-                      {/* Step Title */}
-                      <h5 className="text-xs sm:text-sm font-black text-[#4A3728] mb-1.5 leading-snug">
-                        {step.title}
-                      </h5>
-
-                      {/* Step Detail */}
-                      <p className="text-xs text-stone-600 leading-relaxed font-medium">
-                        {step.detail}
-                      </p>
-                    </div>
-
-                    {/* Optional Math Expression Highlight */}
-                    {step.mathExpression && (
-                      <div className="mt-3 pt-2 border-t border-stone-200/80">
-                        <span className="inline-block px-2.5 py-1 rounded-lg bg-stone-100 border border-stone-300 text-stone-800 font-mono font-bold text-xs tracking-wide">
-                          {step.mathExpression}
-                        </span>
-                      </div>
-                    )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 5. KAD KESIMPULAN JAWAPAN TEPAT */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.35, duration: 0.3 }}
-            className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 via-[#F0FDF4] to-teal-50 border-3 border-emerald-400 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm"
-          >
-            <div className="flex items-center gap-3.5 w-full sm:w-auto">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center shadow-md shrink-0">
-                {question.correctAnswerLetter}
-              </div>
+          {/* ======================================================== */}
+          {/* 🌟 6. KAMU DAH FAHAM? -> AUDIO & CUBA SENDIRI */}
+          {/* ======================================================== */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-indigo-200 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-100 pb-3">
               <div>
-                <span className="text-xs font-bold text-emerald-800 block uppercase tracking-wider">
-                  Jawapan Sebenar:
-                </span>
-                <span className="text-lg sm:text-xl font-black text-emerald-950 font-mono">
-                  {question.correctAnswer}
-                </span>
+                <h3 className="text-base sm:text-lg font-black text-indigo-950 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-indigo-600" />
+                  <span>Kamu Dah Faham?</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-500 font-normal mt-0.5">
+                  Dengar suara penjelasan Alya atau uji manipulasi konsep pecahan secara interaktif.
+                </p>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border-2 border-emerald-300 shadow-xs w-full sm:w-auto justify-center sm:justify-start">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span className="text-xs sm:text-sm font-black text-emerald-950">
-                {explanationData.conclusion}
-              </span>
-            </div>
-          </motion.div>
+              {/* Action Buttons: 🎧 Dengar Penjelasan & 🧩 Cuba Sendiri */}
+              <div className="flex items-center flex-wrap gap-2.5">
+                {/* Audio Button */}
+                {speechSupported && (
+                  <div className="flex items-center gap-1.5">
+                    {audioStatus === 'stopped' && (
+                      <button
+                        type="button"
+                        onClick={handlePlayAudio}
+                        id="btn-audio-dengar"
+                        className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm sm:text-base font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                        <span>🎧 Dengar Penjelasan</span>
+                      </button>
+                    )}
 
-          {/* ======================================================== */}
-          {/* 6. KAWALAN AUDIO LENGKAP: DENGAR, JEDA, SAMBUNG, BERHENTI */}
-          {/* ======================================================== */}
-          <div className="bg-white p-4 rounded-2xl border-2 border-amber-200/90 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              {/* Audio Status & Title */}
-              <div className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-xs transition-colors ${
-                    audioStatus === 'playing'
-                      ? 'bg-rose-500 text-white animate-pulse'
-                      : audioStatus === 'paused'
-                      ? 'bg-amber-400 text-amber-950'
-                      : 'bg-amber-100 text-amber-800'
+                    {audioStatus === 'playing' && (
+                      <button
+                        type="button"
+                        onClick={handlePauseAudio}
+                        id="btn-audio-jeda"
+                        className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white text-sm sm:text-base font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+                      >
+                        <Pause className="w-4 h-4" />
+                        <span>⏸️ Jeda</span>
+                      </button>
+                    )}
+
+                    {audioStatus === 'paused' && (
+                      <button
+                        type="button"
+                        onClick={handleResumeAudio}
+                        id="btn-audio-sambung"
+                        className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-sm sm:text-base font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+                      >
+                        <Play className="w-4 h-4" />
+                        <span>▶️ Sambung</span>
+                      </button>
+                    )}
+
+                    {audioStatus !== 'stopped' && (
+                      <button
+                        type="button"
+                        onClick={handleStopAudio}
+                        id="btn-audio-berhenti"
+                        className="px-3 py-2.5 rounded-xl bg-stone-200 hover:bg-stone-300 active:bg-stone-400 text-stone-700 text-sm font-bold flex items-center gap-1 transition-all cursor-pointer"
+                        title="Berhenti dengar"
+                      >
+                        <Square className="w-3.5 h-3.5" />
+                        <span>⏹️ Berhenti</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Butang Interaktif: 🧩 Cuba Sendiri */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSfx('click', soundEnabled);
+                    setShowTryIt(!showTryIt);
+                  }}
+                  id="btn-cuba-sendiri-toggle"
+                  className={`px-4 py-2.5 rounded-xl text-sm sm:text-base font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xs hover:scale-102 active:scale-98 border-2 ${
+                    showTryIt
+                      ? 'bg-purple-700 text-white border-purple-800 ring-2 ring-purple-300'
+                      : 'bg-white text-purple-900 border-purple-300 hover:bg-purple-50'
                   }`}
                 >
-                  {audioStatus === 'playing' ? (
-                    <Volume2 className="w-5 h-5" />
-                  ) : audioStatus === 'paused' ? (
-                    <Pause className="w-5 h-5" />
-                  ) : (
-                    <Volume2 className="w-5 h-5" />
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-black text-stone-800">
-                      Bimbingan Suara Alya
-                    </span>
-                    <span
-                      className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        audioStatus === 'playing'
-                          ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                          : audioStatus === 'paused'
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                          : 'bg-stone-100 text-stone-600 border border-stone-200'
-                      }`}
-                    >
-                      {audioStatus === 'playing'
-                        ? '🟢 Sedang bercakap...'
-                        : audioStatus === 'paused'
-                        ? '🟡 Dijeda'
-                        : '⚪ Sedia mendengar'}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-stone-500 font-medium mt-0.5">
-                    Sebutan Bahasa Melayu standard (ms-MY) • Pecahan disebut tepat
-                  </p>
-                </div>
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>🧩 {showTryIt ? 'Tutup Aktiviti' : 'Cuba Sendiri'}</span>
+                </button>
               </div>
-
-              {/* Action Buttons: 🔊 Dengar, ⏸️ Jeda, ▶️ Sambung, ⏹️ Berhenti */}
-              {speechSupported ? (
-                <div className="flex items-center flex-wrap gap-2">
-                  {/* Play / Dengar Button (when stopped) */}
-                  {audioStatus === 'stopped' && (
-                    <button
-                      type="button"
-                      onClick={handlePlayAudio}
-                      id="btn-audio-dengar"
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-black flex items-center gap-1.5 shadow-sm hover:shadow transition-all cursor-pointer hover:scale-102 active:scale-98"
-                    >
-                      <Volume2 className="w-4 h-4" />
-                      <span>🔊 Dengar</span>
-                    </button>
-                  )}
-
-                  {/* Pause / Jeda Button (when playing) */}
-                  {audioStatus === 'playing' && (
-                    <button
-                      type="button"
-                      onClick={handlePauseAudio}
-                      id="btn-audio-jeda"
-                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer hover:scale-102 active:scale-98"
-                    >
-                      <Pause className="w-4 h-4" />
-                      <span>⏸️ Jeda</span>
-                    </button>
-                  )}
-
-                  {/* Resume / Sambung Button (when paused) */}
-                  {audioStatus === 'paused' && (
-                    <button
-                      type="button"
-                      onClick={handleResumeAudio}
-                      id="btn-audio-sambung"
-                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer hover:scale-102 active:scale-98"
-                    >
-                      <Play className="w-4 h-4" />
-                      <span>▶️ Sambung</span>
-                    </button>
-                  )}
-
-                  {/* Stop / Berhenti Button (when playing or paused) */}
-                  {audioStatus !== 'stopped' && (
-                    <button
-                      type="button"
-                      onClick={handleStopAudio}
-                      id="btn-audio-berhenti"
-                      className="px-3.5 py-2 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-black flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer hover:scale-102 active:scale-98"
-                    >
-                      <Square className="w-3.5 h-3.5 fill-current" />
-                      <span>⏹️ Berhenti</span>
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="px-3 py-1.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-500 text-xs font-bold flex items-center gap-1.5">
-                  <VolumeX className="w-4 h-4 text-stone-400" />
-                  <span>Audio tidak tersedia. (Teks & visual tetap berfungsi)</span>
-                </div>
-              )}
             </div>
+
+            {/* Aktiviti Interaktif Cuba Sendiri (Jika Dibuka) */}
+            <AnimatePresence>
+              {showTryIt && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden pt-2"
+                >
+                  <AlyaInteractiveTryIt
+                    question={question}
+                    soundEnabled={soundEnabled}
+                    onSuccess={() => {
+                      setTryItCompleted(true);
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
         {/* ======================================================== */}
-        {/* FOOTER ACTIONS: KEMBALI & ➡️ SOALAN SETERUSNYA */}
+        {/* 7. FOOTER KAWALAN: ← KEMBALI & ➡️ SOALAN SETERUSNYA */}
         {/* ======================================================== */}
-        <div className="bg-stone-50 px-4 py-3.5 sm:px-6 sm:py-4 border-t-2 border-stone-200 flex items-center justify-between gap-3">
+        <div className="px-5 py-3.5 sm:px-7 sm:py-4 bg-white border-t-2 border-stone-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <button
             type="button"
             onClick={handleClose}
-            id="btn-alya-kembali"
-            className="px-4 py-2.5 rounded-2xl bg-white hover:bg-stone-100 text-stone-700 border-2 border-stone-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+            id="btn-modal-kembali"
+            className="px-5 py-2.5 rounded-2xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 text-stone-700 text-sm sm:text-base font-bold transition-all cursor-pointer flex items-center gap-1.5"
           >
-            <span>⬅️ Kembali</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali</span>
           </button>
 
           <button
             type="button"
             onClick={handleNext}
-            id="btn-alya-soalan-seterusnya"
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-[#3c4233] to-[#252a1e] hover:from-stone-900 hover:to-black text-amber-300 text-xs sm:text-sm font-black flex items-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all hover:scale-102 active:scale-98"
+            id="btn-modal-soalan-seterusnya"
+            className={`px-6 py-2.5 rounded-2xl text-white text-sm sm:text-base font-black shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2 hover:scale-102 active:scale-98 ${
+              tryItCompleted
+                ? 'bg-emerald-600 hover:bg-emerald-700 ring-4 ring-emerald-300/60 animate-pulse'
+                : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800'
+            }`}
           >
-            {isLastQuestion ? (
-              <>
-                <Trophy className="w-4.5 h-4.5 text-amber-400" />
-                <span>🎉 Tamatkan Sesi</span>
-              </>
-            ) : (
-              <>
-                <span>➡️ SOALAN SETERUSNYA</span>
-                <ArrowRight className="w-4 h-4 text-amber-300" />
-              </>
-            )}
+            <span>{isLastQuestion ? 'Tamat Sesi 🏁' : 'Soalan Seterusnya'}</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </motion.div>
