@@ -1215,6 +1215,17 @@
                     <h2><i class="fa-solid fa-face-smile" style="color: var(--card-accent);"></i> Semak Mood Saya</h2>
                     <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Slot 2 (Video Pembelajaran)!</p>
 
+            <div style="background: #f0f7f4; border: 1.5px solid #d2e8df; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <strong style="color: var(--card-dark); display: block; font-size: 0.95rem;"><i class="fa-solid fa-user-gear"></i> Mod Pengguna (Akses Khas Guru)</strong>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Dilindungi kata laluan untuk pintasan guru.</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="btnRoleStudent" onclick="setUserRole('student')" style="background: var(--card-accent); color: white; border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem;">Pelajar</button>
+                            <button type="button" id="btnRoleTeacher" onclick="promptTeacherPassword()" style="background: #e5dec9; color: var(--text-dark); border: none; padding: 8px 16px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> Guru (Bypass)</button>
+                        </div>
+                    </div>
+
                     <div class="mission-card">
                         <div class="mission-title">
                             <i class="fa-solid fa-bullseye" style="color: var(--accent-gold);"></i>
@@ -2117,6 +2128,72 @@
             }
         }, 1000);
 
+        // --- FUNGSI MOD GURU & KATA LALUAN ---
+        let userRole = 'student';
+
+        function promptTeacherPassword() {
+            // 🔑 TUKAR KATA LALUAN ANDA DI SINI
+            const kataLaluanRahsia = "cikgu123"; 
+
+            const inputKataLaluan = prompt("🔒 Sila masukkan kata laluan keselamatan guru:");
+
+            if (inputKataLaluan === null) return; // Jika guru tekan Cancel
+
+            if (inputKataLaluan === kataLaluanRahsia) {
+                setUserRole('teacher');
+                updateBotSpeech("Kata laluan sah! Mod Guru berjaya diaktifkan.");
+            } else {
+                alert("❌ Kata laluan salah! Akses ditolak.");
+                updateBotSpeech("Kata laluan salah. Sila cuba lagi.");
+            }
+        }
+
+        function setUserRole(role) {
+            userRole = role;
+            const btnStudent = document.getElementById('btnRoleStudent');
+            const btnTeacher = document.getElementById('btnRoleTeacher');
+
+            if (role === 'teacher') {
+                btnTeacher.style.background = 'var(--accent-green)';
+                btnTeacher.style.color = 'white';
+                btnStudent.style.background = '#e5dec9';
+                btnStudent.style.color = 'var(--text-dark)';
+
+                if (isCameraOn) {
+                    hentiKameraEmosi();
+                }
+
+                isVideoUnlocked = true;
+                isKitchenAndGameUnlocked = true;
+
+                for (let i = 2; i <= 4; i++) {
+                    const badge = document.getElementById(`badge-tab-${i}`);
+                    if (badge) {
+                        badge.className = "badge-status badge-unlocked";
+                        badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka (Mod Guru)';
+                    }
+                }
+
+                document.getElementById('m2-locked').style.display = 'none';
+                document.getElementById('m2-content').style.display = 'block';
+
+                document.getElementById('m3-locked').style.display = 'none';
+                document.getElementById('m3-content').style.display = 'block';
+
+                document.getElementById('m4-locked').style.display = 'none';
+                document.getElementById('m4-content').style.display = 'block';
+
+                updateBotSpeech("Mod Guru diaktifkan. Anda boleh mengakses semua modul tanpa imbasan muka!");
+            } else {
+                btnStudent.style.background = 'var(--card-accent)';
+                btnStudent.style.color = 'white';
+                btnTeacher.style.background = '#e5dec9';
+                btnTeacher.style.color = 'var(--text-dark)';
+
+                updateBotSpeech("Mod Pelajar diaktifkan. Sila buat semakan mood pada kamera.");
+            }
+        }
+        
         window.addEventListener('DOMContentLoaded', () => {
             generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
