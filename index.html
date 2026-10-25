@@ -2159,10 +2159,31 @@
                 btnStudent.style.background = '#e5dec9';
                 btnStudent.style.color = 'var(--text-dark)';
 
+                // 1. Hentikan kamera emosi jika aktif
                 if (isCameraOn) {
                     hentiKameraEmosi();
                 }
 
+                // 2. Hentikan muzik Zon Ceria (Goyang Dumang)
+                const audio = document.getElementById("audioGoyangDumang");
+                if(audio) {
+                    audio.pause();
+                    audio.currentTime = 0;
+                }
+
+                // 3. Tutup modal amaran & seksyen Zon Ceria jika sedang terpapar
+                const zonCeriaModal = document.getElementById("zonCeriaModal");
+                if(zonCeriaModal) zonCeriaModal.style.display = "none";
+
+                const zonCeriaSection = document.getElementById("zonCeriaSection");
+                if(zonCeriaSection) zonCeriaSection.style.display = "none";
+
+                // 4. Hentikan kamera Pose Zon Ceria jika aktif
+                if (typeof poseWebcam !== 'undefined' && poseWebcam && poseWebcam.stop) {
+                    poseWebcam.stop().catch(e => console.log("Pose webcam stop error"));
+                }
+
+                // Tetapkan semua modul kepada terbuka (Bypass)
                 isVideoUnlocked = true;
                 isKitchenAndGameUnlocked = true;
 
@@ -2183,7 +2204,7 @@
                 document.getElementById('m4-locked').style.display = 'none';
                 document.getElementById('m4-content').style.display = 'block';
 
-                updateBotSpeech("Mod Guru diaktifkan. Anda boleh mengakses semua modul tanpa imbasan muka!");
+                updateBotSpeech("Mod Guru diaktifkan. Anda boleh mengakses semua modul secara terus tanpa imbasan muka!");
             } else {
                 btnStudent.style.background = 'var(--card-accent)';
                 btnStudent.style.color = 'white';
@@ -2193,7 +2214,7 @@
                 updateBotSpeech("Mod Pelajar diaktifkan. Sila buat semakan mood pada kamera.");
             }
         }
-        
+
         window.addEventListener('DOMContentLoaded', () => {
             generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
