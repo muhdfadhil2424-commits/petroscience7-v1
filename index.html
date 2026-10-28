@@ -155,10 +155,10 @@
             font-weight: 500;
         }
 
-        /* TABS STYLING - 4 COLUMNS */
+        /* TABS STYLING - 5 COLUMNS */
         .module-tabs {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             background: #ffffff;
             padding: 10px;
@@ -263,114 +263,6 @@
             margin-bottom: 24px;
             font-size: 1rem;
             font-weight: 500;
-        }
-
-        /* SECTION CARD UNTUK SEMAK MOOD SAYA */
-        #bahan1 .section-card {
-            background: #ffffff;
-            border: 2px solid var(--border-warm);
-            border-radius: 28px;
-            padding: 38px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.04);
-            min-height: 60vh;
-            color: var(--text-dark);
-        }
-
-        #bahan1 .section-card h2 {
-            font-family: 'Playfair Display', serif;
-            color: var(--card-dark);
-            font-size: 2.2rem;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-top: 0;
-            margin-bottom: 8px;
-        }
-
-        #bahan1 .section-card .desc {
-            color: var(--text-muted);
-            margin-bottom: 24px;
-            font-size: 1rem;
-            font-weight: 500;
-        }
-
-        #bahan1 .section-card .desc strong {
-            color: var(--card-dark);
-        }
-
-        #bahan1 .mission-card {
-            background: #fffdf5;
-            border: 2px dashed #e8d8b0;
-            border-radius: 20px;
-            padding: 18px 22px;
-            margin-bottom: 24px;
-        }
-
-        #bahan1 .mission-title {
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: var(--card-dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        #bahan1 .step-pill {
-            background: #ffffff;
-            border: 1.5px solid var(--border-warm);
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-dark);
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-        }
-
-        #bahan1 .step-pill.highlight {
-            border-color: var(--card-accent);
-            color: var(--card-accent);
-            background: rgba(224, 122, 95, 0.08);
-        }
-
-        #bahan1 .view-box {
-            background: #faf7f0;
-            border: 2.5px dashed #d6cca8;
-            border-radius: 24px;
-            min-height: 380px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 22px;
-        }
-
-        #bahan1 .placeholder-text {
-            color: var(--text-muted);
-        }
-
-        #bahan1 .dominant-card {
-            background: #f0f7f4;
-            border: 1.5px solid #d2e8df;
-        }
-
-        #bahan1 .dominant-title {
-            color: var(--text-muted);
-        }
-
-        #bahan1 .dominant-value {
-            color: var(--card-dark);
-        }
-
-        #bahan1 .target-progress-box {
-            background: #fff8f5;
-            border: 1.5px solid #fce3d9;
-        }
-
-        #bahan1 .target-header {
-            color: var(--card-dark);
         }
 
         .mission-card {
@@ -577,9 +469,7 @@
             font-size: 0.95rem;
         }
 
-        .video-btn-static:hover {
-            background: #ebdcc2;
-        }
+        .video-btn-static:hover { background: #ebdcc2; }
 
         .video-btn-static.active {
             background: var(--accent-green);
@@ -588,9 +478,7 @@
             box-shadow: 0 6px 16px rgba(42, 157, 143, 0.3);
         }
 
-        .video-btn-static.active i {
-            color: #ffffff !important;
-        }
+        .video-btn-static.active i { color: #ffffff !important; }
 
         .video-dual-display-grid {
             display: grid;
@@ -618,9 +506,7 @@
             gap: 10px;
         }
 
-        .video-card-title i {
-            color: var(--card-accent);
-        }
+        .video-card-title i { color: var(--card-accent); }
 
         .video-frame-wrapper {
             position: relative;
@@ -1185,29 +1071,29 @@
             </div>
         </header>
 
-        <!-- 4 MODUL TABS -->
+        <!-- 5 MODUL TABS -->
         <div class="module-tabs">
             <button class="tab-btn active" data-tab="1" onclick="switchTab(1)">
                 <span><i class="fa-solid fa-camera-retro"></i> 1. SEMAK MOOD SAYA</span>
             </button>
 
             <button class="tab-btn" data-tab="2" onclick="switchTab(2)">
-                <span><i class="fa-solid fa-circle-play"></i> 2. VIDEO PEMBELAJARAN</span>
+                <span><i class="fa-solid fa-hat-chef"></i> 2. MISI CHEF ALYA</span>
                 <span id="badge-tab-2" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
             </button>
 
             <button class="tab-btn" data-tab="3" onclick="switchTab(3)">
-                <span><i class="fa-solid fa-utensils"></i> 3. DAPUR PECAHAN</span>
+                <span><i class="fa-solid fa-circle-play"></i> 3. VIDEO PEMBELAJARAN</span>
                 <span id="badge-tab-3" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
             </button>
 
             <button class="tab-btn" data-tab="4" onclick="switchTab(4)">
-                <span><i class="fa-solid fa-gamepad"></i> 4. DUNIA PECAHAN</span>
+                <span><i class="fa-solid fa-utensils"></i> 4. DAPUR PECAHAN</span>
                 <span id="badge-tab-4" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
             </button>
 
             <button class="tab-btn" data-tab="5" onclick="switchTab(5)">
-                <span><i class="fa-solid fa-clipboard-list"></i> 5. REFLEKSI</span>
+                <span><i class="fa-solid fa-gamepad"></i> 5. DUNIA PECAHAN</span>
                 <span id="badge-tab-5" class="badge-status badge-locked"><i class="fa-solid fa-lock"></i> Terkunci</span>
             </button>
         </div>
@@ -1218,9 +1104,9 @@
             <div id="bahan1" class="module-content active">
                 <div class="section-card">
                     <h2><i class="fa-solid fa-face-smile" style="color: var(--card-accent);"></i> Semak Mood Saya</h2>
-                    <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Slot 2 (Video Pembelajaran)!</p>
+                    <p class="desc">Tunjukkan senyuman (Happy) atau wajah tenang (Neutral) sekurang-kurangnya <strong>80%</strong> untuk membuka kunci Slot 2 (Misi Chef Alya)!</p>
 
-            <div style="background: #f0f7f4; border: 1.5px solid #d2e8df; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div style="background: #f0f7f4; border: 1.5px solid #d2e8df; border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                         <div>
                             <strong style="color: var(--card-dark); display: block; font-size: 0.95rem;"><i class="fa-solid fa-user-gear"></i> Mod Pengguna (Akses Khas Guru)</strong>
                             <span style="font-size: 0.85rem; color: var(--text-muted);">Dilindungi kata laluan untuk pintasan guru.</span>
@@ -1381,19 +1267,38 @@
                 </div>
             </div>
 
-            <!-- SLOT 2: VIDEO PEMBELAJARAN (BERDUA / SIDE-BY-SIDE) -->
+            <!-- SLOT 2: MISI CHEF ALYA -->
             <div id="bahan2" class="module-content">
                 <div id="m2-locked" class="locked-card">
                     <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Video Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan semakan emosi di Slot 1 terlebih dahulu untuk menonton video!</p>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Misi Chef Alya Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan semakan emosi di Slot 1 terlebih dahulu untuk masuk ke Misi Chef Alya!</p>
                 </div>
 
-                <div id="m2-content" style="display: none;" class="section-card">
+                <div id="m2-content" style="display: none;">
+                    <iframe id="m2-iframe" src="https://misi-pecahan-chef-alya.ai.studio/" class="iframe-container" scrolling="no" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
+                    
+                    <div style="padding: 20px; text-align: center; background: #ffffff;">
+                        <button id="btnFinishChefAlya" class="btn-complete-video" onclick="unlockVideoModule()">
+                            <i class="fa-solid fa-circle-check" style="font-size: 1.3rem;"></i>
+                            <span>Saya Dah Selesai Misi Chef Alya! (Buka Video Pembelajaran)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SLOT 3: VIDEO PEMBELAJARAN -->
+            <div id="bahan3" class="module-content">
+                <div id="m3-locked" class="locked-card">
+                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Video Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan Misi Chef Alya di Slot 2 terlebih dahulu untuk menonton video!</p>
+                </div>
+
+                <div id="m3-content" style="display: none;" class="section-card">
                     <h2><i class="fa-solid fa-circle-play" style="color: #e07a5f;"></i> Video Pembelajaran Pecahan</h2>
                     <p class="desc">Tonton video penerangan konsep pecahan di bawah untuk memahami tajuk ini dengan mudah!</p>
 
-                    <!-- BUTANG HEADER VIDEO (BOLEH DIKLIK UTK MAINKAN VIDEO) -->
                     <div class="video-selector-grid-dual">
                         <button type="button" class="video-btn-static" id="btn-head-1" onclick="playSelectedVideo(1)">
                             <i class="fa-solid fa-play" style="color: var(--card-accent); font-size: 1.1rem;"></i>
@@ -1405,9 +1310,7 @@
                         </button>
                     </div>
 
-                    <!-- PAPARAN DUA VIDEO BERSEBELAHAN -->
                     <div class="video-dual-display-grid">
-                        <!-- VIDEO 1 -->
                         <div class="video-card-box">
                             <div class="video-card-title">
                                 <i class="fa-solid fa-film"></i>
@@ -1421,7 +1324,6 @@
                             </div>
                         </div>
 
-                        <!-- VIDEO 2 -->
                         <div class="video-card-box">
                             <div class="video-card-title">
                                 <i class="fa-solid fa-film"></i>
@@ -1438,56 +1340,37 @@
 
                     <button id="btnFinishVideo" class="btn-complete-video" onclick="unlockKitchenAndGame()">
                         <i class="fa-solid fa-circle-check" style="font-size: 1.3rem;"></i>
-                        <span>Saya Dah Selesai Tonton Video! (Buka Dapur & Game Pecahan)</span>
+                        <span>Saya Dah Selesai Tonton Video! (Buka Dapur & Dunia Pecahan)</span>
                     </button>
                 </div>
             </div>
 
-            <!-- SLOT 3: DAPUR PECAHAN -->
-            <div id="bahan3" class="module-content">
-                <div id="m3-locked" class="locked-card">
-                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dapur Pecahan Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 2 dan tekan butang pengesahan tontonan untuk membuka Dapur Pecahan!</p>
-                </div>
-
-                <div id="m3-content" style="display: none;">
-                    <!-- Memanggil fail Dapur Pecahan tempatan asal via iframe -->
-                    <iframe id="m3-iframe" src="https://dapur-pecahan.vercel.app/" class="iframe-container" scrolling="no" allowfullscreen="true" style="width: 100%; min-height: 1650px; border: none;"></iframe>
-                </div>
-            </div>
-
-            <!-- SLOT 4: DUNIA PECAHAN (GAME) -->
+            <!-- SLOT 4: DAPUR PECAHAN -->
             <div id="bahan4" class="module-content">
                 <div id="m4-locked" class="locked-card">
-                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--accent-gold);"></i>
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dunia Pecahan Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 2 dan tekan butang pengesahan tontonan untuk membuka Dunia Pecahan!</p>
+                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dapur Pecahan Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 3 untuk membuka Dapur Pecahan!</p>
                 </div>
 
                 <div id="m4-content" style="display: none;">
-                    <iframe id="m4-iframe" src="https://petualangan-dunia-pecahan.vercel.app/" class="iframe-container" scrolling="yes" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
+                    <iframe id="m4-iframe" src="https://dapur-pecahan.vercel.app/" class="iframe-container" scrolling="no" allowfullscreen="true" style="width: 100%; min-height: 1650px; border: none;"></iframe>
                 </div>
             </div>
 
-            <!-- 🔴 TAMBAH SLOT 5 (REFLEKSI) DI SINI -->
+            <!-- SLOT 5: DUNIA PECAHAN -->
             <div id="bahan5" class="module-content">
                 <div id="m5-locked" class="locked-card">
-                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--card-accent);"></i>
-                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Refleksi Terkunci</h3>
-                    <p style="font-size: 0.95rem; margin-top: 8px;">Selesaikan aktiviti di Slot 4 (Dunia Pecahan) terlebih dahulu untuk membuka borang refleksi!</p>
+                    <i class="fa-solid fa-lock" style="font-size: 3.2rem; margin-bottom: 16px; color: var(--accent-gold);"></i>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 0; color: var(--card-dark);">Slot Dunia Pecahan Terkunci</h3>
+                    <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 3 untuk membuka Dunia Pecahan!</p>
                 </div>
 
-                <div id="m5-content" style="display: none; background: #ffffff; border: 2px solid var(--border-warm); border-radius: 28px; padding: 30px; box-shadow: 0 12px 35px rgba(0,0,0,0.04);">
-                    <h2 style="font-family: 'Playfair Display', serif; color: var(--card-dark); font-size: 2.2rem; display: flex; align-items: center; gap: 14px; margin-top: 0;">
-                        <i class="fa-solid fa-clipboard-list" style="color: var(--card-accent);"></i> Refleksi Pembelajaran Hari Ini
-                    </h2>
-                    <p class="desc">Tahniah kerana telah meneroka semua modul! Sila jawab soalan refleksi ringkas di bawah sebelum tamat kelas.</p>
-                    
-                    <!-- Ganti pautan src dengan pautan Embed Google Form anda -->
-                    <iframe src="PAUTAN_GOOGLE_FORM_ANDA_DI_SINI" width="100%" height="900px" frameborder="0" marginheight="0" marginwidth="0" style="border-radius: 16px;">Memuatkan...</iframe>
+                <div id="m5-content" style="display: none;">
+                    <iframe id="m5-iframe" src="https://petualangan-dunia-pecahan.vercel.app/" class="iframe-container" scrolling="yes" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
                 </div>
             </div>
+
         </div>
     </div>
 
@@ -1543,7 +1426,6 @@
             if (v2) v2.pause();
         }
 
-        /* FUNGSI UNTUK MAINKAN VIDEO APABILA BUTANG ATAS DIKLIK */
         function playSelectedVideo(videoNum) {
             const v1 = document.getElementById('videoPlayer1');
             const v2 = document.getElementById('videoPlayer2');
@@ -1565,7 +1447,6 @@
             }
         }
 
-        /* FUNGSI UNTUK MENGAWAL PENGURUSAN STATUS AKTIFA DUA VIDEO */
         function onVideoPlay(playingIndex) {
             const v1 = document.getElementById('videoPlayer1');
             const v2 = document.getElementById('videoPlayer2');
@@ -1674,17 +1555,20 @@
         let currentPoseIndex = 0;
         let isPoseTransitioning = false;
 
-        function switchTab(tabIndex) {
-            if (tabIndex === 2 && !isVideoUnlocked) {
-                updateBotSpeech("Slot Video terkunci! Selesaikan semakan emosi di Slot 1 dahulu.");
+   function switchTab(tabIndex) {
+            // Jika cuba buka Slot 2 atau 3 tapi Slot 1 belum lepas
+            if ((tabIndex === 2 || tabIndex === 3) && !isVideoUnlocked) {
+                updateBotSpeech("Slot ini terkunci! Selesaikan semakan emosi di Slot 1 dahulu.");
                 return;
             }
-            if ((tabIndex === 3 || tabIndex === 4) && !isKitchenAndGameUnlocked) {
-                updateBotSpeech("Slot ini terkunci! Tonton video di Slot 2 terlebih dahulu.");
+            
+            // 🔴 Jika cuba buka Slot 4 atau 5 tapi belum selesai tonton video di Slot 3
+            if ((tabIndex === 4 || tabIndex === 5) && !isKitchenAndGameUnlocked) {
+                updateBotSpeech("Slot ini terkunci! Tonton video pembelajaran di Slot 3 terlebih dahulu.");
                 return;
             }
 
-            if (tabIndex !== 2) {
+            if (tabIndex !== 3) {
                 pauseLocalVideo();
             }
 
@@ -1699,13 +1583,16 @@
             if (tabIndex === 1) {
                 updateBotSpeech("Semak mood kamu di sini!");
             } else if (tabIndex === 2) {
-                updateBotSpeech("Selamat datang ke Slot Video Pembelajaran!");
+                updateBotSpeech("Selamat datang ke Misi Chef Alya!");
+                resizeIframe(document.getElementById('m2-iframe'));
             } else if (tabIndex === 3) {
-                updateBotSpeech("Selamat datang ke Dapur Pecahan!");
-                resizeIframe(document.getElementById('m3-iframe'));
+                updateBotSpeech("Selamat datang ke Slot Video Pembelajaran!");
             } else if (tabIndex === 4) {
-                updateBotSpeech("Selamat datang ke Dunia Pecahan!");
+                updateBotSpeech("Selamat datang ke Dapur Pecahan!");
                 resizeIframe(document.getElementById('m4-iframe'));
+            } else if (tabIndex === 5) {
+                updateBotSpeech("Selamat datang ke Dunia Pecahan!");
+                resizeIframe(document.getElementById('m5-iframe'));
             }
         }
 
@@ -1722,17 +1609,24 @@
                 audio.currentTime = 0;
             }
 
-            const badge2 = document.getElementById('badge-tab-2');
-            if (badge2) {
-                badge2.className = "badge-status badge-unlocked";
-                badge2.innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+            // 🔴 Buka Lencana Slot 2 & Slot 3 serentak untuk Pelajar
+            for (let i = 2; i <= 3; i++) {
+                const badge = document.getElementById(`badge-tab-${i}`);
+                if (badge) {
+                    badge.className = "badge-status badge-unlocked";
+                    badge.innerHTML = '<i class="fa-solid fa-lock-open"></i> Terbuka';
+                }
             }
 
+            // 🔴 Paparkan kandungan Slot 2 & Slot 3
             document.getElementById('m2-locked').style.display = 'none';
             document.getElementById('m2-content').style.display = 'block';
+            resizeIframe(document.getElementById('m2-iframe'));
 
-            updateBotSpeech("Tahniah! Slot Video Pembelajaran telah dibuka!");
-            
+            document.getElementById('m3-locked').style.display = 'none';
+            document.getElementById('m3-content').style.display = 'block';
+            resizeIframe(document.getElementById('m3-iframe'));
+            updateBotSpeech("Tahniah! Misi Chef Alya dan Video Pembelajaran telah dibuka!");
             setTimeout(() => { switchTab(2); }, 1200);
         }
 
@@ -1742,7 +1636,7 @@
             if (isKitchenAndGameUnlocked) return;
             isKitchenAndGameUnlocked = true;
 
-            for (let i = 3; i <= 4; i++) {
+            for (let i = 3; i <= 5; i++) {
                 const badge = document.getElementById(`badge-tab-${i}`);
                 if (badge) {
                     badge.className = "badge-status badge-unlocked";
@@ -1756,14 +1650,17 @@
             document.getElementById('m4-locked').style.display = 'none';
             document.getElementById('m4-content').style.display = 'block';
 
+            document.getElementById('m5-locked').style.display = 'none';
+            document.getElementById('m5-content').style.display = 'block';
+
             const btnFinish = document.getElementById('btnFinishVideo');
             if (btnFinish) {
                 btnFinish.className = "btn-complete-video done";
-                btnFinish.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Dapur & Game Telah Terbuka!</span>';
+                btnFinish.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Semua Modul Seterusnya Telah Terbuka!</span>';
                 btnFinish.onclick = null;
             }
 
-            updateBotSpeech("Syabas! Dapur Pecahan dan Dunia Pecahan kini telah terbuka!");
+            updateBotSpeech("Syabas! Video Pembelajaran, Dapur Pecahan, dan Dunia Pecahan kini telah terbuka!");
         }
 
         function speakText(text) {
@@ -2139,15 +2036,16 @@
             }
         }
 
-        document.getElementById('m3-iframe').addEventListener('load', function() { resizeIframe(this); });
+        document.getElementById('m2-iframe').addEventListener('load', function() { resizeIframe(this); });
         document.getElementById('m4-iframe').addEventListener('load', function() { resizeIframe(this); });
+        document.getElementById('m5-iframe').addEventListener('load', function() { resizeIframe(this); });
 
         setInterval(() => {
             if (isKitchenAndGameUnlocked) {
-                const activeM3 = document.getElementById('m3-iframe');
                 const activeM4 = document.getElementById('m4-iframe');
-                if (activeM3 && activeM3.style.display !== 'none') resizeIframe(activeM3);
+                const activeM5 = document.getElementById('m5-iframe');
                 if (activeM4 && activeM4.style.display !== 'none') resizeIframe(activeM4);
+                if (activeM5 && activeM5.style.display !== 'none') resizeIframe(activeM5);
             }
         }, 1000);
 
@@ -2155,12 +2053,10 @@
         let userRole = 'student';
 
         function promptTeacherPassword() {
-            // 🔑 TUKAR KATA LALUAN ANDA DI SINI
             const kataLaluanRahsia = "cikgu123"; 
-
             const inputKataLaluan = prompt("🔒 Sila masukkan kata laluan keselamatan guru:");
 
-            if (inputKataLaluan === null) return; // Jika guru tekan Cancel
+            if (inputKataLaluan === null) return;
 
             if (inputKataLaluan === kataLaluanRahsia) {
                 setUserRole('teacher');
@@ -2182,35 +2078,31 @@
                 btnStudent.style.background = '#e5dec9';
                 btnStudent.style.color = 'var(--text-dark)';
 
-                // 1. Hentikan kamera emosi jika aktif
                 if (isCameraOn) {
                     hentiKameraEmosi();
                 }
 
-                // 2. Hentikan muzik Zon Ceria (Goyang Dumang)
                 const audio = document.getElementById("audioGoyangDumang");
                 if(audio) {
                     audio.pause();
                     audio.currentTime = 0;
                 }
 
-                // 3. Tutup modal amaran & seksyen Zon Ceria jika sedang terpapar
                 const zonCeriaModal = document.getElementById("zonCeriaModal");
                 if(zonCeriaModal) zonCeriaModal.style.display = "none";
 
                 const zonCeriaSection = document.getElementById("zonCeriaSection");
                 if(zonCeriaSection) zonCeriaSection.style.display = "none";
 
-                // 4. Hentikan kamera Pose Zon Ceria jika aktif
                 if (typeof poseWebcam !== 'undefined' && poseWebcam && poseWebcam.stop) {
                     poseWebcam.stop().catch(e => console.log("Pose webcam stop error"));
                 }
 
-                // Tetapkan semua modul kepada terbuka (Bypass)
                 isVideoUnlocked = true;
                 isKitchenAndGameUnlocked = true;
 
-                for (let i = 2; i <= 4; i++) {
+                // Membuka lencana untuk semua 5 slot
+                for (let i = 2; i <= 5; i++) {
                     const badge = document.getElementById(`badge-tab-${i}`);
                     if (badge) {
                         badge.className = "badge-status badge-unlocked";
@@ -2218,6 +2110,7 @@
                     }
                 }
 
+                // Memaparkan kesemua kandungan slot (2 hingga 5)
                 document.getElementById('m2-locked').style.display = 'none';
                 document.getElementById('m2-content').style.display = 'block';
 
@@ -2226,6 +2119,9 @@
 
                 document.getElementById('m4-locked').style.display = 'none';
                 document.getElementById('m4-content').style.display = 'block';
+
+                document.getElementById('m5-locked').style.display = 'none';
+                document.getElementById('m5-content').style.display = 'block';
 
                 updateBotSpeech("Mod Guru diaktifkan. Anda boleh mengakses semua modul secara terus tanpa imbasan muka!");
             } else {
