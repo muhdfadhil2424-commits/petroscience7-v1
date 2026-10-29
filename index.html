@@ -2099,8 +2099,12 @@
                 const zonCeriaSection = document.getElementById("zonCeriaSection");
                 if(zonCeriaSection) zonCeriaSection.style.display = "none";
 
+                try {
                 if (typeof poseWebcam !== 'undefined' && poseWebcam && poseWebcam.stop) {
                     poseWebcam.stop().catch(e => console.log("Pose webcam stop error"));
+                }
+                } catch (err) {
+                    console.log("Kamera pose belum dimulakan:", err);
                 }
 
                 // 🔴 TETAPAN UTAMA: Aktifkan kesemua status buka kunci secara langsung
@@ -2155,7 +2159,7 @@
                     });
             });
         }
-        
+
         window.addEventListener('DOMContentLoaded', () => {
             generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
