@@ -17,6 +17,10 @@
     <script src="./js/teachablemachine-image.min.js"></script>
     <script src="./js/teachablemachine-pose.min.js"></script>
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2d3528">
+
     <style>
         :root {
             --bg-cream: #faf8f2;
@@ -2139,6 +2143,19 @@
             }
         }
 
+        // --- DAFTAR SERVICE WORKER UNTUK PWA OFFLINE ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => {
+                        console.log('Service Worker berjaya didaftarkan!', reg);
+                    })
+                    .catch(err => {
+                        console.log('Pendaftaran Service Worker gagal:', err);
+                    });
+            });
+        }
+        
         window.addEventListener('DOMContentLoaded', () => {
             generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
