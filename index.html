@@ -1354,7 +1354,7 @@
                 </div>
 
                 <div id="m4-content" style="display: none;">
-                    <iframe id="m4-iframe" src="https://dapur-pecahan.vercel.app/" class="iframe-container" scrolling="no" allowfullscreen="true" style="width: 100%; min-height: 1650px; border: none;"></iframe>
+                    <iframe id="m4-iframe" src="https://remix-dapur-pecahan-chef-alya-9526.ai.studio/" class="iframe-container" scrolling="no" allowfullscreen="true" style="width: 100%; min-height: 1650px; border: none;"></iframe>
                 </div>
             </div>
 
@@ -2098,10 +2098,11 @@
                     poseWebcam.stop().catch(e => console.log("Pose webcam stop error"));
                 }
 
+                // 🔴 TETAPAN UTAMA: Aktifkan kesemua status buka kunci secara langsung
                 isVideoUnlocked = true;
                 isKitchenAndGameUnlocked = true;
 
-                // Membuka lencana untuk semua 5 slot
+                // Membuka lencana untuk semua 5 slot secara rasmi
                 for (let i = 2; i <= 5; i++) {
                     const badge = document.getElementById(`badge-tab-${i}`);
                     if (badge) {
@@ -2110,18 +2111,21 @@
                     }
                 }
 
-                // Memaparkan kesemua kandungan slot (2 hingga 5)
+                // Memaparkan kesemua kandungan slot (2 hingga 5) dan buang kad terkunci
                 document.getElementById('m2-locked').style.display = 'none';
                 document.getElementById('m2-content').style.display = 'block';
+                resizeIframe(document.getElementById('m2-iframe'));
 
                 document.getElementById('m3-locked').style.display = 'none';
                 document.getElementById('m3-content').style.display = 'block';
 
                 document.getElementById('m4-locked').style.display = 'none';
                 document.getElementById('m4-content').style.display = 'block';
+                resizeIframe(document.getElementById('m4-iframe'));
 
                 document.getElementById('m5-locked').style.display = 'none';
                 document.getElementById('m5-content').style.display = 'block';
+                resizeIframe(document.getElementById('m5-iframe'));
 
                 updateBotSpeech("Mod Guru diaktifkan. Anda boleh mengakses semua modul secara terus tanpa imbasan muka!");
             } else {
