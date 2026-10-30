@@ -1281,7 +1281,14 @@
                 </div>
 
                 <div id="m2-content" style="display: none;">
-                    <iframe id="m2-iframe" src="https://misi-pecahan-chef-alya.ai.studio/" class="iframe-container" scrolling="no" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 1650px; border: none;"></iframe>
+                    <!-- Butang Skrin Penuh Slot 2 -->
+                    <div style="padding: 10px 0; text-align: right; background: transparent;">
+                        <button type="button" onclick="openFullscreenIframe('m2-iframe')" style="background: var(--card-dark); color: white; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9rem;">
+                            <i class="fa-solid fa-expand"></i> Buka Skrin Penuh (Full Screen)
+                        </button>
+                    </div>
+
+                    <iframe id="m2-iframe" src="https://misi-pecahan-chef-alya.ai.studio/" class="iframe-container" scrolling="yes" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 1650px; border: none; border-radius: 24px;"></iframe>
                     
                     <div style="padding: 20px; text-align: center; background: #ffffff;">
                         <button id="btnFinishChefAlya" class="btn-complete-video" onclick="unlockVideoModule()">
@@ -1359,7 +1366,14 @@
                 </div>
 
                 <div id="m4-content" style="display: none;">
-                    <iframe id="m4-iframe" src="https://remix-dapur-pecahan-chef-alya-9526.ai.studio/" class="iframe-container" scrolling="no" allowfullscreen="true" style="width: 100%; min-height: 1650px; border: none;"></iframe>
+                    <!-- Butang Skrin Penuh Slot 4 -->
+                    <div style="padding: 10px 0; text-align: right; background: transparent;">
+                        <button type="button" onclick="openFullscreenIframe('m4-iframe')" style="background: var(--card-dark); color: white; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9rem;">
+                            <i class="fa-solid fa-expand"></i> Buka Skrin Penuh (Full Screen)
+                        </button>
+                    </div>
+
+                    <iframe id="m4-iframe" src="https://remix-dapur-pecahan-chef-alya-9526.ai.studio/" class="iframe-container" scrolling="yes" allowfullscreen="true" allow="fullscreen" style="width: 100%; min-height: 1650px; border: none; border-radius: 24px;"></iframe>
                 </div>
             </div>
 
@@ -1371,8 +1385,15 @@
                     <p style="font-size: 0.95rem; margin-top: 8px;">Tonton video pembelajaran di Slot 3 untuk membuka Dunia Pecahan!</p>
                 </div>
 
-                <div id="m5-content" style="display: none;">
-                    <iframe id="m5-iframe" src="https://petualangan-dunia-pecahan.ai.studio/" class="iframe-container" scrolling="yes" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 2400px; border: none;"></iframe>
+                <div id="m5-content" style="display: none; position: relative;">
+                    <!-- Butang Skrin Penuh Khas -->
+                    <div style="padding: 10px 0; text-align: right; background: transparent;">
+                        <button type="button" onclick="openFullscreenIframe('m5-iframe')" style="background: var(--card-dark); color: white; border: none; padding: 10px 20px; border-radius: 14px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 0.9rem;">
+                            <i class="fa-solid fa-expand"></i> Buka Skrin Penuh (Full Screen)
+                        </button>
+                    </div>
+
+                    <iframe id="m5-iframe" src="https://petualangan-dunia-pecahan.ai.studio/" class="iframe-container" scrolling="yes" allow="camera; microphone; fullscreen" allowfullscreen="true" style="display: block; width: 100%; min-height: 2400px; border: none; border-radius: 24px;"></iframe>
                 </div>
             </div>
 
@@ -2164,6 +2185,25 @@
             generateBackgroundEmojis();
             setTimeout(() => { speakText(currentDialog); }, 800);
         });
+
+        // --- FUNGSI SKRIN PENUH (FULLSCREEN) UNTUK IFRAME ---
+        function openFullscreenIframe(iframeId) {
+            const iframe = document.getElementById(iframeId);
+            if (!iframe) return;
+
+            // Pastikan tatalan dibenarkan semasa skrin penuh
+            iframe.setAttribute("scrolling", "yes");
+
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.mozRequestFullScreen) { /* Firefox */
+                iframe.mozRequestFullScreen();
+            } else if (iframe.webkitRequestFullscreen) { /* Chrome, Safari & Opera */
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) { /* IE/Edge */
+                iframe.msRequestFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
